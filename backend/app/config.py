@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     max_upload_mb: int = 50
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
+    # ================= 新增：大模型配置 =================
+    llm_api_key: str = ""
+    llm_base_url: str = "https://api.deepseek.com/v1"
+    llm_model_name: str = "deepseek-chat"
+    # ====================================================
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [item.strip() for item in self.cors_origins.split(",") if item.strip()]

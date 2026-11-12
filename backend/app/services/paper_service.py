@@ -1,9 +1,10 @@
 import hashlib
 import os
-import fitz  # PyMuPDF
+import fitz
+import difflib
+import re
 from sqlalchemy.orm import Session
 from app.core.exceptions import AppError
-
 from app.models.paper import Paper, PaperPage, PaperChunk
 
 # 确保上传目录存在
@@ -11,7 +12,6 @@ UPLOAD_DIR = os.path.join("data", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def ensure_storage():
-    """确保上传目录存在（供 main.py 启动时调用）"""
     os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def create_paper(db: Session, filename: str, content: bytes, content_type: str) -> Paper:
@@ -23,11 +23,11 @@ def create_paper(db: Session, filename: str, content: bytes, content_type: str) 
     if len(content) > 50 * 1024 * 1024:
         raise AppError("文件大小超过 50MB 限制。", code="FILE_TOO_LARGE", status_code=400)
     
-    # 3. SHA256 指纹去重（核心！）
+    # 3. SHA256 指纹去重（绝对重复拦截）
     file_hash = hashlib.sha256(content).hexdigest()
-    existing = db.query(Paper).filter(Paper.file_hash == file_hash).first()
-    if existing:
-        raise AppError(f"检测到重复论文！库中已存在：{existing.original_filename}", code="DUPLICATE_PAPER", status_code=409)
+    existing_exact = db.query(Paper).filter(Paper.file_hash == file_hash).first()
+    if existing_exact:
+        raise AppError(f"检测到完全相同的重复文件！库中已存在：{existing_exact.original_filename}", code="DUPLICATE_PAPER", status_code=409)
 
     # 4. 保存物理文件
     stored_filename = f"{file_hash}.pdf"
@@ -35,12 +35,49 @@ def create_paper(db: Session, filename: str, content: bytes, content_type: str) 
     with open(file_path, "wb") as f:
         f.write(content)
 
-    # 5. 解析 PDF
+    # 5. 解析 PDF 并做语义版本去重
     try:
         doc = fitz.open(file_path)
-        metadata = doc.metadata or {}
         
-        # 智能提取标题（有些 PDF 第一行就是标题）
+        # 提取前 3 页的文本（通常涵盖 Abstract 和 Introduction）
+        text_sample = ""
+        for i in range(min(3, len(doc))):
+            text_sample += doc[i].get_text("text")
+            
+        # ================= 语义去重核心逻辑（升级版） =================
+        # 转小写，仅保留英文和数字，过滤掉所有符号、空格、换行
+        text_sample_clean = re.sub(r'[^a-z0-9]', '', text_sample.lower())
+        
+        if len(text_sample_clean) > 100: 
+            existing_papers = db.query(Paper).all()
+            for p in existing_papers:
+                p_pages = db.query(PaperPage).filter(PaperPage.paper_id == p.id, PaperPage.page_number <= 3).all()
+                p_text = "".join([page.text for page in p_pages])
+                
+                p_text_clean = re.sub(r'[^a-z0-9]', '', p_text.lower())
+                if not p_text_clean: 
+                    continue
+
+                # 截取前 5000 个有效字符进行比对
+                s1 = text_sample_clean[:5000]
+                s2 = p_text_clean[:5000]
+                
+                similarity = difflib.SequenceMatcher(None, s1, s2).ratio()
+                
+                # 调试打印，你可以在后端黑窗口看到结果
+                print(f"[语义去重检测] 正在比对库中论文《{p.title[:20]}...》，相似度为: {similarity*100:.2f}%")
+                
+                # 阈值设为 0.50
+                if similarity > 0.50:
+                    raise AppError(
+                        f"检测到高度重合的论文版本！库中已有：《{p.title}》。文本相似度高达 {similarity*100:.1f}%。建议保留更新版本。",
+                        code="DUPLICATE_VERSION",
+                        status_code=409
+                    )
+        # ====================================================
+
+        # 6. 提取元数据
+        metadata = doc.metadata or {}
         title = metadata.get("title", "").strip()
         if not title or len(title) < 5:
             first_page_text = doc[0].get_text() if len(doc) > 0 else ""
@@ -51,9 +88,9 @@ def create_paper(db: Session, filename: str, content: bytes, content_type: str) 
         page_count = len(doc)
         char_count = 0
         
-        # 6. 创建主记录
+        # 7. 创建主记录
         paper = Paper(
-            title=title[:500], # 防止超长
+            title=title[:500],
             file_hash=file_hash,
             original_filename=filename,
             stored_filename=stored_filename,
@@ -66,11 +103,10 @@ def create_paper(db: Session, filename: str, content: bytes, content_type: str) 
             index_status="pending"
         )
         db.add(paper)
-        db.flush() # 拿到 paper.id
+        db.flush()
 
-        # 7. 逐页提取文本并智能切块
+        # 8. 逐页提取文本并智能切块
         chunk_index_global = 0
-        
         for page_num in range(page_count):
             page = doc[page_num]
             text = page.get_text("text")
@@ -84,7 +120,7 @@ def create_paper(db: Session, filename: str, content: bytes, content_type: str) 
             )
             db.add(paper_page)
             
-            # --- 智能文本切块逻辑 ---
+            # 文本切块
             chunk_size = 500
             start = 0
             while start < len(text):
@@ -94,7 +130,6 @@ def create_paper(db: Session, filename: str, content: bytes, content_type: str) 
                     last_period = text.rfind('。', start, end)
                     last_dot = text.rfind('. ', start, end)
                     cut_point = max(last_newline, last_period, last_dot)
-                    
                     if cut_point > start + 100: 
                         end = cut_point + 1
                 
@@ -108,9 +143,7 @@ def create_paper(db: Session, filename: str, content: bytes, content_type: str) 
                     )
                     db.add(chunk)
                     chunk_index_global += 1
-                
                 start = end
-            # ---------------------------
             
         paper.char_count = char_count
         doc.close()
@@ -118,18 +151,43 @@ def create_paper(db: Session, filename: str, content: bytes, content_type: str) 
         db.commit()
         db.refresh(paper)
         return paper
-        db.commit()
-        db.refresh(paper)
-        return paper
 
     except Exception as e:
         db.rollback()
+        
+        # 关键修复：关闭可能已被打开的 doc 文件句柄，否则 Windows 下删不掉
+        try:
+            doc.close()
+        except:
+            pass
+            
         if os.path.exists(file_path):
-            os.remove(file_path)
+            try:
+                os.remove(file_path)
+            except:
+                pass
+                
         if isinstance(e, AppError):
             raise e
         raise AppError(f"PDF 解析失败: {str(e)}", code="PDF_PARSE_ERROR", status_code=500)
 
+def search_chunks(db: Session, query: str, limit: int = 5):
+    if not query.strip():
+        return []
+    results = db.query(PaperChunk, Paper).join(Paper, PaperChunk.paper_id == Paper.id)\
+        .filter(PaperChunk.text.contains(query))\
+        .limit(limit).all()
+        
+    return [
+        {
+            "chunk_id": chunk.id,
+            "paper_id": chunk.paper_id,
+            "paper_title": paper.title,
+            "page_number": chunk.page_number,
+            "text": chunk.text
+        }
+        for chunk, paper in results
+    ]
 
 def list_papers(db: Session):
     return db.query(Paper).order_by(Paper.created_at.desc()).all()
@@ -162,24 +220,3 @@ def serialize_paper(paper: Paper, include_pages: bool = False):
     if include_pages:
         data["pages"] = [{"page_number": p.page_number, "text": p.text} for p in paper.pages]
     return data
-
-def search_chunks(db: Session, query: str, limit: int = 5):
-    """基础关键词检索"""
-    if not query.strip():
-        return []
-    
-    # 简单的 SQL LIKE 检索（为了抗幻觉，带上对应的论文标题）
-    results = db.query(PaperChunk, Paper).join(Paper, PaperChunk.paper_id == Paper.id)\
-        .filter(PaperChunk.text.contains(query))\
-        .limit(limit).all()
-        
-    return [
-        {
-            "chunk_id": chunk.id,
-            "paper_id": chunk.paper_id,
-            "paper_title": paper.title,
-            "page_number": chunk.page_number,
-            "text": chunk.text
-        }
-        for chunk, paper in results
-    ]

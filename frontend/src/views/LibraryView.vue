@@ -94,6 +94,7 @@ async function onFileChange(uploadFile: UploadFile) {
   if (!file) return;
   uploading.value = true;
   progress.value = 0;
+  
   try {
     const paper = await uploadPaper(file, (value) => {
       progress.value = value;
@@ -101,9 +102,32 @@ async function onFileChange(uploadFile: UploadFile) {
     ElMessage.success(`已解析《${paper.title}》，共 ${paper.page_count} 页`);
     await loadPapers();
     router.push({ name: "paper-detail", params: { id: paper.id } });
-  } catch (error) {
-    const message = error instanceof ApiError ? error.message : "上传失败";
-    ElMessage.error(message);
+  } catch (error: any) {
+    // 拦截语义去重的 409 错误
+    const errorData = error.response?.data?.error;
+    
+    if (errorData && errorData.code === "DUPLICATE_VERSION") {
+      // 弹出对话框让用户选择
+      ElMessageBox.confirm(
+        errorData.message,
+        "发现相似论文版本",
+        {
+          confirmButtonText: "强制保留当前版本",
+          cancelButtonText: "取消上传",
+          type: "warning",
+        }
+      ).then(async () => {
+        // 用户选择强制保留，我们需要在后面调用强制上传接口
+        // 由于我们暂未实现后端的 force 参数，这里先提示用户
+        ElMessage.warning("强制保留功能将在后续版本中开放，当前请先删除旧版本。");
+      }).catch(() => {
+        // 用户点击取消，什么都不做
+      });
+    } else {
+      // 其他普通错误（比如 SHA256 重复）
+      const message = error instanceof ApiError ? error.message : "上传失败";
+      ElMessage.error(message);
+    }
   } finally {
     uploading.value = false;
   }

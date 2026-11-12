@@ -7,6 +7,8 @@ from app.database import get_db
 # 注意：这里把 search_chunks 导入进来了
 from app.services.paper_service import create_paper, delete_paper, get_paper, list_papers, serialize_paper, search_chunks
 
+from app.services.llm_service import generate_rag_answer
+
 router = APIRouter(prefix="/papers", tags=["papers"])
 
 
@@ -46,3 +48,20 @@ def get_paper_detail(paper_id: int, db: Session = Depends(get_db)):
 def remove_paper(paper_id: int, db: Session = Depends(get_db)):
     delete_paper(db, paper_id)
     return success({"id": paper_id, "deleted": True})
+
+@router.post("/chat")
+def chat_with_papers(query: str, db: Session = Depends(get_db)):
+    """RAG 问答接口"""
+    # 1. 先去库里搜证据
+    contexts = search_chunks(db, query, limit=3)
+    if not contexts:
+        return success({"answer": "根据当前知识库，未找到相关证据来回答该问题。", "contexts": []})
+    
+    # 2. 让大模型根据证据回答
+    answer = generate_rag_answer(query, contexts)
+    
+    # 3. 把答案和证据一起返回给前端
+    return success({
+        "answer": answer,
+        "contexts": contexts
+    })
