@@ -11,6 +11,7 @@ class Paper(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(512), nullable=False)
+    file_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
     original_filename: Mapped[str] = mapped_column(String(512), nullable=False)
     stored_filename: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     file_path: Mapped[str] = mapped_column(String(1024), nullable=False)
