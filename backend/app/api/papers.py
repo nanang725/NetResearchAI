@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import AppError
 from app.core.responses import success
 from app.database import get_db
-from app.services.paper_service import create_paper, delete_paper, get_paper, list_papers, serialize_paper
+# 注意：这里把 search_chunks 导入进来了
+from app.services.paper_service import create_paper, delete_paper, get_paper, list_papers, serialize_paper, search_chunks
 
 router = APIRouter(prefix="/papers", tags=["papers"])
 
@@ -13,6 +14,17 @@ router = APIRouter(prefix="/papers", tags=["papers"])
 def list_all_papers(db: Session = Depends(get_db)):
     papers = list_papers(db)
     return success([serialize_paper(paper, include_pages=False) for paper in papers])
+
+
+# ==========================================
+# 搜索接口必须放在 /{paper_id} 前面！
+# ==========================================
+@router.get("/search")
+def search_papers(q: str = "", db: Session = Depends(get_db)):
+    if not q:
+        return success([])
+    results = search_chunks(db, q)
+    return success(results)
 
 
 @router.post("/upload")

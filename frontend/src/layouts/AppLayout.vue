@@ -11,6 +11,8 @@
 
       <nav class="nav">
         <RouterLink to="/" class="nav-item" exact-active-class="active">论文库</RouterLink>
+        <!-- 新增：智能检索 -->
+        <RouterLink to="/search" class="nav-item" active-class="active">智能检索</RouterLink>
         <RouterLink to="/qa" class="nav-item" active-class="active">智能问答</RouterLink>
         <RouterLink to="/graph" class="nav-item" active-class="active">引用图谱</RouterLink>
         <RouterLink to="/compare" class="nav-item" active-class="active">版本比较</RouterLink>
@@ -21,7 +23,8 @@
           <span class="dot" :class="healthOk ? 'ok' : 'bad'"></span>
           <span>{{ healthText }}</span>
         </div>
-        <p>第一阶段：论文入库与 PDF 解析。问答、图谱与版本比较尚未实现。</p>
+        <!-- 修改了底部的状态提示文字 -->
+        <p>第一阶段：论文入库、切块与智能检索。问答与图谱正在开发中。</p>
       </div>
     </aside>
 
@@ -121,6 +124,8 @@ onMounted(async () => {
   padding: 10px 12px;
   border-radius: 10px;
   color: #d5e4ee;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
 }
 
 .nav-item.active,

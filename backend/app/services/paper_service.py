@@ -162,3 +162,24 @@ def serialize_paper(paper: Paper, include_pages: bool = False):
     if include_pages:
         data["pages"] = [{"page_number": p.page_number, "text": p.text} for p in paper.pages]
     return data
+
+def search_chunks(db: Session, query: str, limit: int = 5):
+    """基础关键词检索"""
+    if not query.strip():
+        return []
+    
+    # 简单的 SQL LIKE 检索（为了抗幻觉，带上对应的论文标题）
+    results = db.query(PaperChunk, Paper).join(Paper, PaperChunk.paper_id == Paper.id)\
+        .filter(PaperChunk.text.contains(query))\
+        .limit(limit).all()
+        
+    return [
+        {
+            "chunk_id": chunk.id,
+            "paper_id": chunk.paper_id,
+            "paper_title": paper.title,
+            "page_number": chunk.page_number,
+            "text": chunk.text
+        }
+        for chunk, paper in results
+    ]

@@ -32,3 +32,10 @@ export async function uploadPaper(file: File, onProgress?: (percent: number) => 
 export async function deletePaper(id: number): Promise<void> {
   await http.delete(`/papers/${id}`);
 }
+
+// 检索论文片段
+export function searchPapers(q: string) {
+  return http.get('/papers/search', {
+    params: { q }
+  })
+}

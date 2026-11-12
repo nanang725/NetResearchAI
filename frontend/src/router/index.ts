@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AppLayout from "@/layouts/AppLayout.vue";
+import SearchView from '../views/SearchView.vue'
+
 
 const router = createRouter({
   history: createWebHistory(),
@@ -30,6 +32,12 @@ const router = createRouter({
             feature: "基于混合检索与 LangGraph 的论文问答",
           },
         },
+        {
+          path: 'search', // 或者 '/search'
+          name: 'Search',
+          component: SearchView,
+          meta: { title: '智能检索' }
+        },  
         {
           path: "graph",
           name: "graph",
