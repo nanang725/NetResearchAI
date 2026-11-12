@@ -3,16 +3,16 @@ import os
 import fitz  # PyMuPDF
 from sqlalchemy.orm import Session
 from app.core.exceptions import AppError
-from app.models.paper import Paper, PaperPage
 
+from app.models.paper import Paper, PaperPage, PaperChunk
+
+# 确保上传目录存在
+UPLOAD_DIR = os.path.join("data", "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def ensure_storage():
     """确保上传目录存在（供 main.py 启动时调用）"""
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-    
-# 确保上传目录存在
-UPLOAD_DIR = os.path.join("data", "uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def create_paper(db: Session, filename: str, content: bytes, content_type: str) -> Paper:
     # 1. 格式校验
@@ -68,7 +68,9 @@ def create_paper(db: Session, filename: str, content: bytes, content_type: str) 
         db.add(paper)
         db.flush() # 拿到 paper.id
 
-        # 7. 逐页提取文本
+        # 7. 逐页提取文本并智能切块
+        chunk_index_global = 0
+        
         for page_num in range(page_count):
             page = doc[page_num]
             text = page.get_text("text")
@@ -82,9 +84,40 @@ def create_paper(db: Session, filename: str, content: bytes, content_type: str) 
             )
             db.add(paper_page)
             
+            # --- 智能文本切块逻辑 ---
+            chunk_size = 500
+            start = 0
+            while start < len(text):
+                end = start + chunk_size
+                if end < len(text):
+                    last_newline = text.rfind('\n', start, end)
+                    last_period = text.rfind('。', start, end)
+                    last_dot = text.rfind('. ', start, end)
+                    cut_point = max(last_newline, last_period, last_dot)
+                    
+                    if cut_point > start + 100: 
+                        end = cut_point + 1
+                
+                chunk_text = text[start:end].strip()
+                if chunk_text:
+                    chunk = PaperChunk(
+                        paper_id=paper.id,
+                        page_number=page_num + 1,
+                        chunk_index=chunk_index_global,
+                        text=chunk_text
+                    )
+                    db.add(chunk)
+                    chunk_index_global += 1
+                
+                start = end
+            # ---------------------------
+            
         paper.char_count = char_count
         doc.close()
         
+        db.commit()
+        db.refresh(paper)
+        return paper
         db.commit()
         db.refresh(paper)
         return paper
@@ -96,6 +129,7 @@ def create_paper(db: Session, filename: str, content: bytes, content_type: str) 
         if isinstance(e, AppError):
             raise e
         raise AppError(f"PDF 解析失败: {str(e)}", code="PDF_PARSE_ERROR", status_code=500)
+
 
 def list_papers(db: Session):
     return db.query(Paper).order_by(Paper.created_at.desc()).all()

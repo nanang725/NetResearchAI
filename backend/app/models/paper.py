@@ -46,3 +46,12 @@ class PaperPage(Base):
     char_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     paper: Mapped[Paper] = relationship(back_populates="pages")
+
+class PaperChunk(Base):
+    __tablename__ = "paper_chunks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    paper_id: Mapped[int] = mapped_column(ForeignKey("papers.id", ondelete="CASCADE"), nullable=False, index=True)
+    page_number: Mapped[int] = mapped_column(Integer, nullable=False) # 记录这个块在第几页
+    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False) # 记录是第几个块
+    text: Mapped[str] = mapped_column(Text, nullable=False)
