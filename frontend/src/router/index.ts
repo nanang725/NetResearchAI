@@ -25,7 +25,7 @@ const router = createRouter({
         {
           path: "qa",
           name: "qa",
-          component: () => import("@/views/ComingSoonView.vue"),
+          component: () => import("@/views/QaView.vue"),
           meta: {
             title: "智能问答",
             stage: "第二阶段",

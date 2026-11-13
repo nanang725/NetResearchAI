@@ -33,9 +33,18 @@ export async function deletePaper(id: number): Promise<void> {
   await http.delete(`/papers/${id}`);
 }
 
-// 检索论文片段
 export function searchPapers(q: string) {
   return http.get('/papers/search', {
     params: { q }
   })
+}
+
+export async function chatWithAgent(query: string, paperId?: number) {
+  const { data } = await http.post('/papers/agent/chat', null, {
+    params: { 
+      query,
+      paper_id: paperId // 如果是 undefined 就不会传这个参数
+    }
+  });
+  return data;
 }

@@ -171,13 +171,45 @@ def create_paper(db: Session, filename: str, content: bytes, content_type: str) 
             raise e
         raise AppError(f"PDF 解析失败: {str(e)}", code="PDF_PARSE_ERROR", status_code=500)
 
-def search_chunks(db: Session, query: str, limit: int = 5):
+def search_chunks(db: Session, query: str, limit: int = 3):
     if not query.strip():
         return []
+        
+    # 第一步：先用完整的问题去搜
     results = db.query(PaperChunk, Paper).join(Paper, PaperChunk.paper_id == Paper.id)\
         .filter(PaperChunk.text.contains(query))\
         .limit(limit).all()
+    print(f"\n--- [搜索调试] 原始查询: '{query}' ---")
+    print(f"第一步（完整句子匹配）结果数: {len(results)}")
         
+    # 第二步：如果完整问题搜不到，尝试提取核心英文单词去搜
+    if not results:
+        import re
+        english_words = re.findall(r'[a-zA-Z]+', query)
+        if english_words:
+            # 拿最长的那个英文单词去搜
+            longest_word = max(english_words, key=len)
+            print(f"第二步（提取英文单词）: 尝试搜索 '{longest_word}'")
+            results = db.query(PaperChunk, Paper).join(Paper, PaperChunk.paper_id == Paper.id)\
+                .filter(PaperChunk.text.contains(longest_word))\
+                .limit(limit).all()
+            print(f"第二步结果数: {len(results)}")
+                
+    # 第三步：如果还是搜不到，尝试用中文关键词匹配
+    if not results:
+        chinese_words = re.findall(r'[\u4e00-\u9fa5]+', query)
+        for word in chinese_words:
+            if len(word) >= 2:
+                print(f"第三步（提取中文词）: 尝试搜索 '{word}'")
+                results = db.query(PaperChunk, Paper).join(Paper, PaperChunk.paper_id == Paper.id)\
+                    .filter(PaperChunk.text.contains(word))\
+                    .limit(limit).all()
+                if results:
+                    print(f"第三步结果数: {len(results)}")
+                    break
+
+    print(f"--- [搜索结束] 最终返回 {len(results)} 条证据 ---\n")
+    
     return [
         {
             "chunk_id": chunk.id,
