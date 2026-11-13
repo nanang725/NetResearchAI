@@ -28,3 +28,9 @@ Thumbs.db
 *.log
 # Archives
 *.zip
+
+# AI Models
+backend/data/models/
+
+# Vector Database
+backend/data/chroma_db/
