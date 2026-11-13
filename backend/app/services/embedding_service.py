@@ -192,26 +192,31 @@ def encode_query(query: str) -> list[float]:
 # 单篇论文索引
 # =========================
 
+
 def index_paper(
     db: Session,
     paper_id: int,
     force: bool = False,
 ) -> dict[str, Any]:
     """
-    为指定论文建立向量索引。
+    为指定论文建立 BGE-M3 向量索引。
 
-    参数：
-        db：数据库会话
-        paper_id：论文 ID
-        force：是否强制重新建立索引
-
-    返回：
-        论文 ID、索引文本块数量、索引状态
+    处理原则：
+    1. 索引前备份该论文已有的向量。
+    2. 分批生成并写入向量。
+    3. 全部成功后清理已经失效的旧向量。
+    4. 中途失败时，删除本次可能产生的部分数据，
+       并尝试恢复索引前的向量。
     """
-    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+
+    paper = (
+        db.query(Paper)
+        .filter(Paper.id == paper_id)
+        .first()
+    )
 
     if paper is None:
-        raise ValueError(f"论文不存在，paper_id={paper_id}")
+        raise ValueError(f"论文不存在：paper_id={paper_id}")
 
     chunks = (
         db.query(PaperChunk)
@@ -233,44 +238,36 @@ def index_paper(
 
     collection = get_chroma_collection()
 
-    if force:
-        collection.delete(
-            where={"paper_id": paper_id}
-        )
+    # 备份当前论文已有的向量。
+    # 注意：这里不删除旧向量，避免重建失败后丢失原有数据。
+    old_vectors = collection.get(
+        where={"paper_id": paper_id},
+        include=["documents", "metadatas", "embeddings"],
+    )
+
+    old_ids = old_vectors.get("ids", [])
 
     paper.index_status = "indexing"
     db.commit()
 
     try:
         total_indexed = 0
+        current_ids = set()
 
         for start in range(0, len(chunks), INDEX_BATCH_SIZE):
-            batch = chunks[
-                start:start + INDEX_BATCH_SIZE
-            ]
+            batch = chunks[start:start + INDEX_BATCH_SIZE]
 
-            texts = [
-                chunk.text.strip()
-                for chunk in batch
-            ]
-
-            # 过滤空文本
             valid_items = [
-                (chunk, text)
-                for chunk, text in zip(batch, texts)
-                if text
+                (chunk, chunk.text.strip())
+                for chunk in batch
+                if chunk.text and chunk.text.strip()
             ]
 
             if not valid_items:
                 continue
 
-            valid_chunks = [
-                item[0] for item in valid_items
-            ]
-
-            valid_texts = [
-                item[1] for item in valid_items
-            ]
+            valid_chunks = [item[0] for item in valid_items]
+            valid_texts = [item[1] for item in valid_items]
 
             embeddings = encode_texts(valid_texts)
 
@@ -296,6 +293,7 @@ def index_paper(
                 metadatas=metadatas,
             )
 
+            current_ids.update(ids)
             total_indexed += len(valid_chunks)
 
             print(
@@ -303,22 +301,72 @@ def index_paper(
                 f"{total_indexed}/{len(chunks)}"
             )
 
-        paper.index_status = (
-            "indexed" if total_indexed > 0 else "failed"
-        )
+        if total_indexed == 0:
+            raise ValueError("论文没有有效文本，无法生成向量。")
+
+        # 所有新向量写入成功后，再清理已经不存在的旧文本块。
+        obsolete_ids = [
+            vector_id
+            for vector_id in old_ids
+            if vector_id not in current_ids
+        ]
+
+        if obsolete_ids:
+            collection.delete(ids=obsolete_ids)
+
+        paper.index_status = "indexed"
         db.commit()
+
+        print(
+            f"[向量索引] 论文 {paper_id} 索引完成，"
+            f"共写入 {total_indexed} 条向量。"
+        )
 
         return {
             "paper_id": paper_id,
             "indexed_count": total_indexed,
-            "status": paper.index_status,
+            "status": "indexed",
             "message": "向量索引建立完成。",
         }
 
-    except Exception:
+    except Exception as exc:
+        print(
+            f"[向量索引] 论文 {paper_id} 索引失败：{exc}"
+        )
+
+        # ChromaDB 不受 SQLite 事务控制。
+        # 因此需要单独恢复索引前的向量数据。
+        try:
+            collection.delete(
+                where={"paper_id": paper_id}
+            )
+
+            if old_ids:
+                old_embeddings = old_vectors.get("embeddings")
+
+                if hasattr(old_embeddings, "tolist"):
+                    old_embeddings = old_embeddings.tolist()
+
+                collection.upsert(
+                    ids=old_ids,
+                    embeddings=old_embeddings,
+                    documents=old_vectors.get("documents"),
+                    metadatas=old_vectors.get("metadatas"),
+                )
+
+            print(
+                f"[向量索引] 论文 {paper_id} "
+                "原有向量数据恢复完成。"
+            )
+
+        except Exception as restore_exc:
+            print(
+                f"[向量索引] 警告：论文 {paper_id} "
+                f"原有向量恢复失败：{restore_exc}"
+            )
+
         db.rollback()
 
-        # 回滚后重新获取论文对象
         paper = (
             db.query(Paper)
             .filter(Paper.id == paper_id)
@@ -332,48 +380,29 @@ def index_paper(
         raise
 
 
+
 # =========================
 # 全库论文索引
 # =========================
+
 
 def index_all_papers(
     db: Session,
     force: bool = False,
 ) -> dict[str, Any]:
     """
-    为数据库中的所有论文建立向量索引。
+    为数据库中的所有论文逐篇建立向量索引。
 
-    适用于：
-    1. 第一次启用 BGE-M3
-    2. 为已有论文补建索引
-    3. 重建全部向量索引
+    采用逐篇安全重建策略：
+    1. 不清空整个 ChromaDB 集合。
+    2. 每篇论文单独执行 index_paper。
+    3. 单篇失败时恢复该论文原有向量。
+    4. 单篇失败不影响其他论文继续索引。
 
-    force=False：
-        只处理没有完整索引的论文。
-
-    force=True：
-        清空本项目的向量集合，然后重新建立全部索引。
+    force 参数保留，用于兼容原有调用。
+    当前 index_paper 会重新处理论文文本块，
+    使用 upsert 更新已有向量，不会重复插入。
     """
-    if force:
-        collection = get_chroma_collection()
-
-        collection.delete(
-            where={"paper_id": -1}
-        )
-
-        # 删除整个集合并重新创建，避免遗留旧向量
-        global _collection, _chroma_client
-        with _chroma_lock:
-            if _chroma_client is not None:
-                try:
-                    _chroma_client.delete_collection(
-                        COLLECTION_NAME
-                    )
-                except Exception:
-                    pass
-
-                _collection = None
-
     papers = (
         db.query(Paper)
         .order_by(Paper.id.asc())
@@ -383,18 +412,21 @@ def index_all_papers(
     results = []
 
     for paper in papers:
+        paper_id = paper.id
+
         try:
             result = index_paper(
                 db=db,
-                paper_id=paper.id,
+                paper_id=paper_id,
                 force=force,
             )
+
             results.append(result)
 
         except Exception as exc:
             results.append(
                 {
-                    "paper_id": paper.id,
+                    "paper_id": paper_id,
                     "indexed_count": 0,
                     "status": "failed",
                     "message": str(exc),
@@ -402,7 +434,7 @@ def index_all_papers(
             )
 
             print(
-                f"[向量索引失败] paper_id={paper.id}: {exc}"
+                f"[向量索引失败] paper_id={paper_id}: {exc}"
             )
 
     success_count = sum(
@@ -411,12 +443,15 @@ def index_all_papers(
         if result["status"] == "indexed"
     )
 
+    failed_count = len(papers) - success_count
+
     return {
         "total_papers": len(papers),
         "success_count": success_count,
-        "failed_count": len(papers) - success_count,
+        "failed_count": failed_count,
         "results": results,
     }
+
 
 
 # =========================

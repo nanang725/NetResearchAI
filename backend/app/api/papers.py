@@ -79,15 +79,20 @@ async def upload_paper(
             force=False,
         )
 
-        if indexed:
+
+        if indexed.get("status") == "indexed":
             print(
-                f"[论文上传] 论文 {paper.id} 向量索引成功。"
+                f"[论文上传] 论文 {paper.id} "
+                "向量索引成功。"
             )
         else:
             print(
                 f"[论文上传] 论文 {paper.id} 已保存，"
-                "但向量索引未成功。"
+                f"但向量索引未成功。"
+                f"状态：{indexed.get('status')}，"
+                f"原因：{indexed.get('message', '未知原因')}"
             )
+
 
     except Exception as exc:
         db.rollback()
