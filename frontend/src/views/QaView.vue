@@ -178,7 +178,7 @@
 
           <!-- 无关问题提示 -->
           <div
-            v-if="currentIsRelevant === false"
+            v-if="currentIsRelevant === false && currentKnowledgeSource !== 'generic_knowledge'"
             class="irrelevant-hint"
           >
             <el-icon>
@@ -188,6 +188,13 @@
             <span>
               当前没有可用于回答该问题的相关论文证据，已隐藏无关证据来源。
             </span>
+          </div>
+
+          <div
+            v-if="currentKnowledgeSource === 'generic_knowledge'"
+            class="no-evidence-hint"
+          >
+            本轮回答使用通用知识，不代表论文原文或论文证据。
           </div>
 
           <!-- 只有明确相关时才显示证据 -->
@@ -260,7 +267,7 @@ import {
 } from '@element-plus/icons-vue'
 
 import { marked } from 'marked'
-import { chatWithAgent, fetchPapers } from '@/api/papers'
+import { chatWithAgent, fetchPapers, type ChatHistoryMessage } from '@/api/papers'
 
 interface Message {
   role: 'user' | 'ai' | 'imported'
@@ -277,9 +284,12 @@ interface ChatResponse {
   steps?: string[]
   contexts?: any[]
   is_relevant?: boolean
+  knowledge_source?: 'paper_evidence' | 'generic_knowledge'
 }
 
 const MESSAGE_STORAGE_KEY = 'netresearch-ai-qa-messages'
+const MAX_HISTORY_MESSAGES = 12
+const MAX_HISTORY_MESSAGE_CHARS = 2000
 
 // 检查聊天记录格式
 const isMessage = (value: unknown): value is Message => {
@@ -357,6 +367,9 @@ const currentContexts = ref<any[]>([])
 // true：证据相关
 // false：证据无关或未通过相关性判断
 const currentIsRelevant = ref<boolean | null>(null)
+const currentKnowledgeSource = ref<
+  'paper_evidence' | 'generic_knowledge' | null
+>(null)
 
 const activeEvidence = ref<string[]>(['0'])
 
@@ -401,6 +414,15 @@ const scrollToBottom = async () => {
   }
 }
 
+const buildRequestHistory = (): ChatHistoryMessage[] =>
+  messages.value
+    .filter((message) => message.role === 'user' || message.role === 'ai')
+    .slice(-MAX_HISTORY_MESSAGES)
+    .map((message) => ({
+      role: message.role === 'ai' ? 'assistant' : 'user',
+      content: message.content.slice(0, MAX_HISTORY_MESSAGE_CHARS),
+    }))
+
 // 导入 ChatGPT 对话
 const importConversation = () => {
   const content = importedText.value.trim()
@@ -437,6 +459,8 @@ const sendMessage = async () => {
     return
   }
 
+  const history = buildRequestHistory()
+
   // 添加用户消息
   messages.value.push({
     role: 'user',
@@ -452,6 +476,7 @@ const sendMessage = async () => {
   currentSteps.value = []
   currentContexts.value = []
   currentIsRelevant.value = null
+  currentKnowledgeSource.value = null
   activeEvidence.value = ['0']
 
   scrollToBottom()
@@ -465,7 +490,8 @@ const sendMessage = async () => {
 
     const res: any = await chatWithAgent(
       q,
-      paperIdToSend
+      paperIdToSend,
+      history
     )
 
     // 兼容直接返回和 Axios data 包装两种情况
@@ -490,6 +516,10 @@ const sendMessage = async () => {
     // 只有后端明确返回 true 才展示证据
     currentIsRelevant.value =
       data.is_relevant === true
+    currentKnowledgeSource.value =
+      data.knowledge_source === 'generic_knowledge'
+        ? 'generic_knowledge'
+        : 'paper_evidence'
 
     currentContexts.value =
       currentIsRelevant.value && Array.isArray(data.contexts)
@@ -520,6 +550,7 @@ const sendMessage = async () => {
     currentSteps.value = []
     currentContexts.value = []
     currentIsRelevant.value = null
+    currentKnowledgeSource.value = null
 
   } finally {
     loading.value = false

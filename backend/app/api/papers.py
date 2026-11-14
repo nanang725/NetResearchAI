@@ -16,7 +16,7 @@ NetResearch AI - 论文管理与智能问答 API
 
 import logging
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Body, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -24,6 +24,7 @@ from app.core.exceptions import AppError
 from app.core.responses import success
 from app.database import get_db
 from app.models.paper import Paper
+from app.schemas.paper import ChatHistoryMessage
 
 from app.services.paper_service import (
     create_paper,
@@ -36,8 +37,16 @@ from app.services.paper_service import (
 
 from app.services.llm_service import (
     generate_rag_answer,
+    generate_general_knowledge_answer,
     filter_relevant_contexts,
     is_enumeration_query,
+)
+from app.services.chat_context_service import (
+    MAX_CHAT_HISTORY_MESSAGES,
+    build_conversation_context,
+    build_retrieval_query,
+    classify_intent,
+    resolve_knowledge_source,
 )
 
 from app.services.retrieval_service import (
@@ -206,6 +215,10 @@ def search_papers(
 def agent_chat(
     query: str,
     paper_id: int | None = None,
+    history: list[ChatHistoryMessage] | None = Body(
+        default=None,
+        max_length=MAX_CHAT_HISTORY_MESSAGES,
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -227,6 +240,19 @@ def agent_chat(
             status_code=400,
         )
 
+    history = history or []
+    intent = classify_intent(query, history)
+    knowledge_source = resolve_knowledge_source(query, history)
+    conversation_context = build_conversation_context(
+        query,
+        history,
+        knowledge_source,
+    )
+    retrieval_query = build_retrieval_query(
+        query,
+        conversation_context,
+    )
+
     print(
         f"\n=== 收到问答请求 ===\n"
         f"检索范围："
@@ -237,7 +263,30 @@ def agent_chat(
 
     steps = [
         "🤖 已接收问题，准备检索文献。",
+        f"🧭 意图识别完成：{intent}。",
     ]
+
+    if knowledge_source == "generic_knowledge":
+        steps.append("🌐 本轮使用通用知识模式，不检索或引用论文证据。")
+        answer = generate_general_knowledge_answer(
+            query=query,
+            conversation_context=conversation_context,
+            intent=intent,
+        )
+        steps.append("✅ 通用知识回答生成完成。")
+        return success(
+            {
+                "answer": answer,
+                "steps": steps,
+                "contexts": [],
+                "is_relevant": False,
+                "intent": intent,
+                "knowledge_source": knowledge_source,
+            }
+        )
+
+    if conversation_context:
+        steps.append("🧩 已结合最近一轮相关对话理解当前追问。")
 
     # 检查单篇论文是否存在
     if paper_id is not None:
@@ -259,14 +308,14 @@ def agent_chat(
     # 枚举型单篇问题需要更多候选证据；普通问答和全库问答保持原 Top-5。
     enumeration_query = (
         paper_id is not None
-        and is_enumeration_query(query)
+        and is_enumeration_query(retrieval_query)
     )
     retrieval_limit = 8 if enumeration_query else 5
 
     # 执行 BM25 + BGE-M3 混合检索
     contexts = search_chunks_hybrid(
         db=db,
-        query=query,
+        query=retrieval_query,
         limit=retrieval_limit,
         paper_id=paper_id,
     )
@@ -327,6 +376,8 @@ def agent_chat(
                 "steps": steps,
                 "contexts": [],
                 "is_relevant": False,
+                "intent": intent,
+                "knowledge_source": knowledge_source,
             }
         )
 
@@ -339,6 +390,8 @@ def agent_chat(
     filtered_contexts = filter_relevant_contexts(
         query=query,
         contexts=contexts,
+        contextual_query=retrieval_query,
+        conversation_context=conversation_context,
     )
 
     # 记录过滤结果
@@ -373,6 +426,8 @@ def agent_chat(
                 "steps": steps,
                 "contexts": [],
                 "is_relevant": False,
+                "intent": intent,
+                "knowledge_source": knowledge_source,
             }
         )
 
@@ -385,6 +440,9 @@ def agent_chat(
     answer = generate_rag_answer(
         query=query,
         contexts=filtered_contexts,
+        contextual_query=retrieval_query,
+        conversation_context=conversation_context,
+        intent=intent,
     )
 
     steps.append(
@@ -402,6 +460,8 @@ def agent_chat(
             "steps": steps,
             "contexts": filtered_contexts,
             "is_relevant": True,
+            "intent": intent,
+            "knowledge_source": knowledge_source,
         }
     )
 

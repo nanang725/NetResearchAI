@@ -39,8 +39,17 @@ export function searchPapers(q: string) {
   })
 }
 
-export async function chatWithAgent(query: string, paperId?: number) {
-  const { data } = await http.post('/papers/agent/chat', null, {
+export interface ChatHistoryMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export async function chatWithAgent(
+  query: string,
+  paperId?: number,
+  history?: ChatHistoryMessage[],
+) {
+  const { data } = await http.post('/papers/agent/chat', history ?? null, {
     params: { 
       query,
       paper_id: paperId // 如果是 undefined 就不会传这个参数

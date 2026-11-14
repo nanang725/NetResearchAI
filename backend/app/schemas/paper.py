@@ -1,6 +1,14 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class ChatHistoryMessage(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=2000)
 
 
 class PaperListItem(BaseModel):
