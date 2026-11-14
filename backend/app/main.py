@@ -7,13 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.config import get_settings
 from app.api.health import router as health_router
 from app.api.papers import router as papers_router
-from app.config import get_settings
+from app.services.embedding_service import delete_paper_vectors
 from app.core.exceptions import AppError, app_error_handler, unhandled_error_handler
-from app.database import Base, engine
-from app.models import Paper, PaperPage  # noqa: F401
-from app.services.paper_service import ensure_storage
+from app.database import Base, SessionLocal, engine
+from app.models import Paper, PaperChunk, PaperPage  # noqa: F401
+from app.services.paper_service import ensure_storage, retry_pending_deletions
 
 settings = get_settings()
 
@@ -22,7 +23,8 @@ settings = get_settings()
 async def lifespan(_app: FastAPI):
     ensure_storage()
     Base.metadata.create_all(bind=engine)
-    Path(settings.upload_path).mkdir(parents=True, exist_ok=True)
+    Path(get_settings().upload_path).mkdir(parents=True, exist_ok=True)
+    retry_pending_deletions(SessionLocal, delete_paper_vectors)
     yield
 
 

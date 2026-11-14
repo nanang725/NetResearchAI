@@ -33,6 +33,10 @@ class Paper(Base):
         cascade="all, delete-orphan",
         order_by="PaperPage.page_number",
     )
+    chunks: Mapped[list["PaperChunk"]] = relationship(
+        back_populates="paper",
+        cascade="all, delete-orphan",
+    )
 
 
 class PaperPage(Base):
@@ -55,3 +59,5 @@ class PaperChunk(Base):
     page_number: Mapped[int] = mapped_column(Integer, nullable=False) # 记录这个块在第几页
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False) # 记录是第几个块
     text: Mapped[str] = mapped_column(Text, nullable=False)
+
+    paper: Mapped[Paper] = relationship(back_populates="chunks")

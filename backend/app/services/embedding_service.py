@@ -51,6 +51,14 @@ EMBEDDING_BATCH_SIZE = 16
 # 每次写入 ChromaDB 的最大文本块数量
 INDEX_BATCH_SIZE = 100
 
+_MODEL_CACHE_REPOSITORY = "models--BAAI--bge-m3"
+_MODEL_WEIGHT_PATTERNS = (
+    "pytorch_model.bin",
+    "model.safetensors",
+    "pytorch_model-*.bin",
+    "model-*.safetensors",
+)
+
 
 # =========================
 # 全局资源：延迟初始化
@@ -64,12 +72,47 @@ _model_lock = threading.Lock()
 _chroma_lock = threading.Lock()
 
 
+def _is_complete_model_directory(path: Path) -> bool:
+    if not path.is_dir() or not (path / "modules.json").is_file():
+        return False
+
+    return any(
+        weight_path.is_file()
+        for pattern in _MODEL_WEIGHT_PATTERNS
+        for weight_path in path.rglob(pattern)
+    )
+
+
+def _find_local_model_path() -> Path | None:
+    legacy_model_path = MODEL_DIR / "BAAI" / "bge-m3"
+    if _is_complete_model_directory(legacy_model_path):
+        return legacy_model_path
+
+    cache_repository = MODEL_DIR / _MODEL_CACHE_REPOSITORY
+    main_ref_path = cache_repository / "refs" / "main"
+    if not main_ref_path.is_file():
+        return None
+
+    try:
+        revision = main_ref_path.read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeDecodeError):
+        return None
+
+    if not revision or Path(revision).name != revision:
+        return None
+
+    snapshot_path = cache_repository / "snapshots" / revision
+    if _is_complete_model_directory(snapshot_path):
+        return snapshot_path
+
+    return None
+
+
 def get_embedding_model() -> SentenceTransformer:
     """
-    获取 BGE-M3 模型。
+    获取本地 BGE-M3 模型。
 
-    首次调用时加载模型。
-    如果本地没有模型，则从 Hugging Face 下载。
+    只加载完整的本地模型，不回退到远程模型标识。
     """
     global _model
 
@@ -80,30 +123,30 @@ def get_embedding_model() -> SentenceTransformer:
         if _model is not None:
             return _model
 
-        MODEL_DIR.mkdir(parents=True, exist_ok=True)
-
-        local_model_path = MODEL_DIR / "BAAI" / "bge-m3"
+        local_model_path = _find_local_model_path()
 
         print("\n[BGE-M3] 正在加载向量模型...")
 
-        if local_model_path.exists():
-            model_source = str(local_model_path)
-            print(f"[BGE-M3] 使用本地模型：{model_source}")
-        else:
-            model_source = MODEL_NAME
-            print(f"[BGE-M3] 本地模型不存在，准备下载：{MODEL_NAME}")
+        if local_model_path is None:
+            raise RuntimeError(
+                "未找到完整的本地 BGE-M3 模型。已检查旧式目录和 "
+                "Hugging Face 缓存快照；为避免联网，未尝试下载模型。"
+            )
+
+        print(f"[BGE-M3] 使用本地模型：{local_model_path}")
 
         try:
             _model = SentenceTransformer(
-                model_source,
+                str(local_model_path),
                 cache_folder=str(MODEL_DIR),
                 device=None,
+                local_files_only=True,
             )
         except Exception as exc:
             _model = None
             raise RuntimeError(
-                "BGE-M3 模型加载失败。请检查网络连接、模型下载状态和依赖安装。"
-                f" 原始错误：{exc}"
+                "本地 BGE-M3 模型加载失败，快照可能不完整。"
+                f" model_path={local_model_path}; 未尝试下载。原始错误：{exc}"
             ) from exc
 
         print("[BGE-M3] 模型加载成功。")

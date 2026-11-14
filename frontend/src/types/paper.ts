@@ -2,10 +2,13 @@ export interface PaperListItem {
   id: number;
   title: string;
   original_filename: string;
+  stored_filename: string;
   file_size: number;
+  content_type: string;
   page_count: number;
   char_count: number;
   authors: string | null;
+  pdf_metadata: Record<string, string | null> | null;
   parse_status: string;
   index_status: string;
   created_at: string;
@@ -19,9 +22,6 @@ export interface PaperPage {
 }
 
 export interface PaperDetail extends PaperListItem {
-  content_type: string;
-  stored_filename: string;
-  pdf_metadata: Record<string, string> | null;
   pages: PaperPage[];
 }
 

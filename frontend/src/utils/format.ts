@@ -15,6 +15,8 @@ export function statusLabel(status: string): string {
   const map: Record<string, string> = {
     parsed: "已解析",
     pending: "待索引",
+    indexing: "索引中",
+    indexed: "已索引",
     ready: "就绪",
     failed: "失败",
   };

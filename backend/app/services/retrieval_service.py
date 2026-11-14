@@ -19,6 +19,7 @@ NetResearch AI - 混合检索服务
 14. 返回统一论文证据结构
 """
 
+import logging
 import re
 from collections import defaultdict
 from typing import Any
@@ -29,6 +30,8 @@ from sqlalchemy.orm import Session
 
 from app.models.paper import Paper, PaperChunk
 from app.services.embedding_service import search_similar_chunks
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================================
@@ -861,9 +864,13 @@ def search_chunks_bm25(
         )
         for chunk, paper in valid_rows
     ]
+    chunk_tokens = [
+        set(tokenize(row[0].text))
+        for row in valid_rows
+    ]
 
     valid_items = [
-        (valid_rows[index], corpus[index])
+        (valid_rows[index], corpus[index], chunk_tokens[index])
         for index in range(len(valid_rows))
         if corpus[index]
     ]
@@ -880,13 +887,22 @@ def search_chunks_bm25(
         item[1]
         for item in valid_items
     ]
+    valid_chunk_tokens = [
+        item[2]
+        for item in valid_items
+    ]
 
     bm25 = BM25Okapi(valid_corpus)
 
     scores = bm25.get_scores(query_tokens)
 
+    query_token_set = set(query_tokens)
     ranked_indices = sorted(
-        range(len(scores)),
+        (
+            index
+            for index, tokens in enumerate(valid_chunk_tokens)
+            if query_token_set.intersection(tokens)
+        ),
         key=lambda index: float(scores[index]),
         reverse=True,
     )
@@ -895,9 +911,6 @@ def search_chunks_bm25(
 
     for index in ranked_indices:
         score = float(scores[index])
-
-        if score <= 0:
-            continue
 
         chunk, paper = filtered_rows[index]
 
@@ -1191,32 +1204,53 @@ def _search_single_paper_hybrid(
     # BM25：传入论文级参考文献集合
     # --------------------------------------------------------
 
-    bm25_results = search_chunks_bm25(
-        db=db,
-        query=query,
-        limit=recall_limit,
-        paper_id=paper_id,
-        reference_chunk_ids=reference_chunk_ids,
-    )
+    bm25_failed = False
+
+    try:
+        bm25_results = search_chunks_bm25(
+            db=db,
+            query=query,
+            limit=recall_limit,
+            paper_id=paper_id,
+            reference_chunk_ids=reference_chunk_ids,
+        )
+    except Exception:
+        logger.exception(
+            "BM25 retrieval failed for paper_id=%s",
+            paper_id,
+        )
+        bm25_results = []
+        bm25_failed = True
 
     # --------------------------------------------------------
     # BGE-M3：向量召回后使用相同集合过滤
     # --------------------------------------------------------
 
-    vector_results = search_similar_chunks(
-        query=query,
-        limit=recall_limit,
-        paper_id=paper_id,
-    )
+    vector_failed = False
+    original_vector_count = 0
 
-    original_vector_count = len(vector_results)
+    try:
+        vector_results = search_similar_chunks(
+            query=query,
+            limit=recall_limit,
+            paper_id=paper_id,
+        )
+        original_vector_count = len(vector_results)
 
-    vector_results = _filter_vector_results(
-        vector_results=vector_results,
-        reference_chunk_ids=reference_chunk_ids,
-        paper_id=paper_id,
-        title_map=title_map,
-    )
+        vector_results = _filter_vector_results(
+            vector_results=vector_results,
+            reference_chunk_ids=reference_chunk_ids,
+            paper_id=paper_id,
+            title_map=title_map,
+        )
+    except Exception:
+        logger.exception(
+            "Vector retrieval failed for paper_id=%s",
+            paper_id,
+        )
+        vector_results = []
+        original_vector_count = 0
+        vector_failed = True
 
     filtered_vector_count = (
         original_vector_count - len(vector_results)
@@ -1230,6 +1264,22 @@ def _search_single_paper_hybrid(
         bm25_results,
         title_map,
     )
+
+    if bm25_failed or vector_failed:
+        available_channels = [
+            name
+            for name, failed in (
+                ("BM25", bm25_failed),
+                ("vector", vector_failed),
+            )
+            if not failed
+        ]
+        logger.warning(
+            "Degraded hybrid retrieval for paper_id=%s; "
+            "available channels=%s",
+            paper_id,
+            ", ".join(available_channels) or "none",
+        )
 
     # --------------------------------------------------------
     # RRF 融合

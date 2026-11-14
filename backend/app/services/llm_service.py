@@ -5,6 +5,28 @@ from app.config import get_settings
 from app.core.exceptions import AppError
 
 import json
+
+
+_ENUMERATION_MARKERS = (
+    "列出",
+    "列举",
+    "有哪些",
+    "全部",
+    "所有",
+    "各类",
+    "各个",
+    "常见类型",
+)
+
+
+def is_enumeration_query(query: str) -> bool:
+    normalized_query = "".join((query or "").split()).casefold()
+    return any(
+        marker in normalized_query
+        for marker in _ENUMERATION_MARKERS
+    )
+
+
 def get_llm_client():
     """创建大模型客户端。"""
     settings = get_settings()
@@ -324,6 +346,15 @@ def filter_relevant_contexts(
 
     evidence_text = "\n\n".join(evidence_parts)
 
+    enumeration_guidance = ""
+    if is_enumeration_query(query):
+        enumeration_guidance = """
+【枚举问题补充判断】
+如果用户要求列出多个项目，判断证据时要考虑不同文本块之间的互补关系。
+不同文本块分别支持不同列举项时，即使单个文本块只说明其中一项或不能独立完整回答问题，也应保留这些互补证据。
+仍须排除纯背景、无关介绍，以及不能支持任何列举项或其含义的内容。
+"""
+
     prompt = f"""
 你是一名严格的学术论文证据相关性评估助手。
 
@@ -335,6 +366,7 @@ def filter_relevant_contexts(
 【待判断证据】
 {evidence_text}
 
+{enumeration_guidance}
 【判断标准】
 
 1. 证据必须能够直接支持回答用户问题的某个方面。

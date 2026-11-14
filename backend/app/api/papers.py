@@ -14,16 +14,21 @@ NetResearch AI - 论文管理与智能问答 API
 9. 增加检索证据相关性判断，隐藏无关证据
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.core.exceptions import AppError
 from app.core.responses import success
 from app.database import get_db
+from app.models.paper import Paper
 
 from app.services.paper_service import (
     create_paper,
     delete_paper,
+    finish_paper_deletion,
     get_paper,
     list_papers,
     serialize_paper,
@@ -32,6 +37,7 @@ from app.services.paper_service import (
 from app.services.llm_service import (
     generate_rag_answer,
     filter_relevant_contexts,
+    is_enumeration_query,
 )
 
 from app.services.retrieval_service import (
@@ -43,6 +49,8 @@ from app.services.embedding_service import (
     delete_paper_vectors,
 )
 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/papers",
@@ -66,7 +74,31 @@ async def upload_paper(
             status_code=400,
         )
 
-    content = await file.read()
+    settings = get_settings()
+    max_upload_bytes = settings.max_upload_bytes
+    content_chunks: list[bytes] = []
+    total_size = 0
+
+    try:
+        while True:
+            remaining = max_upload_bytes - total_size
+            chunk = await file.read(min(1024 * 1024, remaining + 1))
+
+            if not chunk:
+                break
+
+            total_size += len(chunk)
+            if total_size > max_upload_bytes:
+                raise AppError(
+                    f"文件大小超过 {settings.max_upload_mb}MB 限制。",
+                    code="FILE_TOO_LARGE",
+                    status_code=400,
+                )
+            content_chunks.append(chunk)
+    finally:
+        await file.close()
+
+    content = b"".join(content_chunks)
 
     paper = create_paper(
         db=db,
@@ -82,29 +114,23 @@ async def upload_paper(
             paper_id=paper.id,
             force=False,
         )
-
-        if indexed.get("status") == "indexed":
-            print(
-                f"[论文上传] 论文 {paper.id} "
-                "向量索引成功。"
-            )
-        else:
-            print(
-                f"[论文上传] 论文 {paper.id} 已保存，"
-                "但向量索引未成功。"
-                f"状态：{indexed.get('status')}，"
-                f"原因：{indexed.get('message', '未知原因')}"
-            )
-
     except Exception as exc:
         db.rollback()
+        logger.exception("Vector indexing failed for uploaded paper_id=%s", paper.id)
+        _mark_index_failed(db, paper.id)
+    else:
+        if indexed.get("status") == "indexed":
+            logger.info("Vector indexing completed for paper_id=%s", paper.id)
+        else:
+            logger.error(
+                "Paper was saved but vector indexing did not complete: "
+                "paper_id=%s status=%s reason=%s",
+                paper.id,
+                indexed.get("status"),
+                indexed.get("message", "unknown"),
+            )
+            _mark_index_failed(db, paper.id)
 
-        print(
-            f"[论文上传] 向量索引异常，"
-            f"论文 {paper.id} 已保存：{exc}"
-        )
-
-    # 刷新论文状态
     db.refresh(paper)
 
     return success(
@@ -114,6 +140,24 @@ async def upload_paper(
         ),
         status_code=201,
     )
+
+
+def _mark_index_failed(db: Session, paper_id: int) -> None:
+    try:
+        db.rollback()
+        paper = db.query(Paper).filter(Paper.id == paper_id).first()
+        if paper is None:
+            raise ValueError(f"Saved paper disappeared during indexing: {paper_id}")
+        paper.index_status = "failed"
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Could not persist failed indexing state for paper_id=%s", paper_id)
+        raise AppError(
+            "论文已保存，但无法记录向量索引失败状态。",
+            code="INDEX_STATUS_UPDATE_FAILED",
+            status_code=500,
+        ) from exc
 
 
 @router.get("")
@@ -212,11 +256,18 @@ def agent_chat(
             "🔍 检索范围：全库联合检索"
         )
 
+    # 枚举型单篇问题需要更多候选证据；普通问答和全库问答保持原 Top-5。
+    enumeration_query = (
+        paper_id is not None
+        and is_enumeration_query(query)
+    )
+    retrieval_limit = 8 if enumeration_query else 5
+
     # 执行 BM25 + BGE-M3 混合检索
     contexts = search_chunks_hybrid(
         db=db,
         query=query,
-        limit=5,
+        limit=retrieval_limit,
         paper_id=paper_id,
     )
 
@@ -383,28 +434,26 @@ def remove_paper(
     paper_id: int,
     db: Session = Depends(get_db),
 ):
-    """
-    删除论文及其对应的向量数据。
-    """
-
-    # 先确认论文存在
-    get_paper(
-        db=db,
-        paper_id=paper_id,
+    deletion = delete_paper(db=db, paper_id=paper_id)
+    cleanup_pending = finish_paper_deletion(
+        deletion,
+        delete_paper_vectors,
     )
-
-    # 先删除 ChromaDB 中对应的向量
-    delete_paper_vectors(paper_id)
-
-    # 再删除 SQLite 中的论文及关联数据
-    delete_paper(
-        db=db,
-        paper_id=paper_id,
-    )
-
-    print(
-        f"[论文删除] 论文 {paper_id} 及其向量数据已删除。"
-    )
+    if cleanup_pending:
+        logger.error(
+            "Paper database deletion committed but external cleanup remains pending: "
+            "paper_id=%s journal=%s",
+            paper_id,
+            deletion.journal_path,
+        )
+        raise AppError(
+            "论文记录已删除，但部分外部资源清理失败，服务将在下次启动时重试。",
+            code="PAPER_CLEANUP_PENDING",
+            status_code=503,
+            details={"paper_id": paper_id},
+        )
+    else:
+        logger.info("Paper deletion completed: paper_id=%s", paper_id)
 
     return success(
         {
