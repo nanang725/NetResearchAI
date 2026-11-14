@@ -17,7 +17,7 @@
 
     <!-- 结果列表 -->
     <div class="results-list" v-if="results.length > 0">
-      <el-card v-for="(item, index) in results" :key="item.chunk_id" class="result-card" shadow="hover">
+      <el-card v-for="item in results" :key="item.chunk_id" class="result-card" shadow="hover">
         <template #header>
           <div class="card-header">
             <span class="paper-title">{{ item.paper_title }}</span>

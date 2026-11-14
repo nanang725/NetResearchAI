@@ -11,6 +11,7 @@ NetResearch AI - 论文管理与智能问答 API
 6. 全库论文问答
 7. 新论文上传后自动建立向量索引
 8. 删除论文时同步删除向量数据
+9. 增加检索证据相关性判断，隐藏无关证据
 """
 
 from fastapi import APIRouter, Depends, File, UploadFile
@@ -28,7 +29,10 @@ from app.services.paper_service import (
     serialize_paper,
 )
 
-from app.services.llm_service import generate_rag_answer
+from app.services.llm_service import (
+    generate_rag_answer,
+    filter_relevant_contexts,
+)
 
 from app.services.retrieval_service import (
     search_chunks_hybrid,
@@ -79,7 +83,6 @@ async def upload_paper(
             force=False,
         )
 
-
         if indexed.get("status") == "indexed":
             print(
                 f"[论文上传] 论文 {paper.id} "
@@ -88,11 +91,10 @@ async def upload_paper(
         else:
             print(
                 f"[论文上传] 论文 {paper.id} 已保存，"
-                f"但向量索引未成功。"
+                "但向量索引未成功。"
                 f"状态：{indexed.get('status')}，"
                 f"原因：{indexed.get('message', '未知原因')}"
             )
-
 
     except Exception as exc:
         db.rollback()
@@ -169,7 +171,7 @@ def agent_chat(
     paper_id 为空：检索整个论文库。
 
     检索流程：
-    BM25 + BGE-M3 -> RRF -> DeepSeek
+    BM25 + BGE-M3 -> RRF -> 证据相关性判断 -> DeepSeek
     """
 
     query = (query or "").strip()
@@ -210,7 +212,7 @@ def agent_chat(
             "🔍 检索范围：全库联合检索"
         )
 
-    # 执行混合检索
+    # 执行 BM25 + BGE-M3 混合检索
     contexts = search_chunks_hybrid(
         db=db,
         query=query,
@@ -253,7 +255,7 @@ def agent_chat(
         f"其中双路命中 {hybrid_count} 条。"
     )
 
-    # 没有证据时不调用大模型
+    # 没有检索到证据时，不调用大模型
     if not contexts:
 
         steps.append(
@@ -273,17 +275,65 @@ def agent_chat(
                 ),
                 "steps": steps,
                 "contexts": [],
+                "is_relevant": False,
             }
         )
 
-    # 将检索到的论文原文交给 DeepSeek
+
+    # 对检索结果进行逐条证据相关性过滤
     steps.append(
-        "🧠 正在根据检索到的论文原文生成回答。"
+        "🔍 正在逐条检查检索证据与用户问题的相关性。"
+    )
+
+    filtered_contexts = filter_relevant_contexts(
+        query=query,
+        contexts=contexts,
+    )
+
+    # 记录过滤结果
+    removed_count = len(contexts) - len(filtered_contexts)
+
+    steps.append(
+        f"🧹 证据过滤完成：原始 {len(contexts)} 条，"
+        f"保留 {len(filtered_contexts)} 条，"
+        f"排除 {removed_count} 条无关证据。"
+    )
+
+    # 过滤后没有相关证据，拒绝生成答案
+    if not filtered_contexts:
+
+        steps.append(
+            "⚠️ 没有找到与当前问题实质相关的论文证据，"
+            "已停止回答。"
+        )
+
+        print(
+            "=== 问答结束：逐条过滤后没有相关证据 ===\n"
+        )
+
+        return success(
+            {
+                "answer": (
+                    "抱歉，当前知识库中虽然检索到了一些论文内容，"
+                    "但经过逐条相关性检查，没有找到能够支持回答"
+                    "您当前问题的有效证据。"
+                    "请尝试提出与已上传论文研究内容相关的问题。"
+                ),
+                "steps": steps,
+                "contexts": [],
+                "is_relevant": False,
+            }
+        )
+
+    # 只使用过滤后的证据生成答案
+    steps.append(
+        "✅ 已确认存在相关论文证据，"
+        "正在根据筛选后的论文原文生成回答。"
     )
 
     answer = generate_rag_answer(
         query=query,
-        contexts=contexts,
+        contexts=filtered_contexts,
     )
 
     steps.append(
@@ -291,15 +341,16 @@ def agent_chat(
     )
 
     print(
-        f"=== 问答完成："
-        f"返回 {len(contexts)} 条证据 ===\n"
+        f"=== 问答完成：原始 {len(contexts)} 条证据，"
+        f"过滤后返回 {len(filtered_contexts)} 条证据 ===\n"
     )
 
     return success(
         {
             "answer": answer,
             "steps": steps,
-            "contexts": contexts,
+            "contexts": filtered_contexts,
+            "is_relevant": True,
         }
     )
 

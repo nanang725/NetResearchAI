@@ -1,0 +1,516 @@
+
+import hashlib
+import os
+import fitz
+import difflib
+import re
+
+from sqlalchemy.orm import Session
+from app.core.exceptions import AppError
+from app.models.paper import Paper, PaperPage, PaperChunk
+
+
+# 确保上传目录存在
+UPLOAD_DIR = os.path.join("data", "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+def ensure_storage():
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+def _is_valid_title(title: str) -> bool:
+    """判断提取到的文本是否可能是真正的论文标题。"""
+    if not title:
+        return False
+
+    title = title.strip()
+    lower = title.lower()
+
+    if len(title) < 5 or len(title) > 200:
+        return False
+
+    invalid_keywords = [
+        "provided proper attribution",
+        "grants permission",
+        "reproduce the tables",
+        "scholarly works",
+        "copyright",
+        "all rights reserved",
+        "abstract",
+        "摘要",
+        "关键词",
+        "issn",
+        "isbn",
+        "arxiv:",
+        "http://",
+        "https://",
+        "www.",
+        "network首发",
+        "网络首发论文",
+    ]
+
+    if any(keyword in lower for keyword in invalid_keywords):
+        return False
+
+    if "@" in title:
+        return False
+
+    if re.search(r"\b(university|google brain|google research)\b", lower):
+        return False
+
+    return True
+
+
+def _extract_paper_title(doc, filename: str) -> str:
+    """
+    从 PDF 中提取论文标题。
+
+    优先级：
+    1. 有效的 PDF 元数据标题
+    2. 首页明确标记的“题目：”或“Title:”
+    3. 跳过版权声明等内容后，寻找首页第一个合理标题
+    4. 使用原始文件名兜底
+    """
+
+    # 第一优先级：PDF 元数据
+    metadata = doc.metadata or {}
+    metadata_title = (metadata.get("title") or "").strip()
+
+    if _is_valid_title(metadata_title):
+        return metadata_title
+
+    if len(doc) == 0:
+        return filename.rsplit(".", 1)[0]
+
+    # 提取首页文本
+    first_page_text = doc[0].get_text("text")
+    lines = [
+        line.strip()
+        for line in first_page_text.splitlines()
+        if line.strip()
+    ]
+
+    # 第二优先级：识别明确的标题字段
+    for i, line in enumerate(lines):
+        match = re.match(
+            r"^(?:论文题目|题目|title)\s*[:：]\s*(.*)$",
+            line,
+            re.IGNORECASE
+        )
+
+        if match:
+            title = match.group(1).strip()
+
+            if not title and i + 1 < len(lines):
+                title = lines[i + 1].strip()
+
+            if _is_valid_title(title):
+                return title
+
+    # 第三优先级：跳过版权声明、期刊信息等内容
+    in_permission_block = False
+
+    for line in lines[:50]:
+        lower = line.lower()
+
+        # Google 等版权许可声明可能跨越多行
+        if (
+            "provided proper attribution" in lower
+            or "grants permission" in lower
+        ):
+            in_permission_block = True
+            if re.search(r"[.!?]\s*$", line):
+                in_permission_block = False
+            continue
+
+        if in_permission_block:
+            if re.search(r"[.!?]\s*$", line):
+                in_permission_block = False
+            continue
+
+        # 跳过常见期刊信息和非标题内容
+        skip_patterns = [
+            r"^issn\b",
+            r"^isbn\b",
+            r"^cn\s*[\d-]",
+            r"^arxiv\b",
+            r"^abstract$",
+            r"^摘要$",
+            r"^关键词",
+            r"^key\s*words",
+            r"^作者",
+            r"^authors?$",
+            r"^received\b",
+            r"^accepted\b",
+            r"^published\b",
+            r"^计算机科学$",
+            r"^computer science$",
+            r"^网络首发论文$",
+        ]
+
+        if any(re.search(pattern, lower, re.IGNORECASE) for pattern in skip_patterns):
+            continue
+
+        if "@" in line:
+            continue
+
+        if line.startswith(("http://", "https://", "www.")):
+            continue
+
+        if _is_valid_title(line):
+            return line
+
+    # 最后兜底：使用文件名
+    return filename.rsplit(".", 1)[0]
+
+
+def create_paper(
+    db: Session,
+    filename: str,
+    content: bytes,
+    content_type: str
+) -> Paper:
+
+    # 1. 格式校验
+    if not filename.lower().endswith(".pdf"):
+        raise AppError(
+            "仅支持 PDF 格式文件。",
+            code="INVALID_FILE_TYPE",
+            status_code=400
+        )
+
+    # 2. 大小校验（50MB）
+    if len(content) > 50 * 1024 * 1024:
+        raise AppError(
+            "文件大小超过 50MB 限制。",
+            code="FILE_TOO_LARGE",
+            status_code=400
+        )
+
+    # 3. SHA256 指纹去重
+    file_hash = hashlib.sha256(content).hexdigest()
+
+    existing_exact = db.query(Paper).filter(
+        Paper.file_hash == file_hash
+    ).first()
+
+    if existing_exact:
+        raise AppError(
+            f"检测到完全相同的重复文件！库中已存在：{existing_exact.original_filename}",
+            code="DUPLICATE_PAPER",
+            status_code=409
+        )
+
+    # 4. 保存 PDF 文件
+    stored_filename = f"{file_hash}.pdf"
+    file_path = os.path.join(UPLOAD_DIR, stored_filename)
+
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    doc = None
+
+    try:
+        doc = fitz.open(file_path)
+
+        # 5. 语义版本去重
+        text_sample = ""
+
+        for i in range(min(3, len(doc))):
+            text_sample += doc[i].get_text("text")
+
+        text_sample_clean = re.sub(
+            r"[^a-z0-9]",
+            "",
+            text_sample.lower()
+        )
+
+        if len(text_sample_clean) > 100:
+            existing_papers = db.query(Paper).all()
+
+            for p in existing_papers:
+                p_pages = db.query(PaperPage).filter(
+                    PaperPage.paper_id == p.id,
+                    PaperPage.page_number <= 3
+                ).all()
+
+                p_text = "".join([page.text for page in p_pages])
+
+                p_text_clean = re.sub(
+                    r"[^a-z0-9]",
+                    "",
+                    p_text.lower()
+                )
+
+                if not p_text_clean:
+                    continue
+
+                s1 = text_sample_clean[:5000]
+                s2 = p_text_clean[:5000]
+
+                similarity = difflib.SequenceMatcher(
+                    None,
+                    s1,
+                    s2
+                ).ratio()
+
+                print(
+                    f"[语义去重检测] 正在比对库中论文《{p.title[:20]}...》，"
+                    f"相似度为: {similarity * 100:.2f}%"
+                )
+
+                if similarity > 0.50:
+                    raise AppError(
+                        f"检测到高度重合的论文版本！库中已有：《{p.title}》。"
+                        f"文本相似度高达 {similarity * 100:.1f}%。建议保留更新版本。",
+                        code="DUPLICATE_VERSION",
+                        status_code=409
+                    )
+
+        # 6. 智能提取标题
+        title = _extract_paper_title(doc, filename)
+
+        print(f"[PDF 标题提取] 文件名={filename}")
+        print(f"[PDF 标题提取] 最终标题={title}")
+
+        # 7. 提取其他元数据
+        metadata = doc.metadata or {}
+        authors = (metadata.get("author") or "").strip() or "未知作者"
+
+        page_count = len(doc)
+        char_count = 0
+
+        # 8. 创建论文记录
+        paper = Paper(
+            title=title[:500],
+            file_hash=file_hash,
+            original_filename=filename,
+            stored_filename=stored_filename,
+            file_path=file_path,
+            file_size=len(content),
+            content_type=content_type or "application/pdf",
+            page_count=page_count,
+            authors=authors,
+            parse_status="parsed",
+            index_status="pending"
+        )
+
+        db.add(paper)
+        db.flush()
+
+        # 9. 逐页提取文本并智能切块
+        chunk_index_global = 0
+
+        for page_num in range(page_count):
+            page = doc[page_num]
+            text = page.get_text("text")
+
+            char_count += len(text)
+
+            paper_page = PaperPage(
+                paper_id=paper.id,
+                page_number=page_num + 1,
+                text=text,
+                char_count=len(text)
+            )
+
+            db.add(paper_page)
+
+            # 文本切块
+            chunk_size = 500
+            start = 0
+
+            while start < len(text):
+                end = start + chunk_size
+
+                if end < len(text):
+                    last_newline = text.rfind("\n", start, end)
+                    last_period = text.rfind("。", start, end)
+                    last_dot = text.rfind(". ", start, end)
+
+                    cut_point = max(
+                        last_newline,
+                        last_period,
+                        last_dot
+                    )
+
+                    if cut_point > start + 100:
+                        end = cut_point + 1
+
+                chunk_text = text[start:end].strip()
+
+                if chunk_text:
+                    chunk = PaperChunk(
+                        paper_id=paper.id,
+                        page_number=page_num + 1,
+                        chunk_index=chunk_index_global,
+                        text=chunk_text
+                    )
+
+                    db.add(chunk)
+                    chunk_index_global += 1
+
+                start = end
+
+        paper.char_count = char_count
+
+        doc.close()
+        doc = None
+
+        db.commit()
+        db.refresh(paper)
+
+        return paper
+
+    except Exception as e:
+        db.rollback()
+
+        if doc is not None:
+            try:
+                doc.close()
+            except Exception:
+                pass
+
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
+
+        if isinstance(e, AppError):
+            raise e
+
+        raise AppError(
+            f"PDF 解析失败: {str(e)}",
+            code="PDF_PARSE_ERROR",
+            status_code=500
+        )
+
+
+def search_chunks(db: Session, query: str, limit: int = 3):
+    if not query.strip():
+        return []
+
+    # 第一步：完整句子匹配
+    results = (
+        db.query(PaperChunk, Paper)
+        .join(Paper, PaperChunk.paper_id == Paper.id)
+        .filter(PaperChunk.text.contains(query))
+        .limit(limit)
+        .all()
+    )
+
+    print(f"\n--- [搜索调试] 原始查询: '{query}' ---")
+    print(f"第一步（完整句子匹配）结果数: {len(results)}")
+
+    # 第二步：提取英文关键词
+    if not results:
+        english_words = re.findall(r"[a-zA-Z]+", query)
+
+        if english_words:
+            longest_word = max(english_words, key=len)
+
+            print(f"第二步（提取英文单词）: 尝试搜索 '{longest_word}'")
+
+            results = (
+                db.query(PaperChunk, Paper)
+                .join(Paper, PaperChunk.paper_id == Paper.id)
+                .filter(PaperChunk.text.contains(longest_word))
+                .limit(limit)
+                .all()
+            )
+
+            print(f"第二步结果数: {len(results)}")
+
+    # 第三步：提取中文关键词
+    if not results:
+        chinese_words = re.findall(r"[\u4e00-\u9fa5]+", query)
+
+        for word in chinese_words:
+            if len(word) >= 2:
+                print(f"第三步（提取中文词）: 尝试搜索 '{word}'")
+
+                results = (
+                    db.query(PaperChunk, Paper)
+                    .join(Paper, PaperChunk.paper_id == Paper.id)
+                    .filter(PaperChunk.text.contains(word))
+                    .limit(limit)
+                    .all()
+                )
+
+                if results:
+                    print(f"第三步结果数: {len(results)}")
+                    break
+
+    print(f"--- [搜索结束] 最终返回 {len(results)} 条证据 ---\n")
+
+    return [
+        {
+            "chunk_id": chunk.id,
+            "paper_id": chunk.paper_id,
+            "paper_title": paper.title,
+            "page_number": chunk.page_number,
+            "text": chunk.text
+        }
+        for chunk, paper in results
+    ]
+
+
+def list_papers(db: Session):
+    return db.query(Paper).order_by(
+        Paper.created_at.desc()
+    ).all()
+
+
+def get_paper(db: Session, paper_id: int, with_pages: bool = False):
+    paper = db.query(Paper).filter(
+        Paper.id == paper_id
+    ).first()
+
+    if not paper:
+        raise AppError(
+            "论文不存在",
+            code="NOT_FOUND",
+            status_code=404
+        )
+
+    return paper
+
+
+def delete_paper(db: Session, paper_id: int):
+    paper = get_paper(db, paper_id)
+
+    if os.path.exists(paper.file_path):
+        os.remove(paper.file_path)
+
+    db.delete(paper)
+    db.commit()
+
+
+def serialize_paper(paper: Paper, include_pages: bool = False):
+    data = {
+        "id": paper.id,
+        "title": paper.title,
+        "original_filename": paper.original_filename,
+        "file_size": paper.file_size,
+        "page_count": paper.page_count,
+        "authors": paper.authors,
+        "created_at": (
+            paper.created_at.isoformat()
+            if paper.created_at else None
+        ),
+        "char_count": paper.char_count,
+        "index_status": paper.index_status
+    }
+
+    if include_pages:
+        data["pages"] = [
+            {
+                "page_number": p.page_number,
+                "text": p.text
+            }
+            for p in paper.pages
+        ]
+
+    return data
