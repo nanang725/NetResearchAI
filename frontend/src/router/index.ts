@@ -28,8 +28,8 @@ const router = createRouter({
           component: () => import("@/views/QaView.vue"),
           meta: {
             title: "智能问答",
-            stage: "第二阶段",
-            feature: "基于混合检索与 LangGraph 的论文问答",
+            stage: "v0.2.0",
+            feature: "上下文感知与意图驱动 Agent",
           },
         },
         {
@@ -44,8 +44,9 @@ const router = createRouter({
           component: () => import("@/views/ComingSoonView.vue"),
           meta: {
             title: "引用图谱",
-            stage: "第三阶段",
-            feature: "基于 NetworkX 与 ECharts 的引用关系可视化",
+            stage: "v0.4.0（规划中）",
+            feature: "科研知识图谱与引用关系可视化",
+            roadmap: "v0.3.0：大规模知识库智能检索（规划中）",
           },
         },
         {

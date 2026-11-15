@@ -1,8 +1,18 @@
 # NetResearch AI
 
-面向计算机网络领域的全流程科研助手 Agent。本仓库用于第九届传智杯 AI 大模型创新应用挑战赛。
+面向计算机网络领域的科研辅助工具。本仓库用于第九届传智杯 AI 大模型创新应用挑战赛。
 
-当前已完成**第一阶段：工程初始化、论文库基础能力与第一版检索问答**。系统支持论文 PDF 管理、BM25 与 BGE-M3 向量混合检索，并通过论文问答接口基于检索证据生成回答。LangGraph 工作流、引用图谱和论文版本比较仍属于后续规划；当前问答接口不保存或接收服务端多轮对话历史。
+## 项目阶段
+
+- **v0.1.0：工程基础与论文检索可靠性（已完成）**：提供论文 PDF 管理、解析、混合检索及基础问答能力。
+- **v0.2.0：上下文感知与意图驱动 Agent（核心功能已完成）**：支持有限对话上下文、轻量 Query Rewriting、基础意图识别，以及论文证据和通用知识两种回答来源。
+- **v0.2.x：PDF 深度解析与海量文献处理（后续扩展）**。
+- **v0.3.0：大规模知识库智能检索（规划中）**。
+- **v0.4.0：科研知识图谱（规划中）**。
+
+v0.2.0 会将最近最多 12 条对话历史随请求传给后端，用于理解依赖上下文的追问，并在需要时轻量改写检索查询。服务端不保存持久化会话状态；这不是完整的长期记忆。基础意图识别分为五类：`paper_qa`（论文问答）、`simple_explanation`（通俗解释）、`comparative_analysis`（比较分析）、`research_assistance`（科研辅助）和 `academic_writing`（学术写作）。科研辅助和学术写作目前只完成基础意图识别，尚未实现完整的专属工作流。
+
+回答可使用两种来源：`paper_evidence` 检索论文并依据筛选后的相关证据回答；`generic_knowledge` 不检索或引用论文证据。多轮对话默认继承上一轮回答的知识来源；用户明确要求根据论文原文或改用通用知识时，按本轮要求切换。论文证据不足时，回答规则要求明确说明，不把缺乏证据的推测包装成论文结论；没有有效相关证据时不会生成论文回答。问答接口使用现有检索与 LLM 服务，不是 LangGraph 工作流。
 
 ## 技术栈
 
@@ -10,7 +20,7 @@
 - 后端：Python + FastAPI + SQLite + ChromaDB
 - PDF 解析：PyMuPDF（保留页码）
 - 检索：BM25、BGE-M3 向量检索与 RRF 融合
-- 后续计划：LangGraph、NetworkX、ECharts
+- 规划中：大规模知识库智能检索、科研知识图谱
 
 ## 目录结构
 
@@ -22,7 +32,7 @@ NetResearchAI/
 │   │   ├── core/            统一错误与响应
 │   │   ├── models/          SQLAlchemy 模型
 │   │   ├── schemas/         Pydantic 结构
-│   │   └── services/        PDF 解析与论文业务
+│   │   └── services/        PDF、检索、问答业务
 │   ├── data/                数据库、上传文件、模型与向量索引（运行时使用）
 │   ├── tests/               pytest 自动化测试
 │   └── requirements.txt
@@ -39,7 +49,7 @@ NetResearchAI/
 - PyMuPDF 按页提取文本并入库
 - 论文列表、详情（含页码文本）、删除
 - BM25 关键词检索、BGE-M3 向量检索及 RRF 混合检索；支持单篇论文范围检索和全库检索
-- `POST /api/papers/agent/chat` 论文问答：检索论文证据、过滤无关证据后调用配置的 LLM 生成回答
+- `POST /api/papers/agent/chat` 论文问答：接收最近最多 12 条对话历史，进行基础意图识别和上下文理解；论文证据模式会检索并过滤相关证据，通用知识模式不会检索论文证据
 - 前端中文科研工作台，统一 API 请求与错误处理
 - 论文删除先提交 SQLite 记录，再清理上传 PDF 与向量；非事务性存储之间不承诺原子提交。失败的外部清理会写入上传目录下的待处理日志，并在服务启动时重试
 - 智能问答支持粘贴导入 ChatGPT 对话，并将聊天记录保存在当前浏览器本地
@@ -47,11 +57,13 @@ NetResearchAI/
 
 ## 尚未实现
 
-- 基于 LangGraph 的 Agent 工作流编排（当前论文问答接口使用现有检索与 LLM 服务，不是 LangGraph 工作流）
-- 服务端多轮对话上下文传递
-- 引用抽取与图谱
-- 论文版本比较
-- 扫描件 OCR
+- 科研辅助和学术写作的完整专属工作流（目前仅有基础意图识别入口）
+- 服务端持久化会话状态或完整长期记忆
+- LangGraph Agent 工作流编排
+- v0.2.x 计划的 PDF 深度解析与海量文献处理扩展
+- v0.3.0 大规模知识库智能检索
+- v0.4.0 科研知识图谱、引用抽取与图谱展示
+- 论文版本比较、扫描件 OCR
 
 ## 环境要求
 
@@ -132,7 +144,7 @@ python -m venv .venv
 - `GET /api/papers`
 - `POST /api/papers/upload`：上传 PDF，成功返回 HTTP 201
 - `GET /api/papers/search?q=...`：混合检索
-- `POST /api/papers/agent/chat?query=...&paper_id=...`：论文问答；`query` 和可选的 `paper_id` 均为 URL 查询参数，省略 `paper_id` 时检索全库；需要配置 `LLM_API_KEY`
+- `POST /api/papers/agent/chat?query=...&paper_id=...`：论文问答；`query` 和可选的 `paper_id` 均为 URL 查询参数，最近最多 12 条对话历史通过请求体传递；省略 `paper_id` 时检索全库；需要配置 `LLM_API_KEY`
 - `GET /api/papers/{paper_id}`：获取论文详情及分页文本
 - `DELETE /api/papers/{paper_id}`：删除论文
 

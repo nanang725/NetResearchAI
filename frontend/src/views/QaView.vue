@@ -7,7 +7,7 @@
         <div v-if="messages.length === 0" class="welcome-box">
           <div class="welcome-icon">🔬</div>
           <h3>NetResearch AI 科研助手</h3>
-          <p>已就绪。您可以询问文献中的任何细节，我会提供真实的原文出处。</p>
+          <p>已就绪。您可以围绕已收录论文提问；我会在检索到相关证据时据此回答。也可在问题中说明希望使用通用知识，通用知识回答不代表论文证据。</p>
         </div>
 
         <div
@@ -82,7 +82,7 @@
 
         <div class="input-actions">
           <span class="hint">
-            基于 LangGraph 多步推理与 DeepSeek 大模型，支持多论文联合问答
+            v0.2.0 上下文感知与意图驱动 Agent；论文证据问答支持全库或单篇检索
           </span>
 
           <div class="action-buttons">

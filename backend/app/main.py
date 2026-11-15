@@ -30,8 +30,13 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    description="面向计算机网络领域的全流程科研助手。第一阶段提供论文库与 PDF 解析。",
-    version="0.1.0",
+    description=(
+        "面向计算机网络领域的科研助手。v0.2.0 提供论文 PDF 管理与混合检索、"
+        "最多 12 条请求级对话历史、上下文理解与轻量 Query Rewriting、"
+        "五类基础意图识别，以及论文证据约束和不检索论文证据的通用知识回答。"
+        "服务端不保存持久化会话状态；科研辅助与学术写作尚无完整专属工作流。"
+    ),
+    version="0.2.0",
     lifespan=lifespan,
 )
 

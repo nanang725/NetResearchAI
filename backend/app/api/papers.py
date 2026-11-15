@@ -24,7 +24,11 @@ from app.core.exceptions import AppError
 from app.core.responses import success
 from app.database import get_db
 from app.models.paper import Paper
-from app.schemas.paper import ChatHistoryMessage
+from app.schemas.paper import (
+    AgentChatResponse,
+    AgentChatValidationErrorResponse,
+    ChatHistoryMessage,
+)
 
 from app.services.paper_service import (
     create_paper,
@@ -211,7 +215,16 @@ def search_papers(
     return success(results)
 
 
-@router.post("/agent/chat")
+@router.post(
+    "/agent/chat",
+    response_model=AgentChatResponse,
+    responses={
+        422: {
+            "model": AgentChatValidationErrorResponse,
+            "description": "请求参数不合法。",
+        }
+    },
+)
 def agent_chat(
     query: str,
     paper_id: int | None = None,

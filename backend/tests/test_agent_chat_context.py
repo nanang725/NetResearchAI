@@ -6,7 +6,7 @@ from unittest.mock import Mock
 import pytest
 
 from app.models.paper import Paper
-from app.schemas.paper import ChatHistoryMessage
+from app.schemas.paper import AgentChatValidationErrorResponse, ChatHistoryMessage
 from app.services.chat_context_service import (
     build_conversation_context,
     build_retrieval_query,
@@ -106,6 +106,13 @@ def test_chat_rejects_invalid_or_oversized_history(client, history):
         json=history,
     )
     assert response.status_code == 422
+    error_body = response.json()
+    assert error_body["success"] is False
+    assert error_body["data"] is None
+    assert error_body["error"]["code"] == "VALIDATION_ERROR"
+    assert error_body["error"]["message"] == "请求参数不合法。"
+    assert error_body["error"]["details"]
+    AgentChatValidationErrorResponse.model_validate(error_body)
 
 
 def test_chat_without_history_keeps_legacy_request_compatible(client):
@@ -602,3 +609,104 @@ def test_four_turn_paper_general_paper_flow_uses_only_topic_anchor(
     fourth_filter_args = filter_contexts.call_args_list[-1].kwargs
     assert fourth_filter_args["query"] == "那这篇论文自己的解释是什么？"
     assert "图神经网络技术" in fourth_filter_args["contextual_query"]
+
+
+def test_agent_chat_openapi_documents_responses_without_changing_request_contract():
+    from app.main import app
+
+    openapi = app.openapi()
+    operation = openapi["paths"]["/api/papers/agent/chat"]["post"]
+    schemas = openapi["components"]["schemas"]
+
+    parameters = {parameter["name"]: parameter for parameter in operation["parameters"]}
+    assert parameters["query"]["in"] == "query"
+    assert parameters["query"]["required"] is True
+    assert parameters["query"]["schema"]["type"] == "string"
+    assert parameters["paper_id"]["in"] == "query"
+    assert parameters["paper_id"]["required"] is False
+    assert parameters["paper_id"]["schema"]["anyOf"] == [
+        {"type": "integer"},
+        {"type": "null"},
+    ]
+
+    assert operation["requestBody"].get("required", False) is False
+    history_schema = operation["requestBody"]["content"]["application/json"]["schema"]
+    assert any(option.get("type") == "null" for option in history_schema["anyOf"])
+    history_array_schema = next(
+        option for option in history_schema["anyOf"] if option.get("type") == "array"
+    )
+    assert history_array_schema["maxItems"] == 12
+    history_item_schema = schemas["ChatHistoryMessage"]
+    assert history_item_schema["properties"]["role"]["enum"] == [
+        "user",
+        "assistant",
+    ]
+    assert history_item_schema["properties"]["content"]["minLength"] == 1
+    assert history_item_schema["properties"]["content"]["maxLength"] == 2000
+    assert history_item_schema["additionalProperties"] is False
+
+    success_schema = operation["responses"]["200"]["content"][
+        "application/json"
+    ]["schema"]
+    assert success_schema["$ref"] == "#/components/schemas/AgentChatResponse"
+    response_properties = schemas["AgentChatResponse"]["properties"]
+    assert set(schemas["AgentChatResponse"]["required"]) == {
+        "success",
+        "data",
+        "error",
+    }
+    data_schema = schemas["AgentChatData"]
+    assert set(data_schema["properties"]) == {
+        "answer",
+        "steps",
+        "contexts",
+        "is_relevant",
+        "intent",
+        "knowledge_source",
+    }
+    assert data_schema["properties"]["intent"]["enum"] == [
+        "paper_qa",
+        "simple_explanation",
+        "comparative_analysis",
+        "research_assistance",
+        "academic_writing",
+    ]
+    assert data_schema["properties"]["knowledge_source"]["enum"] == [
+        "paper_evidence",
+        "generic_knowledge",
+    ]
+    assert data_schema["properties"]["steps"]["items"]["type"] == "string"
+    assert data_schema["properties"]["contexts"]["type"] == "array"
+    assert data_schema["properties"]["is_relevant"]["type"] == "boolean"
+    context_schema = schemas["AgentChatContext"]
+    assert set(context_schema["properties"]) == {
+        "chunk_id",
+        "paper_id",
+        "paper_title",
+        "page_number",
+        "text",
+        "retrieval_method",
+        "retrieval_score",
+        "retrieval_sources",
+        "bm25_rank",
+        "vector_rank",
+        "bm25_score",
+        "vector_score",
+    }
+    assert "AgentChatData" in response_properties["data"]["$ref"]
+
+    validation_schema = operation["responses"]["422"]["content"][
+        "application/json"
+    ]["schema"]
+    assert validation_schema["$ref"] == (
+        "#/components/schemas/AgentChatValidationErrorResponse"
+    )
+    validation_error = schemas["AgentChatValidationError"]
+    assert validation_error["properties"]["code"]["const"] == "VALIDATION_ERROR"
+    assert validation_error["properties"]["details"]["type"] == "array"
+    assert schemas["AgentChatValidationErrorResponse"]["properties"]["success"][
+        "const"
+    ] is False
+    assert schemas["AgentChatValidationErrorResponse"]["properties"]["data"][
+        "type"
+    ] == "null"

@@ -14,7 +14,7 @@ def health_check():
             "name": settings.app_name,
             "status": "ok",
             "env": settings.app_env,
-            "version": "0.1.0",
+            "version": "0.2.0",
             "features": {
                 "pdf_upload": "ready",
                 "pdf_parse": "ready",
