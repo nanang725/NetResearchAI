@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "description": "Real PDF regression corpus. External library files remain in backend/data/uploads and are never copied into Git.",
+  "samples": [
+    {
+      "id": "P02",
+      "path": "backend/data/test_pdfs/1706.03762v7.pdf",
+      "source_kind": "tracked_test_fixture",
+      "title": "Attention Is All You Need",
+      "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+      "expected_pages": 15,
+      "identity_tokens": [
+        "Attention Is All You Need",
+        "arXiv:1706.03762v7"
+      ],
+      "minimum_total_chars": 30000,
+      "minimum_chunk_count": 70,
+      "minimum_math_text_lines": 10,
+      "minimum_element_types": {
+        "paragraph": 1,
+        "table": 1,
+        "figure_caption": 1,
+        "section": 1,
+        "reference": 20
+      },
+      "required_text_tokens": [
+        "Attention Is All You Need",
+        "multi-head attention",
+        "References"
+      ],
+      "focus": "English two-column layout, formula text, tables, figure captions and references"
+    },
+    {
+      "id": "P04",
+      "path": "backend/data/uploads/2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+      "source_kind": "ignored_library_file",
+      "title": "Computing in Integrated Terrestrial and Non-Terrestrial Networks: A Comprehensive Survey",
+      "sha256": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6",
+      "expected_pages": 20,
+      "identity_tokens": [
+        "Computing in Integrated Terrestrial and Non-Terrestrial Networks: A Comprehensive Survey"
+      ],
+      "minimum_total_chars": 80000,
+      "minimum_chunk_count": 180,
+      "minimum_math_text_lines": 0,
+      "minimum_element_types": {
+        "paragraph": 1,
+        "table": 1,
+        "figure_caption": 1,
+        "section": 1
+      },
+      "required_text_tokens": [
+        "Integrated Terrestrial",
+        "TABLE 1",
+        "References"
+      ],
+      "focus": "Long multi-column survey, tables, figure captions and references"
+    },
+    {
+      "id": "P08",
+      "path": "backend/data/uploads/a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+      "source_kind": "ignored_library_file",
+      "title": "AI赋能与风险并存：大学生AI使用行为的心理效应及引导路径",
+      "sha256": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42",
+      "expected_pages": 8,
+      "identity_tokens": [
+        "AI赋能与风险并存",
+        "大学生AI使用行为的心理",
+        "效应及引导路径"
+      ],
+      "minimum_total_chars": 12000,
+      "minimum_chunk_count": 25,
+      "minimum_math_text_lines": 0,
+      "minimum_element_types": {
+        "paragraph": 1,
+        "section": 3,
+        "reference": 1
+      },
+      "required_text_tokens": [
+        "人工智能",
+        "大学生",
+        "参考文献"
+      ],
+      "focus": "Chinese academic text, multi-level sections and interdisciplinary terminology"
+    },
+    {
+      "id": "P09",
+      "path": "backend/data/uploads/b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+      "source_kind": "ignored_library_file",
+      "title": "基于网络路由行为的铁路春运区域划分方案探讨",
+      "sha256": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8",
+      "expected_pages": 5,
+      "identity_tokens": [
+        "基于网络路由行为的铁路春运区域划分方案探讨"
+      ],
+      "minimum_total_chars": 4000,
+      "minimum_chunk_count": 10,
+      "minimum_math_text_lines": 0,
+      "minimum_element_types": {
+        "paragraph": 1,
+        "section": 1,
+        "reference": 1,
+        "figure_caption": 1
+      },
+      "maximum_element_types": {
+        "figure": 50
+      },
+      "required_text_tokens": [
+        "铁路春运",
+        "OSPF",
+        "BGP",
+        "参考文献"
+      ],
+      "focus": "Chinese two-column layout, cross-page structure and network/transport terminology"
+    }
+  ]
+}

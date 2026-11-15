@@ -481,6 +481,8 @@ def detect_reference_chunk_ids(
         db.query(PaperChunk)
         .filter(PaperChunk.paper_id == paper_id)
         .order_by(
+            PaperChunk.page_number.asc(),
+            PaperChunk.page_chunk_index.asc(),
             PaperChunk.chunk_index.asc(),
             PaperChunk.id.asc(),
         )
@@ -644,6 +646,7 @@ def is_non_body_chunk(
     text: str,
     reference_chunk_ids: set[int] | None = None,
     chunk_id: int | None = None,
+    content_type: str = "paragraph",
 ) -> bool:
     """
     统一判断文本块是否不适合作为研究内容证据。
@@ -663,7 +666,7 @@ def is_non_body_chunk(
     normalized = _normalize_text(text)
     lower = normalized.lower()
 
-    if len(normalized) < 35:
+    if len(normalized) < 35 and content_type != "table":
         return True
 
     # 论文级参考文献区域过滤
@@ -846,6 +849,7 @@ def search_chunks_bm25(
             text=chunk.text,
             reference_chunk_ids=reference_chunk_ids,
             chunk_id=chunk.id,
+            content_type=chunk.content_type,
         ):
             continue
 
@@ -919,7 +923,10 @@ def search_chunks_bm25(
             "paper_id": chunk.paper_id,
             "paper_title": paper.title,
             "page_number": chunk.page_number,
+            "page_chunk_index": chunk.page_chunk_index,
             "text": chunk.text,
+            "content_type": chunk.content_type,
+            "element_id": chunk.element_id,
             "retrieval_method": "bm25",
             "retrieval_score": round(score, 6),
         })
@@ -1029,7 +1036,10 @@ def reciprocal_rank_fusion(
             "paper_id": item["paper_id"],
             "paper_title": item["paper_title"],
             "page_number": item["page_number"],
+            "page_chunk_index": item.get("page_chunk_index", 0),
             "text": item["text"],
+            "content_type": item.get("content_type", "paragraph"),
+            "element_id": item.get("element_id"),
             "retrieval_method": method,
             "retrieval_score": round(
                 item["rrf_score"],
@@ -1161,6 +1171,7 @@ def _filter_vector_results(
             text=result.get("text", ""),
             reference_chunk_ids=reference_chunk_ids,
             chunk_id=chunk_id,
+            content_type=result.get("content_type", "paragraph"),
         ):
             continue
 
@@ -1299,6 +1310,7 @@ def _search_single_paper_hybrid(
             text=item.get("text", ""),
             reference_chunk_ids=reference_chunk_ids,
             chunk_id=item.get("chunk_id"),
+            content_type=item.get("content_type", "paragraph"),
         )
     ]
 

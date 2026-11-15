@@ -684,6 +684,7 @@ def test_agent_chat_openapi_documents_responses_without_changing_request_contrac
         "paper_id",
         "paper_title",
         "page_number",
+        "page_chunk_index",
         "text",
         "retrieval_method",
         "retrieval_score",

@@ -1,5 +1,13 @@
 import { http } from "./http";
-import type { HealthData, PaperDetail, PaperListItem } from "@/types/paper";
+import type {
+  HealthData,
+  IndexConsistency,
+  ImportJob,
+  PaperDetail,
+  PaperListItem,
+  PaperVersion,
+  SimilarPaperCandidate,
+} from "@/types/paper";
 
 export async function fetchHealth(): Promise<HealthData> {
   const { data } = await http.get<HealthData>("/health");
@@ -27,6 +35,83 @@ export async function uploadPaper(file: File, onProgress?: (percent: number) => 
     },
   });
   return data;
+}
+
+export async function createImportJob(files: File[]): Promise<ImportJob> {
+  const form = new FormData();
+  files.forEach((file) => form.append("files", file));
+  const { data } = await http.post<ImportJob>("/papers/import-jobs", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+}
+
+export async function fetchImportJobs(): Promise<ImportJob[]> {
+  const { data } = await http.get<ImportJob[]>("/papers/import-jobs");
+  return data ?? [];
+}
+
+export async function fetchImportJob(id: string): Promise<ImportJob> {
+  const { data } = await http.get<ImportJob>(`/papers/import-jobs/${id}`);
+  return data;
+}
+
+export async function retryImportJob(id: string): Promise<ImportJob> {
+  const { data } = await http.post<ImportJob>(`/papers/import-jobs/${id}/retry`);
+  return data;
+}
+
+export async function retryImportItem(jobId: string, itemId: string): Promise<ImportJob> {
+  const { data } = await http.post<ImportJob>(
+    `/papers/import-jobs/${jobId}/items/${itemId}/retry`,
+  );
+  return data;
+}
+
+export async function fetchIndexConsistency(): Promise<IndexConsistency> {
+  const { data } = await http.get<IndexConsistency>("/papers/index/consistency");
+  return data;
+}
+
+export async function requestIndexRebuild(): Promise<ImportJob> {
+  const { data } = await http.post<ImportJob>("/papers/index/rebuild");
+  return data;
+}
+
+export async function fetchSimilarPapers(id: number): Promise<SimilarPaperCandidate[]> {
+  const { data } = await http.get<SimilarPaperCandidate[]>(`/papers/${id}/similar`);
+  return data ?? [];
+}
+
+export async function fetchPaperVersions(id: number): Promise<PaperVersion[]> {
+  const { data } = await http.get<PaperVersion[]>(`/papers/${id}/versions`);
+  return data ?? [];
+}
+
+export async function addPaperVersion(id: number, basedOnId: number): Promise<PaperVersion[]> {
+  const { data } = await http.post<PaperVersion[]>(`/papers/${id}/versions`, {
+    based_on_id: basedOnId,
+    source: "manual",
+  });
+  return data ?? [];
+}
+
+export async function retainPaperVersion(id: number, retainedPaperId: number): Promise<PaperVersion[]> {
+  const { data } = await http.post<PaperVersion[]>(
+    `/papers/${id}/versions/${retainedPaperId}/retain`,
+  );
+  return data ?? [];
+}
+
+export async function comparePaperVersions(id: number, otherId: number): Promise<{ diff: string; truncated: boolean }> {
+  const { data } = await http.get<{ diff: string; truncated: boolean }>(
+    `/papers/${id}/versions/${otherId}/diff`,
+  );
+  return data;
+}
+
+export async function deletePaperVersion(id: number, versionId: number): Promise<void> {
+  await http.delete(`/papers/${id}/versions/${versionId}`);
 }
 
 export async function deletePaper(id: number): Promise<void> {

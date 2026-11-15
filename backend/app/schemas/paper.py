@@ -16,6 +16,7 @@ class AgentChatContext(BaseModel):
     paper_id: int
     paper_title: str
     page_number: int
+    page_chunk_index: int = 0
     text: str
     retrieval_method: Literal["hybrid", "bm25", "vector"]
     retrieval_score: float
@@ -80,10 +81,25 @@ class PaperListItem(BaseModel):
     page_count: int
     char_count: int
     authors: str | None = None
+    doi: str | None = None
+    publication_year: int | None = None
+    venue: str | None = None
     parse_status: str
     index_status: str
     created_at: datetime
     updated_at: datetime
+
+
+class PaperElementOut(BaseModel):
+    id: int
+    element_index: int
+    element_type: str
+    text: str
+    data: dict[str, Any] | list[Any] | None = None
+    bbox: list[float] | None = None
+    section_path: str | None = None
+    extraction_status: str
+    confidence: float | None = None
 
 
 class PaperPageOut(BaseModel):
@@ -92,6 +108,13 @@ class PaperPageOut(BaseModel):
     page_number: int
     text: str
     char_count: int
+    parse_status: str = "text_extracted"
+    ocr_executed: bool = False
+    ocr_error: str | None = None
+    checkpoint_status: str = "pending"
+    checkpoint_error: str | None = None
+    checkpoint_generation: int = 0
+    elements: list[PaperElementOut] = Field(default_factory=list)
 
 
 class PaperDetail(PaperListItem):
@@ -103,3 +126,52 @@ class PaperDetail(PaperListItem):
 
 class PaperUploadResult(PaperDetail):
     pass
+
+
+class PaperImportItemOut(BaseModel):
+    id: str
+    original_filename: str
+    paper_id: int | None
+    status: str
+    parse_status: str
+    index_status: str
+    current_stage: str
+    progress: int
+    attempts: int
+    error_message: str | None
+    file_size: int
+    can_retry: bool
+    created_at: datetime | None
+    updated_at: datetime | None
+
+
+class PaperImportJobOut(BaseModel):
+    id: str
+    kind: Literal["import", "index_rebuild"]
+    status: Literal["queued", "running", "partial", "failed", "completed"]
+    total_count: int
+    completed_count: int
+    failed_count: int
+    queued_count: int
+    running_count: int
+    progress: int
+    created_at: datetime | None
+    updated_at: datetime | None
+    items: list[PaperImportItemOut]
+
+
+class PaperImportJobResponse(BaseModel):
+    success: Literal[True]
+    data: PaperImportJobOut
+    error: None
+
+
+class PaperImportJobListResponse(BaseModel):
+    success: Literal[True]
+    data: list[PaperImportJobOut]
+    error: None
+
+
+class PaperVersionCreate(BaseModel):
+    based_on_id: int = Field(gt=0)
+    source: str = Field(default="manual", min_length=1, max_length=128)

@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
@@ -21,6 +22,13 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite:///{(BACKEND_ROOT / 'data' / 'netresearch.db').as_posix()}"
     upload_dir: str = str(BACKEND_ROOT / "data" / "uploads")
     max_upload_mb: int = 50
+    max_batch_files: int = Field(default=20, ge=1, le=100)
+    max_batch_upload_mb: int = Field(default=200, ge=1)
+    ocr_enabled: bool = True
+    ocr_language: str = "eng+chi_sim"
+    ocr_dpi: int = Field(default=200, ge=72, le=600)
+    ocr_min_text_chars: int = Field(default=30, ge=0)
+    semantic_duplicate_threshold: float = Field(default=0.90, ge=0, le=1)
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     # ================= 新增：大模型配置 =================

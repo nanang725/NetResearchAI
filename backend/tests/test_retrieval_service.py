@@ -143,6 +143,16 @@ def test_bm25_does_not_match_query_present_only_in_paper_title(db):
     assert results == []
 
 
+def test_short_table_chunks_remain_retrievable():
+    table_text = "A | B\n1 | 2"
+
+    assert retrieval_service.is_non_body_chunk(table_text) is True
+    assert retrieval_service.is_non_body_chunk(
+        table_text,
+        content_type="table",
+    ) is False
+
+
 def test_single_paper_keeps_bm25_results_when_vector_search_fails(
     db,
     monkeypatch,
@@ -273,7 +283,10 @@ def test_both_successful_channels_are_fused_with_rrf(db, monkeypatch):
         "paper_id",
         "paper_title",
         "page_number",
+        "page_chunk_index",
         "text",
+        "content_type",
+        "element_id",
         "retrieval_method",
         "retrieval_score",
         "retrieval_sources",
@@ -282,6 +295,8 @@ def test_both_successful_channels_are_fused_with_rrf(db, monkeypatch):
         "bm25_score",
         "vector_score",
     }
+    assert results[0]["content_type"] == "paragraph"
+    assert results[0]["element_id"] is None
     assert results[1]["retrieval_method"] == "bm25"
     assert results[2]["retrieval_method"] == "vector"
 

@@ -30,8 +30,12 @@
           />
         </div>
         <article v-if="current" class="page-text">
-          <header>第 {{ current.page_number }} 页 · {{ current.char_count }} 字符</header>
-          <pre>{{ current.text || "（本页未提取到文本，可能为扫描件或图片页。OCR 尚未实现。）" }}</pre>
+          <header>
+            第 {{ current.page_number }} 页 · {{ current.char_count }} 字符 ·
+            {{ statusLabel(current.parse_status) }}
+          </header>
+          <p v-if="current.ocr_error" class="ocr-error">{{ current.ocr_error }}</p>
+          <pre>{{ current.text || `（本页没有可用文本：${statusLabel(current.parse_status)}。）` }}</pre>
         </article>
       </section>
     </template>
@@ -155,5 +159,9 @@ watch(
   padding: 16px;
   min-height: 360px;
   line-height: 1.7;
+}
+
+.ocr-error {
+  color: #b54708;
 }
 </style>

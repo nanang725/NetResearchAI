@@ -1,4 +1,6 @@
 import sys
+import threading
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -11,8 +13,42 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
 
-@pytest.fixture()
-def isolated_environment(tmp_path, monkeypatch):
+def pytest_addoption(parser):
+    parser.addoption(
+        "--real-pdf-id",
+        action="append",
+        default=[],
+        help=(
+            "Run only the selected real PDF sample ID. May be repeated. "
+            "Without this option, all available manifest samples run."
+        ),
+    )
+    parser.addoption(
+        "--real-pdf-report",
+        action="store",
+        default=None,
+        help=(
+            "Write the real PDF regression JSON report to this path. "
+            "Defaults to backend/.pytest_cache/real_pdf_regression_report.json."
+        ),
+    )
+    parser.addoption(
+        "--run-real-embedding",
+        action="store_true",
+        default=False,
+        help=(
+            "Use the existing local BGE-M3 model for real PDF indexing. "
+            "The default suite uses deterministic test embeddings."
+        ),
+    )
+
+
+def _wait_for_import_worker_stop(_session_factory, stop_event):
+    stop_event.wait()
+
+
+@contextmanager
+def _build_isolated_environment(tmp_path, monkeypatch, *, start_worker: bool):
     import app.api.papers as papers_api
     import app.main as main_module
     from app.config import get_settings
@@ -73,7 +109,26 @@ def isolated_environment(tmp_path, monkeypatch):
             db.close()
 
     main_module.app.dependency_overrides[get_db] = override_get_db
+    leaked_workers: list[threading.Thread] = []
     try:
+        active_workers_before = [
+            worker
+            for worker in threading.enumerate()
+            if worker.name == "paper-import-worker" and worker.is_alive()
+        ]
+        if active_workers_before:
+            raise AssertionError(
+                "A paper-import-worker was already alive before starting "
+                f"the isolated environment: {active_workers_before!r}"
+            )
+
+        if not start_worker:
+            monkeypatch.setattr(
+                main_module,
+                "run_import_worker",
+                _wait_for_import_worker_stop,
+            )
+
         with TestClient(main_module.app) as test_client:
             yield {
                 "client": test_client,
@@ -83,9 +138,39 @@ def isolated_environment(tmp_path, monkeypatch):
                 "vector_state": vector_state,
             }
     finally:
+        leaked_workers = [
+            worker
+            for worker in threading.enumerate()
+            if worker.name == "paper-import-worker" and worker.is_alive()
+        ]
         main_module.app.dependency_overrides.clear()
         test_engine.dispose()
         get_settings.cache_clear()
+    if leaked_workers:
+        raise AssertionError(
+            "paper-import-worker did not exit after lifespan shutdown: "
+            f"{leaked_workers!r}"
+        )
+
+
+@pytest.fixture()
+def isolated_environment(tmp_path, monkeypatch):
+    with _build_isolated_environment(
+        tmp_path,
+        monkeypatch,
+        start_worker=True,
+    ) as environment:
+        yield environment
+
+
+@pytest.fixture()
+def isolated_environment_no_worker(tmp_path, monkeypatch):
+    with _build_isolated_environment(
+        tmp_path,
+        monkeypatch,
+        start_worker=False,
+    ) as environment:
+        yield environment
 
 
 @pytest.fixture()
