@@ -1,0 +1,1450 @@
+{
+  "status": "READY",
+  "started_at": "2026-11-16T09:21:54.605290+00:00",
+  "finished_at": "2026-11-16T09:21:55.648704+00:00",
+  "summary": {
+    "papers": 8,
+    "paper_paths_migrated": 8,
+    "other_tables_unchanged": true,
+    "backup_logical_match": true,
+    "chroma_vectors": 386,
+    "formal_environment_unchanged": true,
+    "staging_environment_unchanged": true
+  },
+  "database": {
+    "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\sqlite\\netresearch.db",
+    "backup_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\sqlite\\netresearch.pre-path-migration.db",
+    "before": {
+      "integrity_check": [
+        "ok"
+      ],
+      "foreign_key_check": []
+    },
+    "before_counts": {
+      "citation_edges": 0,
+      "citation_references": 252,
+      "paper_chunks": 474,
+      "paper_element_backfill_state": 8,
+      "paper_elements": 1847,
+      "paper_import_items": 4,
+      "paper_import_jobs": 2,
+      "paper_pages": 67,
+      "paper_versions": 0,
+      "papers": 8,
+      "schema_migrations": 1
+    },
+    "after": {
+      "integrity_check": [
+        "ok"
+      ],
+      "foreign_key_check": []
+    },
+    "after_counts": {
+      "citation_edges": 0,
+      "citation_references": 252,
+      "paper_chunks": 474,
+      "paper_element_backfill_state": 8,
+      "paper_elements": 1847,
+      "paper_import_items": 4,
+      "paper_import_jobs": 2,
+      "paper_pages": 67,
+      "paper_versions": 0,
+      "papers": 8,
+      "schema_migrations": 1
+    },
+    "schema_fingerprint_before": "f4f0bc23e949865dd110403b521c799391cc4c1a0920c9bd13b745bcb279bb3a",
+    "schema_fingerprint_after": "f4f0bc23e949865dd110403b521c799391cc4c1a0920c9bd13b745bcb279bb3a",
+    "data_fingerprint_before": "b0f5b3b911fe1b3822b0c43066a090fe65c3447c9d4f53c2e5a9ee6506b49b99",
+    "data_fingerprint_after": "980ed4443921e5cf1d9ae8fcc3dddbe3e577d7296c54528817b2d881daa3d478"
+  },
+  "backup": {
+    "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\sqlite\\netresearch.pre-path-migration.db",
+    "size": 1884160,
+    "sha256": "914dccbb42f863d87be621549531b8f3193ace9f00fef3b61126ff69bb327dda",
+    "integrity_check": [
+      "ok"
+    ],
+    "foreign_key_check": [],
+    "logical_content_matches_pre_migration_db": true,
+    "logical_fingerprint": "b0f5b3b911fe1b3822b0c43066a090fe65c3447c9d4f53c2e5a9ee6506b49b99",
+    "schema_fingerprint": "f4f0bc23e949865dd110403b521c799391cc4c1a0920c9bd13b745bcb279bb3a",
+    "note": "SQLite Backup API byte SHA256 may differ from the live file; logical schema and row content are authoritative."
+  },
+  "manifest": {
+    "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\manifests\\file_hashes.json",
+    "entry_count": 18,
+    "all_matched_before_migration": true,
+    "entries": [
+      {
+        "relative_path": "chroma_db/chroma.sqlite3",
+        "matched": true,
+        "expected_sha256": "23420E44DD026EBC8505037A3DBE24F6821665EA54AD758284C14FFAA9818B97",
+        "actual_sha256": "23420e44dd026ebc8505037a3dbe24f6821665ea54ad758284c14ffaa9818b97"
+      },
+      {
+        "relative_path": "chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/data_level0.bin",
+        "matched": true,
+        "expected_sha256": "1930DDBCAE6CA008ECEB5D449BD8C5523F9DFBF3027F71CE7B30BF39683C56F2",
+        "actual_sha256": "1930ddbcae6ca008eceb5d449bd8c5523f9dfbf3027f71ce7b30bf39683c56f2"
+      },
+      {
+        "relative_path": "chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/header.bin",
+        "matched": true,
+        "expected_sha256": "E33CAB57086CD20111DD7084E6F8686E1AC486F2ABFB47D9197AFCDFF8242AF6",
+        "actual_sha256": "e33cab57086cd20111dd7084e6f8686e1ac486f2abfb47d9197afcdff8242af6"
+      },
+      {
+        "relative_path": "chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/index_metadata.pickle",
+        "matched": true,
+        "expected_sha256": "E58835294AAD2401148A4D4771A4E44A091F02163EFA2BDDF4628FC99A6605E6",
+        "actual_sha256": "e58835294aad2401148a4d4771a4e44a091f02163efa2bddf4628fc99a6605e6"
+      },
+      {
+        "relative_path": "chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/length.bin",
+        "matched": true,
+        "expected_sha256": "E4C21AB6CFB3AC84D34A6B960CE7495694247DE765734AC6E40BC381616A7B2E",
+        "actual_sha256": "e4c21ab6cfb3ac84d34a6b960ce7495694247de765734ac6e40bc381616a7b2e"
+      },
+      {
+        "relative_path": "chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/link_lists.bin",
+        "matched": true,
+        "expected_sha256": "AEBB63AF45663E0AF98F655A7CF067D046B70DACC1F260B99FD5BFBD25BC8178",
+        "actual_sha256": "aebb63af45663e0af98f655a7cf067d046b70dacc1f260b99fd5bfbd25bc8178"
+      },
+      {
+        "relative_path": "sqlite/netresearch.db",
+        "matched": true,
+        "expected_sha256": "C9791D7E962453D68E4814648DC51B20474A8167F946851CD0861C4EA603514F",
+        "actual_sha256": "c9791d7e962453d68e4814648dc51b20474a8167f946851cd0861c4ea603514f"
+      },
+      {
+        "relative_path": "uploads/.gitkeep",
+        "matched": true,
+        "expected_sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "actual_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "relative_path": "uploads/12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+        "matched": true,
+        "expected_sha256": "12B06565D00BB4A6EA38C0699430F78A3E59662E30D503F8E88F4C4C4BD12DE8",
+        "actual_sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+      },
+      {
+        "relative_path": "uploads/2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+        "matched": true,
+        "expected_sha256": "2B0579EF6732EA9374F94184C38C6817C599C03E37DC7375757B79F0934C6DE6",
+        "actual_sha256": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6"
+      },
+      {
+        "relative_path": "uploads/5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+        "matched": true,
+        "expected_sha256": "5ED703CF3ADD6A537E83DD8712EDC99196B963F28697F61E14CBCD80B938B25E",
+        "actual_sha256": "5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e"
+      },
+      {
+        "relative_path": "uploads/8b78647cb18e43e396621806dd477732.pdf",
+        "matched": true,
+        "expected_sha256": "12B06565D00BB4A6EA38C0699430F78A3E59662E30D503F8E88F4C4C4BD12DE8",
+        "actual_sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+      },
+      {
+        "relative_path": "uploads/8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+        "matched": true,
+        "expected_sha256": "8C0D7E3CEA2D00B5FFE72242BDD55734DA9C8940EBEC29D6C260BA53F050D292",
+        "actual_sha256": "8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292"
+      },
+      {
+        "relative_path": "uploads/a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+        "matched": true,
+        "expected_sha256": "A5C79A4D67F8DA8B7728D553F21D360F65DCE49B2608B2C4D120BD7085D53A42",
+        "actual_sha256": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42"
+      },
+      {
+        "relative_path": "uploads/b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+        "matched": true,
+        "expected_sha256": "B9ECD17C7063CA59834D9B2ED67D09AE87A5973AB02EC173799E51D452885BD8",
+        "actual_sha256": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8"
+      },
+      {
+        "relative_path": "uploads/bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+        "matched": true,
+        "expected_sha256": "BDFAA68D8984F0DC02BEACA527B76F207D99B666D31D1DA728EE0728182DF697",
+        "actual_sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697"
+      },
+      {
+        "relative_path": "uploads/c4ffe3d641474154a73e10c4445ae194.pdf",
+        "matched": true,
+        "expected_sha256": "12B06565D00BB4A6EA38C0699430F78A3E59662E30D503F8E88F4C4C4BD12DE8",
+        "actual_sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+      },
+      {
+        "relative_path": "uploads/f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+        "matched": true,
+        "expected_sha256": "F3057A4391F2F04FA39CCBAC7CB01EEC9977B8067AD1FC61C00EC6F3591068E5",
+        "actual_sha256": "f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5"
+      }
+    ]
+  },
+  "papers_before": [
+    {
+      "id": 1,
+      "title": "Attention Is All You Need",
+      "file_hash": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+      "original_filename": "1706.03762v7.pdf",
+      "stored_filename": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+      "file_path": "data\\uploads\\bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+      "file_size": 2215244,
+      "content_type": "application/pdf",
+      "page_count": 15,
+      "char_count": 39498,
+      "authors": "未知作者",
+      "pdf_metadata": null,
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-12 12:56:16",
+      "updated_at": "2026-11-14 00:35:50",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 2,
+      "title": "信息系统架构发展展望——以国家自然科学基金委员会信息系统为例",
+      "file_hash": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8",
+      "original_filename": "v0.1.0test.pdf",
+      "stored_filename": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+      "file_path": "data\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+      "file_size": 1046705,
+      "content_type": "application/pdf",
+      "page_count": 12,
+      "char_count": 21720,
+      "authors": "CNKI",
+      "pdf_metadata": null,
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-12 12:56:26",
+      "updated_at": "2026-11-14 00:35:50",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 3,
+      "title": "NetResearch AI Phase One Upload Test",
+      "file_hash": "f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5",
+      "original_filename": "phase1_upload_test.pdf",
+      "stored_filename": "f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+      "file_size": 1186,
+      "content_type": "application/pdf",
+      "page_count": 1,
+      "char_count": 142,
+      "authors": "未知作者",
+      "pdf_metadata": "{\"format\": \"PDF 1.7\", \"title\": \"\", \"author\": \"\", \"subject\": \"\", \"keywords\": \"\", \"creator\": \"\", \"producer\": \"\", \"creationDate\": \"\", \"modDate\": \"\", \"trapped\": \"\", \"encryption\": null}",
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-14 05:42:27",
+      "updated_at": "2026-11-14 05:42:44",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 4,
+      "title": "试论网络维护中Ping命令的使用及错误提示分析",
+      "file_hash": "8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292",
+      "original_filename": "试论网络维护中Ping命令的使用及错误提示分析.pdf",
+      "stored_filename": "8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+      "file_size": 112229,
+      "content_type": "application/pdf",
+      "page_count": 1,
+      "char_count": 3508,
+      "authors": "未知作者",
+      "pdf_metadata": "{\"format\": \"PDF 1.3\", \"title\": \"试论网络维护中Ping命令的使用及错误提示分析\", \"author\": \"\", \"subject\": \"\", \"keywords\": \"\", \"creator\": \"Image2PDF Command Line software\", \"producer\": \"www.verypdf.com Inc\", \"creationDate\": \"D:20120521113714\", \"modDate\": \"D:20120521113714\", \"trapped\": \"\", \"encryption\": \"Standard V2 R3 128-bit RC4\"}",
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-14 06:59:26",
+      "updated_at": "2026-11-14 06:59:47",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 5,
+      "title": "Date of publication xxxx 00, 0000, date of current version xxxx 00, 0000.",
+      "file_hash": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6",
+      "original_filename": "2505.03016v1.pdf",
+      "stored_filename": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+      "file_size": 9317661,
+      "content_type": "application/pdf",
+      "page_count": 20,
+      "char_count": 117710,
+      "authors": "未知作者",
+      "pdf_metadata": "{\"format\": \"PDF 1.5\", \"title\": \"\", \"author\": \"\", \"subject\": \"\", \"keywords\": \"\", \"creator\": \"LaTeX with hyperref\", \"producer\": \"pdfTeX-1.40.25\", \"creationDate\": \"D:20250507000958Z\", \"modDate\": \"D:20250507000958Z\", \"trapped\": \"\", \"encryption\": null}",
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-15 04:32:01",
+      "updated_at": "2026-11-15 04:35:42",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 6,
+      "title": "Preparation of Papers in Two-Column Format",
+      "file_hash": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8",
+      "original_filename": "A200803-1664.pdf",
+      "stored_filename": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+      "file_size": 782150,
+      "content_type": "application/pdf",
+      "page_count": 5,
+      "char_count": 6647,
+      "authors": "王伟",
+      "pdf_metadata": "{\"format\": \"PDF 1.5\", \"title\": \"Preparation of Papers in Two-Column Format\", \"author\": \"王伟\", \"subject\": \"\", \"keywords\": \"\", \"creator\": \"Acrobat PDFMaker 7.0 for Word\", \"producer\": \"Acrobat Distiller 7.0 (Windows)\", \"creationDate\": \"D:20080320191953+08'00'\", \"modDate\": \"D:20080331154457+08'00'\", \"trapped\": \"\", \"encryption\": \"Standard V2 R3 128-bit RC4\"}",
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-15 04:34:57",
+      "updated_at": "2026-11-15 04:35:19",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 7,
+      "title": "AI赋能与风险并存：大学生AI使用行为的心理效应及引导路径",
+      "file_hash": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42",
+      "original_filename": "ass_2400715.pdf",
+      "stored_filename": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+      "file_size": 618599,
+      "content_type": "application/pdf",
+      "page_count": 8,
+      "char_count": 16586,
+      "authors": "邓珊珊, 陈思, 李杰, 周彧姣, 申子优",
+      "pdf_metadata": "{\"format\": \"PDF 1.6\", \"title\": \"AI赋能与风险并存：大学生AI使用行为的心理效应及引导路径\", \"author\": \"邓珊珊, 陈思, 李杰, 周彧姣, 申子优\", \"subject\": \"随着以ChatGPT、DeepSeek为代表的生成式人工智能(AI)在全球范围内大规模流行，其在教育领域的应用已成为不容忽视的社会现象。本研究通过梳理大学生AI使用的现状，系统分析AI对大学生发展的双重影响：一方面，AI通过提供心理辅助服务、提升学习效率、赋能个性化发展等路径，为大学生心理建设注入正向动能；另一方面，其使用也存在心理依赖、学术创新弱化、隐私安全风险及价值观渗透等多元潜在风险挑战。研究最终提出“以人为本”的AI教育生态构建路径，包括课程体系完善、价值观引领、人机协同优化等维度，为规范大学生AI使用、守护心理健康提供理论与实践参考。\", \"keywords\": \"人工智能，赋能效应，潜在风险，引导路径，大学生\", \"creator\": \"Acrobat PDFMaker 22 Word 版\", \"producer\": \"Adobe PDF Library 22.1.117\", \"creationDate\": \"D:20260312111905+08'00'\", \"modDate\": \"D:20260312111907+08'00'\", \"trapped\": \"\", \"encryption\": null}",
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-15 04:35:19",
+      "updated_at": "2026-11-15 04:35:57",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 8,
+      "title": "基于计算机网络技术的计算机网络信息安全及其防护策略",
+      "file_hash": "5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e",
+      "original_filename": "csa20190900000_57172524.pdf",
+      "stored_filename": "5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+      "file_size": 1498953,
+      "content_type": "application/pdf",
+      "page_count": 5,
+      "char_count": 5884,
+      "authors": "纪汉杰, 李啸林, 张帆, 武装, 王海舰",
+      "pdf_metadata": "{\"format\": \"PDF 1.5\", \"title\": \"基于计算机网络技术的计算机网络信息安全及其防护策略\", \"author\": \"纪汉杰, 李啸林, 张帆, 武装, 王海舰\", \"subject\": \"目前我国正处于科学技术与国民经济双重发展的关键时期，计算机网络技术的应用不但提高了人们生产生活的效率，还很大程度上提高了人们物质生活水平，因此计算机网络技术被应用于多个领域，包括医院、学校、大型企业、政府机关单位等，日常的工作生活已经离不开计算机网络技术，这也就意味着计算机网络技术高速发展下的网络信息安全问题成了每个人都关注的重点问题，一旦计算机网络信息泄露将会给使用者带来不可预估的损失。\", \"keywords\": \"计算机网络技术，网络信息安全，防护策略\", \"creator\": \"Acrobat PDFMaker 11 Word 版\", \"producer\": \"Adobe PDF Library 11.0\", \"creationDate\": \"D:20190918143246+08'00'\", \"modDate\": \"D:20190918143247+08'00'\", \"trapped\": \"\", \"encryption\": null}",
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-15 05:30:09",
+      "updated_at": "2026-11-15 05:30:32",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    }
+  ],
+  "papers_after": [
+    {
+      "id": 1,
+      "title": "Attention Is All You Need",
+      "file_hash": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+      "original_filename": "1706.03762v7.pdf",
+      "stored_filename": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+      "file_size": 2215244,
+      "content_type": "application/pdf",
+      "page_count": 15,
+      "char_count": 39498,
+      "authors": "未知作者",
+      "pdf_metadata": null,
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-12 12:56:16",
+      "updated_at": "2026-11-14 00:35:50",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 2,
+      "title": "信息系统架构发展展望——以国家自然科学基金委员会信息系统为例",
+      "file_hash": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8",
+      "original_filename": "v0.1.0test.pdf",
+      "stored_filename": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+      "file_size": 1046705,
+      "content_type": "application/pdf",
+      "page_count": 12,
+      "char_count": 21720,
+      "authors": "CNKI",
+      "pdf_metadata": null,
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-12 12:56:26",
+      "updated_at": "2026-11-14 00:35:50",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 3,
+      "title": "NetResearch AI Phase One Upload Test",
+      "file_hash": "f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5",
+      "original_filename": "phase1_upload_test.pdf",
+      "stored_filename": "f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+      "file_size": 1186,
+      "content_type": "application/pdf",
+      "page_count": 1,
+      "char_count": 142,
+      "authors": "未知作者",
+      "pdf_metadata": "{\"format\": \"PDF 1.7\", \"title\": \"\", \"author\": \"\", \"subject\": \"\", \"keywords\": \"\", \"creator\": \"\", \"producer\": \"\", \"creationDate\": \"\", \"modDate\": \"\", \"trapped\": \"\", \"encryption\": null}",
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-14 05:42:27",
+      "updated_at": "2026-11-14 05:42:44",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 4,
+      "title": "试论网络维护中Ping命令的使用及错误提示分析",
+      "file_hash": "8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292",
+      "original_filename": "试论网络维护中Ping命令的使用及错误提示分析.pdf",
+      "stored_filename": "8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+      "file_size": 112229,
+      "content_type": "application/pdf",
+      "page_count": 1,
+      "char_count": 3508,
+      "authors": "未知作者",
+      "pdf_metadata": "{\"format\": \"PDF 1.3\", \"title\": \"试论网络维护中Ping命令的使用及错误提示分析\", \"author\": \"\", \"subject\": \"\", \"keywords\": \"\", \"creator\": \"Image2PDF Command Line software\", \"producer\": \"www.verypdf.com Inc\", \"creationDate\": \"D:20120521113714\", \"modDate\": \"D:20120521113714\", \"trapped\": \"\", \"encryption\": \"Standard V2 R3 128-bit RC4\"}",
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-14 06:59:26",
+      "updated_at": "2026-11-14 06:59:47",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 5,
+      "title": "Date of publication xxxx 00, 0000, date of current version xxxx 00, 0000.",
+      "file_hash": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6",
+      "original_filename": "2505.03016v1.pdf",
+      "stored_filename": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+      "file_size": 9317661,
+      "content_type": "application/pdf",
+      "page_count": 20,
+      "char_count": 117710,
+      "authors": "未知作者",
+      "pdf_metadata": "{\"format\": \"PDF 1.5\", \"title\": \"\", \"author\": \"\", \"subject\": \"\", \"keywords\": \"\", \"creator\": \"LaTeX with hyperref\", \"producer\": \"pdfTeX-1.40.25\", \"creationDate\": \"D:20250507000958Z\", \"modDate\": \"D:20250507000958Z\", \"trapped\": \"\", \"encryption\": null}",
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-15 04:32:01",
+      "updated_at": "2026-11-15 04:35:42",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 6,
+      "title": "Preparation of Papers in Two-Column Format",
+      "file_hash": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8",
+      "original_filename": "A200803-1664.pdf",
+      "stored_filename": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+      "file_size": 782150,
+      "content_type": "application/pdf",
+      "page_count": 5,
+      "char_count": 6647,
+      "authors": "王伟",
+      "pdf_metadata": "{\"format\": \"PDF 1.5\", \"title\": \"Preparation of Papers in Two-Column Format\", \"author\": \"王伟\", \"subject\": \"\", \"keywords\": \"\", \"creator\": \"Acrobat PDFMaker 7.0 for Word\", \"producer\": \"Acrobat Distiller 7.0 (Windows)\", \"creationDate\": \"D:20080320191953+08'00'\", \"modDate\": \"D:20080331154457+08'00'\", \"trapped\": \"\", \"encryption\": \"Standard V2 R3 128-bit RC4\"}",
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-15 04:34:57",
+      "updated_at": "2026-11-15 04:35:19",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 7,
+      "title": "AI赋能与风险并存：大学生AI使用行为的心理效应及引导路径",
+      "file_hash": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42",
+      "original_filename": "ass_2400715.pdf",
+      "stored_filename": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+      "file_size": 618599,
+      "content_type": "application/pdf",
+      "page_count": 8,
+      "char_count": 16586,
+      "authors": "邓珊珊, 陈思, 李杰, 周彧姣, 申子优",
+      "pdf_metadata": "{\"format\": \"PDF 1.6\", \"title\": \"AI赋能与风险并存：大学生AI使用行为的心理效应及引导路径\", \"author\": \"邓珊珊, 陈思, 李杰, 周彧姣, 申子优\", \"subject\": \"随着以ChatGPT、DeepSeek为代表的生成式人工智能(AI)在全球范围内大规模流行，其在教育领域的应用已成为不容忽视的社会现象。本研究通过梳理大学生AI使用的现状，系统分析AI对大学生发展的双重影响：一方面，AI通过提供心理辅助服务、提升学习效率、赋能个性化发展等路径，为大学生心理建设注入正向动能；另一方面，其使用也存在心理依赖、学术创新弱化、隐私安全风险及价值观渗透等多元潜在风险挑战。研究最终提出“以人为本”的AI教育生态构建路径，包括课程体系完善、价值观引领、人机协同优化等维度，为规范大学生AI使用、守护心理健康提供理论与实践参考。\", \"keywords\": \"人工智能，赋能效应，潜在风险，引导路径，大学生\", \"creator\": \"Acrobat PDFMaker 22 Word 版\", \"producer\": \"Adobe PDF Library 22.1.117\", \"creationDate\": \"D:20260312111905+08'00'\", \"modDate\": \"D:20260312111907+08'00'\", \"trapped\": \"\", \"encryption\": null}",
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-15 04:35:19",
+      "updated_at": "2026-11-15 04:35:57",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    },
+    {
+      "id": 8,
+      "title": "基于计算机网络技术的计算机网络信息安全及其防护策略",
+      "file_hash": "5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e",
+      "original_filename": "csa20190900000_57172524.pdf",
+      "stored_filename": "5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+      "file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+      "file_size": 1498953,
+      "content_type": "application/pdf",
+      "page_count": 5,
+      "char_count": 5884,
+      "authors": "纪汉杰, 李啸林, 张帆, 武装, 王海舰",
+      "pdf_metadata": "{\"format\": \"PDF 1.5\", \"title\": \"基于计算机网络技术的计算机网络信息安全及其防护策略\", \"author\": \"纪汉杰, 李啸林, 张帆, 武装, 王海舰\", \"subject\": \"目前我国正处于科学技术与国民经济双重发展的关键时期，计算机网络技术的应用不但提高了人们生产生活的效率，还很大程度上提高了人们物质生活水平，因此计算机网络技术被应用于多个领域，包括医院、学校、大型企业、政府机关单位等，日常的工作生活已经离不开计算机网络技术，这也就意味着计算机网络技术高速发展下的网络信息安全问题成了每个人都关注的重点问题，一旦计算机网络信息泄露将会给使用者带来不可预估的损失。\", \"keywords\": \"计算机网络技术，网络信息安全，防护策略\", \"creator\": \"Acrobat PDFMaker 11 Word 版\", \"producer\": \"Adobe PDF Library 11.0\", \"creationDate\": \"D:20190918143246+08'00'\", \"modDate\": \"D:20190918143247+08'00'\", \"trapped\": \"\", \"encryption\": null}",
+      "parse_status": "parsed",
+      "index_status": "indexed",
+      "created_at": "2026-11-15 05:30:09",
+      "updated_at": "2026-11-15 05:30:32",
+      "doi": null,
+      "normalized_title": null,
+      "publication_year": null,
+      "venue": null,
+      "normalized_venue": null,
+      "parse_checkpoint_version": 0,
+      "parse_source_hash": null,
+      "parse_source_size": 0,
+      "parse_source_page_count": 0,
+      "parse_layout_title": null
+    }
+  ],
+  "paper_migration_results": [
+    {
+      "paper_id": 1,
+      "original_filename": "1706.03762v7.pdf",
+      "stored_filename": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+      "old_file_path": "data\\uploads\\bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+      "new_file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+      "absolute": true,
+      "within_demo_uploads": true,
+      "exists": true,
+      "file_hash": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+      "actual_pdf_sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+      "sha256_matches": true,
+      "file_size": 2215244,
+      "actual_pdf_size": 2215244,
+      "size_matches": true,
+      "sha256_candidate_count": 1,
+      "selection_basis": "unique SHA256",
+      "points_to_formal_or_staging": false
+    },
+    {
+      "paper_id": 2,
+      "original_filename": "v0.1.0test.pdf",
+      "stored_filename": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+      "old_file_path": "data\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+      "new_file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+      "absolute": true,
+      "within_demo_uploads": true,
+      "exists": true,
+      "file_hash": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8",
+      "actual_pdf_sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8",
+      "sha256_matches": true,
+      "file_size": 1046705,
+      "actual_pdf_size": 1046705,
+      "size_matches": true,
+      "sha256_candidate_count": 3,
+      "selection_basis": "stored_filename+old_file_path_basename+size under authorized paper_id=2 special case",
+      "points_to_formal_or_staging": false
+    },
+    {
+      "paper_id": 3,
+      "original_filename": "phase1_upload_test.pdf",
+      "stored_filename": "f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+      "old_file_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+      "new_file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+      "absolute": true,
+      "within_demo_uploads": true,
+      "exists": true,
+      "file_hash": "f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5",
+      "actual_pdf_sha256": "f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5",
+      "sha256_matches": true,
+      "file_size": 1186,
+      "actual_pdf_size": 1186,
+      "size_matches": true,
+      "sha256_candidate_count": 1,
+      "selection_basis": "unique SHA256",
+      "points_to_formal_or_staging": false
+    },
+    {
+      "paper_id": 4,
+      "original_filename": "试论网络维护中Ping命令的使用及错误提示分析.pdf",
+      "stored_filename": "8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+      "old_file_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+      "new_file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+      "absolute": true,
+      "within_demo_uploads": true,
+      "exists": true,
+      "file_hash": "8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292",
+      "actual_pdf_sha256": "8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292",
+      "sha256_matches": true,
+      "file_size": 112229,
+      "actual_pdf_size": 112229,
+      "size_matches": true,
+      "sha256_candidate_count": 1,
+      "selection_basis": "unique SHA256",
+      "points_to_formal_or_staging": false
+    },
+    {
+      "paper_id": 5,
+      "original_filename": "2505.03016v1.pdf",
+      "stored_filename": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+      "old_file_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+      "new_file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+      "absolute": true,
+      "within_demo_uploads": true,
+      "exists": true,
+      "file_hash": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6",
+      "actual_pdf_sha256": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6",
+      "sha256_matches": true,
+      "file_size": 9317661,
+      "actual_pdf_size": 9317661,
+      "size_matches": true,
+      "sha256_candidate_count": 1,
+      "selection_basis": "unique SHA256",
+      "points_to_formal_or_staging": false
+    },
+    {
+      "paper_id": 6,
+      "original_filename": "A200803-1664.pdf",
+      "stored_filename": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+      "old_file_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+      "new_file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+      "absolute": true,
+      "within_demo_uploads": true,
+      "exists": true,
+      "file_hash": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8",
+      "actual_pdf_sha256": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8",
+      "sha256_matches": true,
+      "file_size": 782150,
+      "actual_pdf_size": 782150,
+      "size_matches": true,
+      "sha256_candidate_count": 1,
+      "selection_basis": "unique SHA256",
+      "points_to_formal_or_staging": false
+    },
+    {
+      "paper_id": 7,
+      "original_filename": "ass_2400715.pdf",
+      "stored_filename": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+      "old_file_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+      "new_file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+      "absolute": true,
+      "within_demo_uploads": true,
+      "exists": true,
+      "file_hash": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42",
+      "actual_pdf_sha256": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42",
+      "sha256_matches": true,
+      "file_size": 618599,
+      "actual_pdf_size": 618599,
+      "size_matches": true,
+      "sha256_candidate_count": 1,
+      "selection_basis": "unique SHA256",
+      "points_to_formal_or_staging": false
+    },
+    {
+      "paper_id": 8,
+      "original_filename": "csa20190900000_57172524.pdf",
+      "stored_filename": "5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+      "old_file_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+      "new_file_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+      "absolute": true,
+      "within_demo_uploads": true,
+      "exists": true,
+      "file_hash": "5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e",
+      "actual_pdf_sha256": "5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e",
+      "sha256_matches": true,
+      "file_size": 1498953,
+      "actual_pdf_size": 1498953,
+      "size_matches": true,
+      "sha256_candidate_count": 1,
+      "selection_basis": "unique SHA256",
+      "points_to_formal_or_staging": false
+    }
+  ],
+  "paper_id_2_disambiguation": {
+    "candidates": [
+      "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+      "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\8b78647cb18e43e396621806dd477732.pdf",
+      "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\c4ffe3d641474154a73e10c4445ae194.pdf"
+    ],
+    "stored_filename": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+    "old_file_path_basename": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+    "stored_filename_matches": [
+      "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf"
+    ],
+    "old_path_basename_matches": [
+      "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf"
+    ],
+    "selected": [
+      "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf"
+    ],
+    "paper_created_at": "2026-11-12 12:56:26",
+    "candidate_mtimes": {
+      "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf": "2026-11-12T12:56:26.564735+00:00",
+      "8b78647cb18e43e396621806dd477732.pdf": "2026-11-12T05:08:34.627123+00:00",
+      "c4ffe3d641474154a73e10c4445ae194.pdf": "2026-11-12T05:04:49.364718+00:00"
+    }
+  },
+  "other_tables": {
+    "unchanged": true,
+    "counts": {
+      "citation_edges": 0,
+      "citation_references": 252,
+      "paper_chunks": 474,
+      "paper_element_backfill_state": 8,
+      "paper_elements": 1847,
+      "paper_import_items": 4,
+      "paper_import_jobs": 2,
+      "paper_pages": 67,
+      "paper_versions": 0,
+      "papers": 8,
+      "schema_migrations": 1
+    },
+    "data_fingerprint": "980ed4443921e5cf1d9ae8fcc3dddbe3e577d7296c54528817b2d881daa3d478"
+  },
+  "historical_import_item_warning": {
+    "count": 4,
+    "records": [
+      {
+        "id": "e3c80fb3-8c32-4f14-9db0-d3350264168a",
+        "status": "succeeded",
+        "current_stage": "completed",
+        "staged_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\.imports\\730f0a69-044b-4cf0-bbb5-8968bdf91fe5.pdf"
+      },
+      {
+        "id": "3e3ee272-dc68-4096-80cc-768115ef9058",
+        "status": "succeeded",
+        "current_stage": "completed",
+        "staged_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\.imports\\2662d78e-cae1-4bf1-be84-cab4401576bb.pdf"
+      },
+      {
+        "id": "24c5c097-7a11-4ddd-b1fa-69c4cfc7ba97",
+        "status": "succeeded",
+        "current_stage": "completed",
+        "staged_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\.imports\\1eda31bf-d156-4ebe-9ffc-c13c5f8ae006.pdf"
+      },
+      {
+        "id": "28c6f32d-9487-4fc9-bf1a-5cdae2296449",
+        "status": "succeeded",
+        "current_stage": "completed",
+        "staged_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\.imports\\01d32ec2-4d16-45b0-bac1-71c2c70de19c.pdf"
+      }
+    ],
+    "modified": false
+  },
+  "chroma": {
+    "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db",
+    "integrity_check": [
+      "ok"
+    ],
+    "vector_count": 386,
+    "required_files": [
+      "chroma.sqlite3",
+      "ec4a224f-2e61-441c-9c48-ac95019e9b24/data_level0.bin",
+      "ec4a224f-2e61-441c-9c48-ac95019e9b24/header.bin",
+      "ec4a224f-2e61-441c-9c48-ac95019e9b24/index_metadata.pickle",
+      "ec4a224f-2e61-441c-9c48-ac95019e9b24/length.bin",
+      "ec4a224f-2e61-441c-9c48-ac95019e9b24/link_lists.bin"
+    ],
+    "missing_required_files": [],
+    "file_count": 6,
+    "total_bytes": 9204310,
+    "fingerprint": "5263f94bd1e7161939c86205e7d6a86a921f88ce1e98489de03d3534102388a6",
+    "unchanged_from_before": true,
+    "files": [
+      {
+        "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db\\chroma.sqlite3",
+        "relative_path": "maintenance/demo-20261118-r1/chroma_db/chroma.sqlite3",
+        "size": 6877184,
+        "sha256": "23420e44dd026ebc8505037a3dbe24f6821665ea54ad758284c14ffaa9818b97"
+      },
+      {
+        "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\data_level0.bin",
+        "relative_path": "maintenance/demo-20261118-r1/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/data_level0.bin",
+        "size": 2304384,
+        "sha256": "1930ddbcae6ca008eceb5d449bd8c5523f9dfbf3027f71ce7b30bf39683c56f2"
+      },
+      {
+        "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\header.bin",
+        "relative_path": "maintenance/demo-20261118-r1/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/header.bin",
+        "size": 100,
+        "sha256": "e33cab57086cd20111dd7084e6f8686e1ac486f2abfb47d9197afcdff8242af6"
+      },
+      {
+        "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\index_metadata.pickle",
+        "relative_path": "maintenance/demo-20261118-r1/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/index_metadata.pickle",
+        "size": 15910,
+        "sha256": "e58835294aad2401148a4d4771a4e44a091f02163efa2bddf4628fc99a6605e6"
+      },
+      {
+        "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\length.bin",
+        "relative_path": "maintenance/demo-20261118-r1/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/length.bin",
+        "size": 2176,
+        "sha256": "e4c21ab6cfb3ac84d34a6b960ce7495694247de765734ac6e40bc381616a7b2e"
+      },
+      {
+        "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\link_lists.bin",
+        "relative_path": "maintenance/demo-20261118-r1/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/link_lists.bin",
+        "size": 4556,
+        "sha256": "aebb63af45663e0af98f655a7cf067d046b70dacc1f260b99fd5bfbd25bc8178"
+      }
+    ]
+  },
+  "formal_environment": {
+    "unchanged": true,
+    "before": {
+      "file_count": 18,
+      "total_bytes": 27656399,
+      "fingerprint": "e3d2cdef5ed1cccb672b6377822a108959cb6f8d0c6650620a66bae222729e42",
+      "files": [
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\chroma_db\\chroma.sqlite3",
+          "relative_path": "backend/data/chroma_db/chroma.sqlite3",
+          "size": 6877184,
+          "sha256": "23420e44dd026ebc8505037a3dbe24f6821665ea54ad758284c14ffaa9818b97"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\data_level0.bin",
+          "relative_path": "backend/data/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/data_level0.bin",
+          "size": 2304384,
+          "sha256": "1930ddbcae6ca008eceb5d449bd8c5523f9dfbf3027f71ce7b30bf39683c56f2"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\header.bin",
+          "relative_path": "backend/data/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/header.bin",
+          "size": 100,
+          "sha256": "e33cab57086cd20111dd7084e6f8686e1ac486f2abfb47d9197afcdff8242af6"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\index_metadata.pickle",
+          "relative_path": "backend/data/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/index_metadata.pickle",
+          "size": 15910,
+          "sha256": "e58835294aad2401148a4d4771a4e44a091f02163efa2bddf4628fc99a6605e6"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\length.bin",
+          "relative_path": "backend/data/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/length.bin",
+          "size": 2176,
+          "sha256": "e4c21ab6cfb3ac84d34a6b960ce7495694247de765734ac6e40bc381616a7b2e"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\link_lists.bin",
+          "relative_path": "backend/data/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/link_lists.bin",
+          "size": 4556,
+          "sha256": "aebb63af45663e0af98f655a7cf067d046b70dacc1f260b99fd5bfbd25bc8178"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\netresearch.db",
+          "relative_path": "backend/data/netresearch.db",
+          "size": 765952,
+          "sha256": "541d2434cd528a7a3e1853212fde6b8178b47da8b8814b3df5ed176c03884eb9"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\.gitkeep",
+          "relative_path": "backend/data/uploads/.gitkeep",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+          "relative_path": "backend/data/uploads/12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+          "size": 1046705,
+          "sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+          "relative_path": "backend/data/uploads/2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+          "size": 9317661,
+          "sha256": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+          "relative_path": "backend/data/uploads/5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+          "size": 1498953,
+          "sha256": "5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\8b78647cb18e43e396621806dd477732.pdf",
+          "relative_path": "backend/data/uploads/8b78647cb18e43e396621806dd477732.pdf",
+          "size": 1046705,
+          "sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+          "relative_path": "backend/data/uploads/8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+          "size": 112229,
+          "sha256": "8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+          "relative_path": "backend/data/uploads/a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+          "size": 618599,
+          "sha256": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+          "relative_path": "backend/data/uploads/b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+          "size": 782150,
+          "sha256": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+          "relative_path": "backend/data/uploads/bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+          "size": 2215244,
+          "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\c4ffe3d641474154a73e10c4445ae194.pdf",
+          "relative_path": "backend/data/uploads/c4ffe3d641474154a73e10c4445ae194.pdf",
+          "size": 1046705,
+          "sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+          "relative_path": "backend/data/uploads/f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+          "size": 1186,
+          "sha256": "f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5"
+        }
+      ]
+    },
+    "after": {
+      "file_count": 18,
+      "total_bytes": 27656399,
+      "fingerprint": "e3d2cdef5ed1cccb672b6377822a108959cb6f8d0c6650620a66bae222729e42",
+      "files": [
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\chroma_db\\chroma.sqlite3",
+          "relative_path": "backend/data/chroma_db/chroma.sqlite3",
+          "size": 6877184,
+          "sha256": "23420e44dd026ebc8505037a3dbe24f6821665ea54ad758284c14ffaa9818b97"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\data_level0.bin",
+          "relative_path": "backend/data/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/data_level0.bin",
+          "size": 2304384,
+          "sha256": "1930ddbcae6ca008eceb5d449bd8c5523f9dfbf3027f71ce7b30bf39683c56f2"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\header.bin",
+          "relative_path": "backend/data/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/header.bin",
+          "size": 100,
+          "sha256": "e33cab57086cd20111dd7084e6f8686e1ac486f2abfb47d9197afcdff8242af6"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\index_metadata.pickle",
+          "relative_path": "backend/data/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/index_metadata.pickle",
+          "size": 15910,
+          "sha256": "e58835294aad2401148a4d4771a4e44a091f02163efa2bddf4628fc99a6605e6"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\length.bin",
+          "relative_path": "backend/data/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/length.bin",
+          "size": 2176,
+          "sha256": "e4c21ab6cfb3ac84d34a6b960ce7495694247de765734ac6e40bc381616a7b2e"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\link_lists.bin",
+          "relative_path": "backend/data/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/link_lists.bin",
+          "size": 4556,
+          "sha256": "aebb63af45663e0af98f655a7cf067d046b70dacc1f260b99fd5bfbd25bc8178"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\netresearch.db",
+          "relative_path": "backend/data/netresearch.db",
+          "size": 765952,
+          "sha256": "541d2434cd528a7a3e1853212fde6b8178b47da8b8814b3df5ed176c03884eb9"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\.gitkeep",
+          "relative_path": "backend/data/uploads/.gitkeep",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+          "relative_path": "backend/data/uploads/12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+          "size": 1046705,
+          "sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+          "relative_path": "backend/data/uploads/2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+          "size": 9317661,
+          "sha256": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+          "relative_path": "backend/data/uploads/5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+          "size": 1498953,
+          "sha256": "5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\8b78647cb18e43e396621806dd477732.pdf",
+          "relative_path": "backend/data/uploads/8b78647cb18e43e396621806dd477732.pdf",
+          "size": 1046705,
+          "sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+          "relative_path": "backend/data/uploads/8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+          "size": 112229,
+          "sha256": "8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+          "relative_path": "backend/data/uploads/a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+          "size": 618599,
+          "sha256": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+          "relative_path": "backend/data/uploads/b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+          "size": 782150,
+          "sha256": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+          "relative_path": "backend/data/uploads/bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+          "size": 2215244,
+          "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\c4ffe3d641474154a73e10c4445ae194.pdf",
+          "relative_path": "backend/data/uploads/c4ffe3d641474154a73e10c4445ae194.pdf",
+          "size": 1046705,
+          "sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+          "relative_path": "backend/data/uploads/f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+          "size": 1186,
+          "sha256": "f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5"
+        }
+      ]
+    }
+  },
+  "staging_environment": {
+    "unchanged": true,
+    "before": {
+      "file_count": 22,
+      "total_bytes": 31502502,
+      "fingerprint": "21707147ce63925c9bc64c39924b33e27160602a76db6a07086227f2dca5f5a3",
+      "files": [
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\chroma_db\\chroma.sqlite3",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/chroma_db/chroma.sqlite3",
+          "size": 6877184,
+          "sha256": "23420e44dd026ebc8505037a3dbe24f6821665ea54ad758284c14ffaa9818b97"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\data_level0.bin",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/data_level0.bin",
+          "size": 2304384,
+          "sha256": "1930ddbcae6ca008eceb5d449bd8c5523f9dfbf3027f71ce7b30bf39683c56f2"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\header.bin",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/header.bin",
+          "size": 100,
+          "sha256": "e33cab57086cd20111dd7084e6f8686e1ac486f2abfb47d9197afcdff8242af6"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\index_metadata.pickle",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/index_metadata.pickle",
+          "size": 15910,
+          "sha256": "e58835294aad2401148a4d4771a4e44a091f02163efa2bddf4628fc99a6605e6"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\length.bin",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/length.bin",
+          "size": 2176,
+          "sha256": "e4c21ab6cfb3ac84d34a6b960ce7495694247de765734ac6e40bc381616a7b2e"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\link_lists.bin",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/link_lists.bin",
+          "size": 4556,
+          "sha256": "aebb63af45663e0af98f655a7cf067d046b70dacc1f260b99fd5bfbd25bc8178"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\reports\\apply-final.json",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/reports/apply-final.json",
+          "size": 448447,
+          "sha256": "fe26624d06a27c6721955a6766471b49664a60eb6cf65863f3955cade5fe7be7"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\reports\\citation-relations-20261116-125304.json",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/reports/citation-relations-20261116-125304.json",
+          "size": 266395,
+          "sha256": "bbe86b3e6d882255de4231f8d6d7274ca19c640bdc02edac94f77dfe83e99904"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\reports\\dry-run-final.json",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/reports/dry-run-final.json",
+          "size": 448381,
+          "sha256": "f9a3ac5236b46d69274d35c7bfa66bd7b9594b03d89959602a38a39e3b7da8e0"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\sqlite\\netresearch-citation-staging-20261116-125304.db",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/sqlite/netresearch-citation-staging-20261116-125304.db",
+          "size": 1884160,
+          "sha256": "c9791d7e962453d68e4814648dc51b20474a8167f946851cd0861c4ea603514f"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\sqlite\\netresearch.db",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/sqlite/netresearch.db",
+          "size": 1564672,
+          "sha256": "40ee213db0f311f472009b86ea831832b6635432bc182e22bed9adfe00589bf3"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\.gitkeep",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/.gitkeep",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+          "size": 1046705,
+          "sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+          "size": 9317661,
+          "sha256": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+          "size": 1498953,
+          "sha256": "5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\8b78647cb18e43e396621806dd477732.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/8b78647cb18e43e396621806dd477732.pdf",
+          "size": 1046705,
+          "sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+          "size": 112229,
+          "sha256": "8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+          "size": 618599,
+          "sha256": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+          "size": 782150,
+          "sha256": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+          "size": 2215244,
+          "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\c4ffe3d641474154a73e10c4445ae194.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/c4ffe3d641474154a73e10c4445ae194.pdf",
+          "size": 1046705,
+          "sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+          "size": 1186,
+          "sha256": "f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5"
+        }
+      ]
+    },
+    "after": {
+      "file_count": 22,
+      "total_bytes": 31502502,
+      "fingerprint": "21707147ce63925c9bc64c39924b33e27160602a76db6a07086227f2dca5f5a3",
+      "files": [
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\chroma_db\\chroma.sqlite3",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/chroma_db/chroma.sqlite3",
+          "size": 6877184,
+          "sha256": "23420e44dd026ebc8505037a3dbe24f6821665ea54ad758284c14ffaa9818b97"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\data_level0.bin",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/data_level0.bin",
+          "size": 2304384,
+          "sha256": "1930ddbcae6ca008eceb5d449bd8c5523f9dfbf3027f71ce7b30bf39683c56f2"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\header.bin",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/header.bin",
+          "size": 100,
+          "sha256": "e33cab57086cd20111dd7084e6f8686e1ac486f2abfb47d9197afcdff8242af6"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\index_metadata.pickle",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/index_metadata.pickle",
+          "size": 15910,
+          "sha256": "e58835294aad2401148a4d4771a4e44a091f02163efa2bddf4628fc99a6605e6"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\length.bin",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/length.bin",
+          "size": 2176,
+          "sha256": "e4c21ab6cfb3ac84d34a6b960ce7495694247de765734ac6e40bc381616a7b2e"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\link_lists.bin",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/link_lists.bin",
+          "size": 4556,
+          "sha256": "aebb63af45663e0af98f655a7cf067d046b70dacc1f260b99fd5bfbd25bc8178"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\reports\\apply-final.json",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/reports/apply-final.json",
+          "size": 448447,
+          "sha256": "fe26624d06a27c6721955a6766471b49664a60eb6cf65863f3955cade5fe7be7"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\reports\\citation-relations-20261116-125304.json",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/reports/citation-relations-20261116-125304.json",
+          "size": 266395,
+          "sha256": "bbe86b3e6d882255de4231f8d6d7274ca19c640bdc02edac94f77dfe83e99904"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\reports\\dry-run-final.json",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/reports/dry-run-final.json",
+          "size": 448381,
+          "sha256": "f9a3ac5236b46d69274d35c7bfa66bd7b9594b03d89959602a38a39e3b7da8e0"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\sqlite\\netresearch-citation-staging-20261116-125304.db",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/sqlite/netresearch-citation-staging-20261116-125304.db",
+          "size": 1884160,
+          "sha256": "c9791d7e962453d68e4814648dc51b20474a8167f946851cd0861c4ea603514f"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\sqlite\\netresearch.db",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/sqlite/netresearch.db",
+          "size": 1564672,
+          "sha256": "40ee213db0f311f472009b86ea831832b6635432bc182e22bed9adfe00589bf3"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\.gitkeep",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/.gitkeep",
+          "size": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+          "size": 1046705,
+          "sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+          "size": 9317661,
+          "sha256": "2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+          "size": 1498953,
+          "sha256": "5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\8b78647cb18e43e396621806dd477732.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/8b78647cb18e43e396621806dd477732.pdf",
+          "size": 1046705,
+          "sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+          "size": 112229,
+          "sha256": "8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+          "size": 618599,
+          "sha256": "a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+          "size": 782150,
+          "sha256": "b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+          "size": 2215244,
+          "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\c4ffe3d641474154a73e10c4445ae194.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/c4ffe3d641474154a73e10c4445ae194.pdf",
+          "size": 1046705,
+          "sha256": "12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8"
+        },
+        {
+          "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\paper-element-staging-20261116-125304\\uploads\\f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+          "relative_path": "maintenance/paper-element-staging-20261116-125304/uploads/f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+          "size": 1186,
+          "sha256": "f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5"
+        }
+      ]
+    }
+  },
+  "scope": {
+    "only_paper_file_path_modified": true,
+    "backend_started": false,
+    "index_repair_invoked": false,
+    "persistent_client_initialized": false,
+    "git_operations": false,
+    "pdfs_deleted_moved_or_renamed": false
+  },
+  "warnings": [
+    "4 completed paper_import_items retain historical staged_path metadata pointing to formal uploads; these were intentionally not modified."
+  ],
+  "failures": [],
+  "unverified": []
+}

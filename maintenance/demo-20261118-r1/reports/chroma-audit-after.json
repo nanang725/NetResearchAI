@@ -1,0 +1,47 @@
+﻿{
+    "success":  true,
+    "data":  {
+                 "scope":  "collection",
+                 "sqlite_chunk_count":  474,
+                 "chroma_vector_count":  474,
+                 "missing_vector_count":  0,
+                 "stale_vector_count":  0,
+                 "legacy_vector_count":  0,
+                 "orphan_vector_count":  0,
+                 "unverifiable_vector_count":  0,
+                 "read_error_count":  0,
+                 "parse_incomplete_page_count":  0,
+                 "parse_affected_paper_ids":  [
+
+                                              ],
+                 "parse_issue_details":  [
+
+                                         ],
+                 "missing_vector_ids":  [
+
+                                        ],
+                 "stale_vector_ids":  [
+
+                                      ],
+                 "legacy_vector_ids":  [
+
+                                       ],
+                 "orphan_vector_ids":  [
+
+                                       ],
+                 "affected_paper_ids":  [
+
+                                        ],
+                 "orphan_paper_ids":  [
+
+                                      ],
+                 "issues":  [
+
+                            ],
+                 "index_schema_version":  3,
+                 "content_hash_algorithm":  "sha256",
+                 "content_normalization_version":  "nfkc-lf-strip-v1",
+                 "consistent":  true
+             },
+    "error":  null
+}

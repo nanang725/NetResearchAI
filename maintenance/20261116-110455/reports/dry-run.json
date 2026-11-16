@@ -1,0 +1,23 @@
+{
+  "success": false,
+  "mode": "dry-run",
+  "started_at": "2026-11-16T03:05:09.766895+00:00",
+  "finished_at": "2026-11-16T03:05:09.766895+00:00",
+  "element_backfill_version": "paper-elements-backfill-v1",
+  "database": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\20261116-110455\\netresearch.db",
+  "pdf_root": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\20261116-110455\\uploads",
+  "chroma_dir": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\20261116-110455\\chroma_db",
+  "requested_paper_ids": null,
+  "papers": [],
+  "committed_paper_ids": [],
+  "failed_paper_ids": [],
+  "unprocessed_paper_ids": [],
+  "partial_commit_possible": false,
+  "overall_transaction_rolled_back": false,
+  "errors": [
+    {
+      "stage": "fatal",
+      "error": "PDF does not exist or is outside --pdf-root: C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf"
+    }
+  ]
+}

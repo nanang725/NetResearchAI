@@ -11,6 +11,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.config import get_settings
 from app.api.health import router as health_router
 from app.api.papers import router as papers_router
+from app.api.citations import router as citations_router
+from app.api.datasets import router as datasets_router
+from app.api.discovery import router as discovery_router
+from app.api.reviews import router as reviews_router
+from app.api.research_agent import router as research_agent_router
+from app.api.writing import router as writing_router
 from app.services.embedding_service import delete_paper_vectors
 from app.core.exceptions import AppError, app_error_handler, unhandled_error_handler
 from app.database import Base, SessionLocal, engine, ensure_additive_schema
@@ -23,6 +29,17 @@ from app.models import (  # noqa: F401
     PaperElement,
     PaperPage,
     PaperVersion,
+    ExternalFavorite,
+    ExternalPaper,
+    TrackingRun,
+    TrackingRunItem,
+    TrackingSearch,
+    TrackingSeen,
+    ResearchAgentArtifact,
+    ResearchAgentEvidence,
+    ResearchAgentNode,
+    ResearchAgentRun,
+    ResearchAgentToolCall,
 )
 from app.services.paper_service import ensure_storage, retry_pending_deletions
 from app.services.ingestion_service import (
@@ -61,12 +78,11 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     description=(
-        "面向计算机网络领域的科研助手。v0.2.0 提供论文 PDF 管理与混合检索、"
-        "最多 12 条请求级对话历史、上下文理解与轻量 Query Rewriting、"
-        "五类基础意图识别，以及论文证据约束和不检索论文证据的通用知识回答。"
-        "服务端不保存持久化会话状态；科研辅助与学术写作尚无完整专属工作流。"
+        "面向计算机网络领域的科研助手。v0.3.0 开发预览提供可靠论文检索、"
+        "文献发现、引用图谱预览、多文献证据综述、基础学术写作、"
+        "结构化阅读翻译与 CSV 数据分析；自主科研 Agent 为 v0.4.0 提前预览。"
     ),
-    version="0.2.0",
+    version="0.3.0-dev.0",
     lifespan=lifespan,
 )
 
@@ -116,3 +132,9 @@ async def http_exception_handler(_request, exc: StarletteHTTPException):
 
 app.include_router(health_router, prefix="/api")
 app.include_router(papers_router, prefix="/api")
+app.include_router(citations_router, prefix="/api")
+app.include_router(reviews_router, prefix="/api")
+app.include_router(writing_router, prefix="/api")
+app.include_router(datasets_router, prefix="/api")
+app.include_router(discovery_router, prefix="/api")
+app.include_router(research_agent_router, prefix="/api")

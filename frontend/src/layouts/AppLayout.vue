@@ -15,6 +15,10 @@
         <RouterLink to="/search" class="nav-item" active-class="active">智能检索</RouterLink>
         <RouterLink to="/qa" class="nav-item" active-class="active">智能问答</RouterLink>
         <RouterLink to="/graph" class="nav-item" active-class="active">引用图谱</RouterLink>
+        <RouterLink to="/review" class="nav-item" active-class="active">多文献综述</RouterLink>
+        <RouterLink to="/writing" class="nav-item" active-class="active">学术写作</RouterLink>
+        <RouterLink to="/discovery" class="nav-item" active-class="active">文献发现</RouterLink>
+        <RouterLink to="/research-agent" class="nav-item" active-class="active">自主科研 Agent</RouterLink>
         <RouterLink to="/compare" class="nav-item" active-class="active">版本比较</RouterLink>
       </nav>
 
@@ -23,8 +27,8 @@
           <span class="dot" :class="healthOk ? 'ok' : 'bad'"></span>
           <span>{{ healthText }}</span>
         </div>
-        <!-- 修改了底部的状态提示文字 -->
-        <p>v0.2.0：上下文感知与意图驱动 Agent；知识图谱规划于 v0.4.0。</p>
+        <p class="version">{{ appVersion }} 开发预览</p>
+        <p>证据增强科研工作台；自主科研 Agent 为 v0.4.0 提前预览。</p>
       </div>
     </aside>
 
@@ -52,6 +56,7 @@ const route = useRoute();
 const router = useRouter();
 const healthOk = ref(false);
 const healthText = ref("正在检查后端…");
+const appVersion = ref("v0.3.0-dev.0");
 
 const pageTitle = computed(() => (route.meta.title as string | undefined) ?? "工作台");
 
@@ -63,7 +68,10 @@ onMounted(async () => {
   try {
     const health = await fetchHealth();
     healthOk.value = health.status === "ok";
-    healthText.value = `${health.name} ${health.version} 在线`;
+    appVersion.value = health.version.startsWith("v")
+      ? health.version
+      : `v${health.version}`;
+    healthText.value = `${health.name} 在线`;
   } catch {
     healthOk.value = false;
     healthText.value = "后端未连接";
@@ -139,6 +147,12 @@ onMounted(async () => {
   font-size: 12px;
   color: #9fb4c4;
   line-height: 1.6;
+}
+
+.sidebar-foot .version {
+  margin: 8px 0 4px;
+  color: #e8f1f6;
+  font-weight: 700;
 }
 
 .health {

@@ -16,11 +16,12 @@ NetResearch AI - 论文管理与智能问答 API
 
 import asyncio
 import logging
+import math
 import re
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, Body, Depends, File, UploadFile
+from fastapi import APIRouter, Body, Depends, File, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -32,9 +33,11 @@ from app.schemas.paper import (
     AgentChatResponse,
     AgentChatValidationErrorResponse,
     ChatHistoryMessage,
-    PaperVersionCreate,
+    PaperTranslationRequest,
+    PaperTranslationResponse,
     PaperImportJobListResponse,
     PaperImportJobResponse,
+    PaperVersionCreate,
 )
 
 from app.services.paper_service import (
@@ -77,6 +80,7 @@ from app.services.chat_context_service import (
 from app.services.retrieval_service import (
     search_chunks_hybrid,
 )
+from app.services.translation_service import translate_paper_content
 
 from app.services.embedding_service import (
     audit_index_consistency,
@@ -92,6 +96,46 @@ router = APIRouter(
     prefix="/papers",
     tags=["papers"],
 )
+
+
+def _search_selected_papers(
+    db: Session,
+    *,
+    query: str,
+    paper_ids: list[int],
+    limit: int,
+) -> list[dict]:
+    per_paper_limit = max(2, math.ceil(limit / len(paper_ids)))
+    results_by_paper = []
+    for selected_paper_id in paper_ids:
+        results = search_chunks_hybrid(
+            db=db,
+            query=query,
+            limit=per_paper_limit,
+            paper_id=selected_paper_id,
+        )
+        results_by_paper.append(
+            [
+                item
+                for item in results
+                if int(item.get("paper_id", -1)) == selected_paper_id
+            ]
+        )
+    combined = []
+    positions = [0] * len(paper_ids)
+    while len(combined) < limit:
+        added = False
+        for index, results in enumerate(results_by_paper):
+            if positions[index] >= len(results):
+                continue
+            combined.append(results[positions[index]])
+            positions[index] += 1
+            added = True
+            if len(combined) >= limit:
+                break
+        if not added:
+            break
+    return combined
 
 
 def _stage_upload(
@@ -512,6 +556,7 @@ def search_papers(
 def agent_chat(
     query: str,
     paper_id: int | None = None,
+    paper_ids: list[int] | None = Query(default=None),
     history: list[ChatHistoryMessage] | None = Body(
         default=None,
         max_length=MAX_CHAT_HISTORY_MESSAGES,
@@ -536,6 +581,25 @@ def agent_chat(
             code="EMPTY_QUERY",
             status_code=400,
         )
+    if paper_id is not None and paper_ids is not None:
+        raise AppError(
+            "paper_id 与 paper_ids 不能同时使用。",
+            code="INVALID_PAPER_SELECTION",
+            status_code=422,
+        )
+    if paper_ids is not None:
+        if len(paper_ids) < 2 or len(paper_ids) > 5:
+            raise AppError(
+                "多论文联合分析必须选择 2 至 5 篇论文。",
+                code="INVALID_PAPER_SELECTION",
+                status_code=422,
+            )
+        if len(set(paper_ids)) != len(paper_ids):
+            raise AppError(
+                "多论文联合分析不能重复选择论文。",
+                code="DUPLICATE_PAPER_ID",
+                status_code=422,
+            )
 
     history = history or []
     intent = classify_intent(query, history)
@@ -553,8 +617,9 @@ def agent_chat(
     print(
         f"\n=== 收到问答请求 ===\n"
         f"检索范围："
-        f"{'单篇论文' if paper_id is not None else '全库'}\n"
+        f"{'单篇论文' if paper_id is not None else ('指定多篇论文' if paper_ids is not None else '全库')}\n"
         f"paper_id：{paper_id}\n"
+        f"paper_ids：{paper_ids}\n"
         f"问题：{query}"
     )
 
@@ -597,6 +662,34 @@ def agent_chat(
             f"🔍 检索范围：单篇论文《{paper.title}》"
         )
 
+    elif paper_ids is not None:
+        selected_rows = (
+            db.query(Paper)
+            .filter(Paper.id.in_(paper_ids))
+            .all()
+        )
+        selected_map = {paper.id: paper for paper in selected_rows}
+        missing_paper_ids = [
+            selected_paper_id
+            for selected_paper_id in paper_ids
+            if selected_paper_id not in selected_map
+        ]
+        if missing_paper_ids:
+            raise AppError(
+                "多论文分析包含不存在的论文。",
+                code="PAPER_NOT_FOUND",
+                status_code=404,
+                details={"paper_ids": missing_paper_ids},
+            )
+        selected_papers = [
+            selected_map[selected_paper_id]
+            for selected_paper_id in paper_ids
+        ]
+        steps.append(
+            "🔍 检索范围：用户指定的 "
+            f"{len(selected_papers)} 篇论文，逐篇独立检索"
+        )
+
     else:
         steps.append(
             "🔍 检索范围：全库联合检索"
@@ -610,12 +703,21 @@ def agent_chat(
     retrieval_limit = 8 if enumeration_query else 5
 
     # 执行 BM25 + BGE-M3 混合检索
-    contexts = search_chunks_hybrid(
-        db=db,
-        query=retrieval_query,
-        limit=retrieval_limit,
-        paper_id=paper_id,
-    )
+    if paper_ids is not None:
+        retrieval_limit = max(retrieval_limit, len(paper_ids))
+        contexts = _search_selected_papers(
+            db,
+            query=retrieval_query,
+            paper_ids=paper_ids,
+            limit=retrieval_limit,
+        )
+    else:
+        contexts = search_chunks_hybrid(
+            db=db,
+            query=retrieval_query,
+            limit=retrieval_limit,
+            paper_id=paper_id,
+        )
 
     # 统计检索来源
     bm25_count = sum(
@@ -782,6 +884,27 @@ def get_paper_detail(
         serialize_paper(
             paper,
             include_pages=True,
+        )
+    )
+
+
+@router.post(
+    "/{paper_id}/translate",
+    response_model=PaperTranslationResponse,
+)
+def translate_paper_page_or_element(
+    paper_id: int,
+    request: PaperTranslationRequest,
+    db: Session = Depends(get_db),
+):
+    """Translate an authoritative page or element without persisting the result."""
+    return success(
+        translate_paper_content(
+            db,
+            paper_id=paper_id,
+            page_number=request.page_number,
+            element_id=request.element_id,
+            direction=request.direction,
         )
     )
 

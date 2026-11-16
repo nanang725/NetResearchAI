@@ -1,0 +1,1404 @@
+{
+  "status": "SUCCESS",
+  "started_at": "2026-11-16T09:36:09.893129+00:00",
+  "finished_at": "2026-11-16T09:36:10.563859+00:00",
+  "scope": {
+    "root": "C:\\Users\\ranna\\NetResearchAI",
+    "demo": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1",
+    "database": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\sqlite\\netresearch.db",
+    "uploads": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads",
+    "chroma": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db",
+    "backend_started": "yes then stopped",
+    "second_backend_instance": false,
+    "manual_chroma_write_logic": false,
+    "git_operations": false
+  },
+  "environment_isolation": {
+    "DATABASE_URL": "sqlite:///C:/Users/ranna/NetResearchAI/maintenance/demo-20261118-r1/sqlite/netresearch.db",
+    "UPLOAD_DIR": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads",
+    "CHROMA_DIR": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db",
+    "all_resolved_within_demo": true,
+    "listening_port": 8018
+  },
+  "startup": {
+    "initial_attempt": {
+      "pid": 16568,
+      "result": "failed before app startup",
+      "reason": "PermissionError loading torch_python.dll in sandbox",
+      "database_or_chroma_opened": false
+    },
+    "successful_attempt": {
+      "launcher_pid": 19280,
+      "server_pid": 19220,
+      "command": "backend\\.venv\\Scripts\\python.exe -B -m uvicorn app.main:app --host 127.0.0.1 --port 8018 --log-level info",
+      "stdout": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\logs\\backend.stdout.retry.log",
+      "stderr": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\logs\\backend.stderr.retry.log",
+      "health": "ok",
+      "stopped_after_validation": true
+    }
+  },
+  "backup": {
+    "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\backups\\pre-chroma-rebuild-20261116",
+    "manifest": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\backups\\pre-chroma-rebuild-20261116\\backup-manifest.json",
+    "database_integrity": [
+      "ok"
+    ],
+    "database_foreign_keys": [],
+    "chroma_file_count": 6,
+    "uploads_file_count": 11,
+    "source_backup_chroma_match": true,
+    "source_backup_uploads_match": true,
+    "manifest_file_count": 21
+  },
+  "audit": {
+    "before": {
+      "scope": "collection",
+      "sqlite_chunk_count": 474,
+      "chroma_vector_count": 386,
+      "missing_vector_count": 88,
+      "stale_vector_count": 386,
+      "legacy_vector_count": 384,
+      "orphan_vector_count": 0,
+      "unverifiable_vector_count": 0,
+      "read_error_count": 0,
+      "parse_incomplete_page_count": 0,
+      "parse_affected_paper_ids": [],
+      "parse_issue_details": [],
+      "missing_vector_ids": [
+        "chunk_3",
+        "chunk_4",
+        "chunk_5",
+        "chunk_6",
+        "chunk_7",
+        "chunk_8",
+        "chunk_9",
+        "chunk_10",
+        "chunk_11",
+        "chunk_12",
+        "chunk_13",
+        "chunk_14",
+        "chunk_15",
+        "chunk_16",
+        "chunk_17",
+        "chunk_18",
+        "chunk_19",
+        "chunk_20",
+        "chunk_21",
+        "chunk_22",
+        "chunk_23",
+        "chunk_24",
+        "chunk_25",
+        "chunk_26",
+        "chunk_27",
+        "chunk_28",
+        "chunk_29",
+        "chunk_30",
+        "chunk_31",
+        "chunk_32",
+        "chunk_33",
+        "chunk_34",
+        "chunk_35",
+        "chunk_36",
+        "chunk_37",
+        "chunk_38",
+        "chunk_39",
+        "chunk_40",
+        "chunk_41",
+        "chunk_42",
+        "chunk_43",
+        "chunk_44",
+        "chunk_45",
+        "chunk_46",
+        "chunk_47",
+        "chunk_48",
+        "chunk_49",
+        "chunk_50",
+        "chunk_51",
+        "chunk_52"
+      ],
+      "stale_vector_ids": [
+        "chunk_1",
+        "chunk_2",
+        "chunk_91",
+        "chunk_92",
+        "chunk_93",
+        "chunk_94",
+        "chunk_95",
+        "chunk_96",
+        "chunk_97",
+        "chunk_98",
+        "chunk_99",
+        "chunk_100",
+        "chunk_101",
+        "chunk_102",
+        "chunk_103",
+        "chunk_104",
+        "chunk_105",
+        "chunk_106",
+        "chunk_107",
+        "chunk_108",
+        "chunk_109",
+        "chunk_110",
+        "chunk_111",
+        "chunk_112",
+        "chunk_113",
+        "chunk_114",
+        "chunk_115",
+        "chunk_116",
+        "chunk_117",
+        "chunk_118",
+        "chunk_119",
+        "chunk_120",
+        "chunk_121",
+        "chunk_122",
+        "chunk_123",
+        "chunk_124",
+        "chunk_125",
+        "chunk_126",
+        "chunk_127",
+        "chunk_128",
+        "chunk_129",
+        "chunk_130",
+        "chunk_131",
+        "chunk_132",
+        "chunk_133",
+        "chunk_134",
+        "chunk_135",
+        "chunk_136",
+        "chunk_137",
+        "chunk_138"
+      ],
+      "legacy_vector_ids": [
+        "chunk_91",
+        "chunk_92",
+        "chunk_93",
+        "chunk_94",
+        "chunk_95",
+        "chunk_96",
+        "chunk_97",
+        "chunk_98",
+        "chunk_99",
+        "chunk_100",
+        "chunk_101",
+        "chunk_102",
+        "chunk_103",
+        "chunk_104",
+        "chunk_105",
+        "chunk_106",
+        "chunk_107",
+        "chunk_108",
+        "chunk_109",
+        "chunk_110",
+        "chunk_111",
+        "chunk_112",
+        "chunk_113",
+        "chunk_114",
+        "chunk_115",
+        "chunk_116",
+        "chunk_117",
+        "chunk_118",
+        "chunk_119",
+        "chunk_120",
+        "chunk_121",
+        "chunk_122",
+        "chunk_123",
+        "chunk_124",
+        "chunk_125",
+        "chunk_126",
+        "chunk_127",
+        "chunk_128",
+        "chunk_129",
+        "chunk_130",
+        "chunk_131",
+        "chunk_132",
+        "chunk_133",
+        "chunk_134",
+        "chunk_135",
+        "chunk_136",
+        "chunk_137",
+        "chunk_138",
+        "chunk_139",
+        "chunk_140"
+      ],
+      "orphan_vector_ids": [],
+      "affected_paper_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "orphan_paper_ids": [],
+      "issues": [
+        {
+          "status": "stale",
+          "vector_id": "chunk_1",
+          "paper_id": 1,
+          "chunk_id": 1,
+          "reasons": [
+            "document_content_changed",
+            "metadata_changed:paper_title",
+            "index_fingerprint_mismatch"
+          ]
+        },
+        {
+          "status": "stale",
+          "vector_id": "chunk_2",
+          "paper_id": 1,
+          "chunk_id": 2,
+          "reasons": [
+            "document_content_changed",
+            "metadata_changed:paper_title",
+            "metadata_changed:page_number",
+            "metadata_changed:page_chunk_index",
+            "index_fingerprint_mismatch"
+          ]
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_3",
+          "paper_id": 1,
+          "chunk_id": 3,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_4",
+          "paper_id": 1,
+          "chunk_id": 4,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_5",
+          "paper_id": 1,
+          "chunk_id": 5,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_6",
+          "paper_id": 1,
+          "chunk_id": 6,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_7",
+          "paper_id": 1,
+          "chunk_id": 7,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_8",
+          "paper_id": 1,
+          "chunk_id": 8,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_9",
+          "paper_id": 1,
+          "chunk_id": 9,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_10",
+          "paper_id": 1,
+          "chunk_id": 10,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_11",
+          "paper_id": 1,
+          "chunk_id": 11,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_12",
+          "paper_id": 1,
+          "chunk_id": 12,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_13",
+          "paper_id": 1,
+          "chunk_id": 13,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_14",
+          "paper_id": 1,
+          "chunk_id": 14,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_15",
+          "paper_id": 1,
+          "chunk_id": 15,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_16",
+          "paper_id": 1,
+          "chunk_id": 16,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_17",
+          "paper_id": 1,
+          "chunk_id": 17,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_18",
+          "paper_id": 1,
+          "chunk_id": 18,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_19",
+          "paper_id": 1,
+          "chunk_id": 19,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_20",
+          "paper_id": 1,
+          "chunk_id": 20,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_21",
+          "paper_id": 1,
+          "chunk_id": 21,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_22",
+          "paper_id": 1,
+          "chunk_id": 22,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_23",
+          "paper_id": 1,
+          "chunk_id": 23,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_24",
+          "paper_id": 1,
+          "chunk_id": 24,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_25",
+          "paper_id": 1,
+          "chunk_id": 25,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_26",
+          "paper_id": 1,
+          "chunk_id": 26,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_27",
+          "paper_id": 1,
+          "chunk_id": 27,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_28",
+          "paper_id": 1,
+          "chunk_id": 28,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_29",
+          "paper_id": 1,
+          "chunk_id": 29,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_30",
+          "paper_id": 1,
+          "chunk_id": 30,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_31",
+          "paper_id": 1,
+          "chunk_id": 31,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_32",
+          "paper_id": 1,
+          "chunk_id": 32,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_33",
+          "paper_id": 1,
+          "chunk_id": 33,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_34",
+          "paper_id": 1,
+          "chunk_id": 34,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_35",
+          "paper_id": 1,
+          "chunk_id": 35,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_36",
+          "paper_id": 1,
+          "chunk_id": 36,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_37",
+          "paper_id": 1,
+          "chunk_id": 37,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_38",
+          "paper_id": 1,
+          "chunk_id": 38,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_39",
+          "paper_id": 1,
+          "chunk_id": 39,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_40",
+          "paper_id": 1,
+          "chunk_id": 40,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_41",
+          "paper_id": 1,
+          "chunk_id": 41,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_42",
+          "paper_id": 1,
+          "chunk_id": 42,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_43",
+          "paper_id": 1,
+          "chunk_id": 43,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_44",
+          "paper_id": 1,
+          "chunk_id": 44,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_45",
+          "paper_id": 1,
+          "chunk_id": 45,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_46",
+          "paper_id": 1,
+          "chunk_id": 46,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_47",
+          "paper_id": 1,
+          "chunk_id": 47,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_48",
+          "paper_id": 1,
+          "chunk_id": 48,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_49",
+          "paper_id": 1,
+          "chunk_id": 49,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_50",
+          "paper_id": 1,
+          "chunk_id": 50,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_51",
+          "paper_id": 1,
+          "chunk_id": 51,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_52",
+          "paper_id": 1,
+          "chunk_id": 52,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_53",
+          "paper_id": 1,
+          "chunk_id": 53,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_54",
+          "paper_id": 1,
+          "chunk_id": 54,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_55",
+          "paper_id": 1,
+          "chunk_id": 55,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_56",
+          "paper_id": 1,
+          "chunk_id": 56,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_57",
+          "paper_id": 1,
+          "chunk_id": 57,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_58",
+          "paper_id": 1,
+          "chunk_id": 58,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_59",
+          "paper_id": 1,
+          "chunk_id": 59,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_60",
+          "paper_id": 1,
+          "chunk_id": 60,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_61",
+          "paper_id": 1,
+          "chunk_id": 61,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_62",
+          "paper_id": 1,
+          "chunk_id": 62,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_63",
+          "paper_id": 1,
+          "chunk_id": 63,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_64",
+          "paper_id": 1,
+          "chunk_id": 64,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_65",
+          "paper_id": 1,
+          "chunk_id": 65,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_66",
+          "paper_id": 1,
+          "chunk_id": 66,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_67",
+          "paper_id": 1,
+          "chunk_id": 67,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_68",
+          "paper_id": 1,
+          "chunk_id": 68,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_69",
+          "paper_id": 1,
+          "chunk_id": 69,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_70",
+          "paper_id": 1,
+          "chunk_id": 70,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_71",
+          "paper_id": 1,
+          "chunk_id": 71,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_72",
+          "paper_id": 1,
+          "chunk_id": 72,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_73",
+          "paper_id": 1,
+          "chunk_id": 73,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_74",
+          "paper_id": 1,
+          "chunk_id": 74,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_75",
+          "paper_id": 1,
+          "chunk_id": 75,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_76",
+          "paper_id": 1,
+          "chunk_id": 76,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_77",
+          "paper_id": 1,
+          "chunk_id": 77,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_78",
+          "paper_id": 1,
+          "chunk_id": 78,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_79",
+          "paper_id": 1,
+          "chunk_id": 79,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_80",
+          "paper_id": 1,
+          "chunk_id": 80,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_81",
+          "paper_id": 1,
+          "chunk_id": 81,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_82",
+          "paper_id": 1,
+          "chunk_id": 82,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_83",
+          "paper_id": 1,
+          "chunk_id": 83,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_84",
+          "paper_id": 1,
+          "chunk_id": 84,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_85",
+          "paper_id": 1,
+          "chunk_id": 85,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_86",
+          "paper_id": 1,
+          "chunk_id": 86,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_87",
+          "paper_id": 1,
+          "chunk_id": 87,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_88",
+          "paper_id": 1,
+          "chunk_id": 88,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_89",
+          "paper_id": 1,
+          "chunk_id": 89,
+          "reasons": []
+        },
+        {
+          "status": "missing",
+          "vector_id": "chunk_90",
+          "paper_id": 1,
+          "chunk_id": 90,
+          "reasons": []
+        },
+        {
+          "status": "stale",
+          "vector_id": "chunk_91",
+          "paper_id": 2,
+          "chunk_id": 91,
+          "reasons": [
+            "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+            "metadata_changed:paper_title",
+            "metadata_changed:page_chunk_index",
+            "metadata_changed:content_type"
+          ]
+        },
+        {
+          "status": "stale",
+          "vector_id": "chunk_92",
+          "paper_id": 2,
+          "chunk_id": 92,
+          "reasons": [
+            "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+            "metadata_changed:paper_title",
+            "metadata_changed:page_chunk_index",
+            "metadata_changed:content_type"
+          ]
+        },
+        {
+          "status": "stale",
+          "vector_id": "chunk_93",
+          "paper_id": 2,
+          "chunk_id": 93,
+          "reasons": [
+            "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+            "metadata_changed:paper_title",
+            "metadata_changed:page_chunk_index",
+            "metadata_changed:content_type"
+          ]
+        },
+        {
+          "status": "stale",
+          "vector_id": "chunk_94",
+          "paper_id": 2,
+          "chunk_id": 94,
+          "reasons": [
+            "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+            "metadata_changed:paper_title",
+            "metadata_changed:page_chunk_index",
+            "metadata_changed:content_type"
+          ]
+        },
+        {
+          "status": "stale",
+          "vector_id": "chunk_95",
+          "paper_id": 2,
+          "chunk_id": 95,
+          "reasons": [
+            "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+            "metadata_changed:paper_title",
+            "metadata_changed:page_chunk_index",
+            "metadata_changed:content_type"
+          ]
+        },
+        {
+          "status": "stale",
+          "vector_id": "chunk_96",
+          "paper_id": 2,
+          "chunk_id": 96,
+          "reasons": [
+            "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+            "metadata_changed:paper_title",
+            "metadata_changed:page_chunk_index",
+            "metadata_changed:content_type"
+          ]
+        },
+        {
+          "status": "stale",
+          "vector_id": "chunk_97",
+          "paper_id": 2,
+          "chunk_id": 97,
+          "reasons": [
+            "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+            "metadata_changed:paper_title",
+            "metadata_changed:page_chunk_index",
+            "metadata_changed:content_type"
+          ]
+        },
+        {
+          "status": "stale",
+          "vector_id": "chunk_98",
+          "paper_id": 2,
+          "chunk_id": 98,
+          "reasons": [
+            "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+            "metadata_changed:paper_title",
+            "metadata_changed:page_chunk_index",
+            "metadata_changed:content_type"
+          ]
+        },
+        {
+          "status": "stale",
+          "vector_id": "chunk_99",
+          "paper_id": 2,
+          "chunk_id": 99,
+          "reasons": [
+            "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+            "metadata_changed:paper_title",
+            "metadata_changed:page_chunk_index",
+            "metadata_changed:content_type"
+          ]
+        },
+        {
+          "status": "stale",
+          "vector_id": "chunk_100",
+          "paper_id": 2,
+          "chunk_id": 100,
+          "reasons": [
+            "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+            "metadata_changed:paper_title",
+            "metadata_changed:page_chunk_index",
+            "metadata_changed:content_type"
+          ]
+        }
+      ],
+      "index_schema_version": 3,
+      "content_hash_algorithm": "sha256",
+      "content_normalization_version": "nfkc-lf-strip-v1",
+      "consistent": false
+    },
+    "after": {
+      "scope": "collection",
+      "sqlite_chunk_count": 474,
+      "chroma_vector_count": 474,
+      "missing_vector_count": 0,
+      "stale_vector_count": 0,
+      "legacy_vector_count": 0,
+      "orphan_vector_count": 0,
+      "unverifiable_vector_count": 0,
+      "read_error_count": 0,
+      "parse_incomplete_page_count": 0,
+      "parse_affected_paper_ids": [],
+      "parse_issue_details": [],
+      "missing_vector_ids": [],
+      "stale_vector_ids": [],
+      "legacy_vector_ids": [],
+      "orphan_vector_ids": [],
+      "affected_paper_ids": [],
+      "orphan_paper_ids": [],
+      "issues": [],
+      "index_schema_version": 3,
+      "content_hash_algorithm": "sha256",
+      "content_normalization_version": "nfkc-lf-strip-v1",
+      "consistent": true
+    }
+  },
+  "rebuild_job": {
+    "id": "25f666ec-3259-4bb8-beae-6dfcafc76acf",
+    "kind": "index_rebuild",
+    "submitted_once": true,
+    "post_log_count": 1,
+    "initial_status": "running",
+    "final_status": "completed",
+    "total_count": 8,
+    "completed_count": 8,
+    "failed_count": 0,
+    "progress": 100,
+    "items": [
+      {
+        "id": "5991a4da-cab9-4d31-99f4-383d7f9d68a0",
+        "original_filename": "1706.03762v7.pdf",
+        "paper_id": 1,
+        "status": "succeeded",
+        "parse_status": "parsed",
+        "index_status": "indexed",
+        "current_stage": "completed",
+        "progress": 100,
+        "attempts": 1,
+        "error_message": null,
+        "file_size": 2215244,
+        "can_retry": false,
+        "created_at": "2026-11-16T09:28:58",
+        "updated_at": "2026-11-16T09:29:58"
+      },
+      {
+        "id": "9ce90908-f25b-4d5f-b50a-b572c581b6a6",
+        "original_filename": "v0.1.0test.pdf",
+        "paper_id": 2,
+        "status": "succeeded",
+        "parse_status": "parsed",
+        "index_status": "indexed",
+        "current_stage": "completed",
+        "progress": 100,
+        "attempts": 1,
+        "error_message": null,
+        "file_size": 1046705,
+        "can_retry": false,
+        "created_at": "2026-11-16T09:28:58",
+        "updated_at": "2026-11-16T09:30:57"
+      },
+      {
+        "id": "5cd8702d-f9b5-4df8-86ac-7648f91a24d9",
+        "original_filename": "phase1_upload_test.pdf",
+        "paper_id": 3,
+        "status": "succeeded",
+        "parse_status": "parsed",
+        "index_status": "indexed",
+        "current_stage": "completed",
+        "progress": 100,
+        "attempts": 1,
+        "error_message": null,
+        "file_size": 1186,
+        "can_retry": false,
+        "created_at": "2026-11-16T09:28:58",
+        "updated_at": "2026-11-16T09:30:57"
+      },
+      {
+        "id": "c75739af-84a2-49fc-8694-b07df672b0d5",
+        "original_filename": "è¯è®ºç½ç»ç»´æ¤ä¸­Pingå½ä»¤çä½¿ç¨åéè¯¯æç¤ºåæ.pdf",
+        "paper_id": 4,
+        "status": "succeeded",
+        "parse_status": "parsed",
+        "index_status": "indexed",
+        "current_stage": "completed",
+        "progress": 100,
+        "attempts": 1,
+        "error_message": null,
+        "file_size": 112229,
+        "can_retry": false,
+        "created_at": "2026-11-16T09:28:58",
+        "updated_at": "2026-11-16T09:31:08"
+      },
+      {
+        "id": "c5e285b9-40e2-45e6-b5fc-17f86cac0400",
+        "original_filename": "2505.03016v1.pdf",
+        "paper_id": 5,
+        "status": "succeeded",
+        "parse_status": "parsed",
+        "index_status": "indexed",
+        "current_stage": "completed",
+        "progress": 100,
+        "attempts": 1,
+        "error_message": null,
+        "file_size": 9317661,
+        "can_retry": false,
+        "created_at": "2026-11-16T09:28:58",
+        "updated_at": "2026-11-16T09:33:30"
+      },
+      {
+        "id": "43edfa42-f1c7-4dd3-ba52-89bee2ec4d6e",
+        "original_filename": "A200803-1664.pdf",
+        "paper_id": 6,
+        "status": "succeeded",
+        "parse_status": "parsed",
+        "index_status": "indexed",
+        "current_stage": "completed",
+        "progress": 100,
+        "attempts": 1,
+        "error_message": null,
+        "file_size": 782150,
+        "can_retry": false,
+        "created_at": "2026-11-16T09:28:58",
+        "updated_at": "2026-11-16T09:33:50"
+      },
+      {
+        "id": "01d64084-5bb2-4e2c-b48c-dcf3ca4969c1",
+        "original_filename": "ass_2400715.pdf",
+        "paper_id": 7,
+        "status": "succeeded",
+        "parse_status": "parsed",
+        "index_status": "indexed",
+        "current_stage": "completed",
+        "progress": 100,
+        "attempts": 1,
+        "error_message": null,
+        "file_size": 618599,
+        "can_retry": false,
+        "created_at": "2026-11-16T09:28:58",
+        "updated_at": "2026-11-16T09:34:29"
+      },
+      {
+        "id": "1d605a39-cdae-4557-b40c-59965d1566dc",
+        "original_filename": "csa20190900000_57172524.pdf",
+        "paper_id": 8,
+        "status": "succeeded",
+        "parse_status": "parsed",
+        "index_status": "indexed",
+        "current_stage": "completed",
+        "progress": 100,
+        "attempts": 1,
+        "error_message": null,
+        "file_size": 1498953,
+        "can_retry": false,
+        "created_at": "2026-11-16T09:28:58",
+        "updated_at": "2026-11-16T09:34:44"
+      }
+    ],
+    "created_at": "2026-11-16T09:28:58",
+    "updated_at": "2026-11-16T09:34:44"
+  },
+  "papers": [
+    {
+      "paper_id": 1,
+      "title": "Attention Is All You Need",
+      "index_status": "indexed",
+      "chunk_count": 90,
+      "vector_count": 90,
+      "counts_match": true,
+      "pdf_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697.pdf",
+      "pdf_exists": true,
+      "pdf_in_demo_uploads": true,
+      "pdf_sha256_matches": true,
+      "pdf_size_matches": true
+    },
+    {
+      "paper_id": 2,
+      "title": "信息系统架构发展展望——以国家自然科学基金委员会信息系统为例",
+      "index_status": "indexed",
+      "chunk_count": 49,
+      "vector_count": 49,
+      "counts_match": true,
+      "pdf_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\12b06565d00bb4a6ea38c0699430f78a3e59662e30d503f8e88f4c4c4bd12de8.pdf",
+      "pdf_exists": true,
+      "pdf_in_demo_uploads": true,
+      "pdf_sha256_matches": true,
+      "pdf_size_matches": true
+    },
+    {
+      "paper_id": 3,
+      "title": "NetResearch AI Phase One Upload Test",
+      "index_status": "indexed",
+      "chunk_count": 1,
+      "vector_count": 1,
+      "counts_match": true,
+      "pdf_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\f3057a4391f2f04fa39ccbac7cb01eec9977b8067ad1fc61c00ec6f3591068e5.pdf",
+      "pdf_exists": true,
+      "pdf_in_demo_uploads": true,
+      "pdf_sha256_matches": true,
+      "pdf_size_matches": true
+    },
+    {
+      "paper_id": 4,
+      "title": "试论网络维护中Ping命令的使用及错误提示分析",
+      "index_status": "indexed",
+      "chunk_count": 8,
+      "vector_count": 8,
+      "counts_match": true,
+      "pdf_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\8c0d7e3cea2d00b5ffe72242bdd55734da9c8940ebec29d6c260ba53f050d292.pdf",
+      "pdf_exists": true,
+      "pdf_in_demo_uploads": true,
+      "pdf_sha256_matches": true,
+      "pdf_size_matches": true
+    },
+    {
+      "paper_id": 5,
+      "title": "Date of publication xxxx 00, 0000, date of current version xxxx 00, 0000.",
+      "index_status": "indexed",
+      "chunk_count": 257,
+      "vector_count": 257,
+      "counts_match": true,
+      "pdf_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\2b0579ef6732ea9374f94184c38c6817c599c03e37dc7375757b79f0934c6de6.pdf",
+      "pdf_exists": true,
+      "pdf_in_demo_uploads": true,
+      "pdf_sha256_matches": true,
+      "pdf_size_matches": true
+    },
+    {
+      "paper_id": 6,
+      "title": "Preparation of Papers in Two-Column Format",
+      "index_status": "indexed",
+      "chunk_count": 16,
+      "vector_count": 16,
+      "counts_match": true,
+      "pdf_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\b9ecd17c7063ca59834d9b2ed67d09ae87a5973ab02ec173799e51d452885bd8.pdf",
+      "pdf_exists": true,
+      "pdf_in_demo_uploads": true,
+      "pdf_sha256_matches": true,
+      "pdf_size_matches": true
+    },
+    {
+      "paper_id": 7,
+      "title": "AI赋能与风险并存：大学生AI使用行为的心理效应及引导路径",
+      "index_status": "indexed",
+      "chunk_count": 38,
+      "vector_count": 38,
+      "counts_match": true,
+      "pdf_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\a5c79a4d67f8da8b7728d553f21d360f65dce49b2608b2c4d120bd7085d53a42.pdf",
+      "pdf_exists": true,
+      "pdf_in_demo_uploads": true,
+      "pdf_sha256_matches": true,
+      "pdf_size_matches": true
+    },
+    {
+      "paper_id": 8,
+      "title": "基于计算机网络技术的计算机网络信息安全及其防护策略",
+      "index_status": "indexed",
+      "chunk_count": 15,
+      "vector_count": 15,
+      "counts_match": true,
+      "pdf_path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\uploads\\5ed703cf3add6a537e83dd8712edc99196b963f28697f61e14cbcd80b938b25e.pdf",
+      "pdf_exists": true,
+      "pdf_in_demo_uploads": true,
+      "pdf_sha256_matches": true,
+      "pdf_size_matches": true
+    }
+  ],
+  "database": {
+    "integrity_check": [
+      "ok"
+    ],
+    "foreign_key_check": [],
+    "paper_count": 8,
+    "paper_chunk_count": 474,
+    "all_indexed": true
+  },
+  "chroma": {
+    "sqlite_integrity_check": [
+      "ok"
+    ],
+    "vector_count": 474,
+    "unique_vector_count": 474,
+    "duplicate_ids": [],
+    "expected_chunk_id_count": 474,
+    "missing_vector_ids": [],
+    "orphan_vector_ids": [],
+    "exact_id_set_match": true,
+    "index_fingerprint_count": 474,
+    "metadata_counts": {
+      "chroma:document": 474,
+      "chunk_id": 474,
+      "content_hash": 474,
+      "content_hash_algorithm": 474,
+      "content_normalization_version": 474,
+      "content_type": 474,
+      "index_fingerprint": 474,
+      "index_schema_version": 474,
+      "page_chunk_index": 474,
+      "page_number": 474,
+      "paper_id": 474,
+      "paper_title": 474
+    },
+    "file_count": 6,
+    "total_bytes": 9904726,
+    "fingerprint": "67c6c01f799120264075ffbfb4e3c908d1635259e79746955e7766a7bfa937eb",
+    "missing_required_files": [],
+    "files": [
+      {
+        "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db\\chroma.sqlite3",
+        "relative_path": "maintenance/demo-20261118-r1/chroma_db/chroma.sqlite3",
+        "size": 7577600,
+        "sha256": "f44f102a75073097302dadbda7257f5cfa469eaadd38d203fe355150bcf76b8b"
+      },
+      {
+        "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\data_level0.bin",
+        "relative_path": "maintenance/demo-20261118-r1/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/data_level0.bin",
+        "size": 2304384,
+        "sha256": "1930ddbcae6ca008eceb5d449bd8c5523f9dfbf3027f71ce7b30bf39683c56f2"
+      },
+      {
+        "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\header.bin",
+        "relative_path": "maintenance/demo-20261118-r1/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/header.bin",
+        "size": 100,
+        "sha256": "e33cab57086cd20111dd7084e6f8686e1ac486f2abfb47d9197afcdff8242af6"
+      },
+      {
+        "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\index_metadata.pickle",
+        "relative_path": "maintenance/demo-20261118-r1/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/index_metadata.pickle",
+        "size": 15910,
+        "sha256": "e58835294aad2401148a4d4771a4e44a091f02163efa2bddf4628fc99a6605e6"
+      },
+      {
+        "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\length.bin",
+        "relative_path": "maintenance/demo-20261118-r1/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/length.bin",
+        "size": 2176,
+        "sha256": "e4c21ab6cfb3ac84d34a6b960ce7495694247de765734ac6e40bc381616a7b2e"
+      },
+      {
+        "path": "C:\\Users\\ranna\\NetResearchAI\\maintenance\\demo-20261118-r1\\chroma_db\\ec4a224f-2e61-441c-9c48-ac95019e9b24\\link_lists.bin",
+        "relative_path": "maintenance/demo-20261118-r1/chroma_db/ec4a224f-2e61-441c-9c48-ac95019e9b24/link_lists.bin",
+        "size": 4556,
+        "sha256": "aebb63af45663e0af98f655a7cf067d046b70dacc1f260b99fd5bfbd25bc8178"
+      }
+    ]
+  },
+  "safety_review": {
+    "historical_import_items": [
+      {
+        "id": "24c5c097-7a11-4ddd-b1fa-69c4cfc7ba97",
+        "status": "succeeded",
+        "current_stage": "completed",
+        "staged_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\.imports\\1eda31bf-d156-4ebe-9ffc-c13c5f8ae006.pdf"
+      },
+      {
+        "id": "28c6f32d-9487-4fc9-bf1a-5cdae2296449",
+        "status": "succeeded",
+        "current_stage": "completed",
+        "staged_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\.imports\\01d32ec2-4d16-45b0-bac1-71c2c70de19c.pdf"
+      },
+      {
+        "id": "3e3ee272-dc68-4096-80cc-768115ef9058",
+        "status": "succeeded",
+        "current_stage": "completed",
+        "staged_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\.imports\\2662d78e-cae1-4bf1-be84-cab4401576bb.pdf"
+      },
+      {
+        "id": "e3c80fb3-8c32-4f14-9db0-d3350264168a",
+        "status": "succeeded",
+        "current_stage": "completed",
+        "staged_path": "C:\\Users\\ranna\\NetResearchAI\\backend\\data\\uploads\\.imports\\730f0a69-044b-4cf0-bbb5-8968bdf91fe5.pdf"
+      }
+    ],
+    "cleanup_scope": "failed items only; orphan staging scan rooted at demo uploads/.imports",
+    "recovery_scope": "running items only",
+    "index_worker_staged_path": "not used for index_rebuild; item.staged_path is None",
+    "worker_force_false": true
+  },
+  "environment_protection": {
+    "formal_unchanged": true,
+    "staging_unchanged": true,
+    "combined_unchanged": true,
+    "formal_before_fingerprint": "e3d2cdef5ed1cccb672b6377822a108959cb6f8d0c6650620a66bae222729e42",
+    "formal_after_fingerprint": "e3d2cdef5ed1cccb672b6377822a108959cb6f8d0c6650620a66bae222729e42",
+    "staging_before_fingerprint": "21707147ce63925c9bc64c39924b33e27160602a76db6a07086227f2dca5f5a3",
+    "staging_after_fingerprint": "21707147ce63925c9bc64c39924b33e27160602a76db6a07086227f2dca5f5a3"
+  },
+  "failures": [],
+  "warnings": [
+    "First startup attempt exited before DB/Chroma access because sandbox denied torch DLL loading; a single authorized non-sandbox retry succeeded.",
+    "Pre-rebuild audit legacy count was 384 rather than 386 because chunk_1 and chunk_2 were stale with current schema markers; this is explained by their reported document/title/page changes.",
+    "Four completed historical paper_import_items retain formal uploads staged_path metadata; startup safety review proved they are not queued/running and are not used by index rebuild."
+  ],
+  "unverified": []
+}

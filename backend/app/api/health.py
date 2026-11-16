@@ -14,7 +14,7 @@ def health_check():
             "name": settings.app_name,
             "status": "ok",
             "env": settings.app_env,
-            "version": "0.2.0",
+            "version": "0.3.0-dev.0",
             "features": {
                 "pdf_upload": "ready",
                 "pdf_parse": "ready",
@@ -22,9 +22,16 @@ def health_check():
                 "rag": "ready",
                 "agent": "partial",
                 "paper_qa": "ready",
+                "discovery": "ready",
+                "citation_graph": "preview",
+                "multi_paper_review": "ready",
+                "academic_writing": "basic",
+                "structured_reading_translation": "ready",
+                "data_analysis": "ready",
+                "research_agent": "v0.4.0_preview_read_only",
                 "langgraph_agent": "planned",
-                "citation_graph": "planned",
-                "version_compare": "planned",
+                "scientific_knowledge_graph": "planned_v0.5.0",
+                "version_compare": "not_implemented",
             },
         }
     )

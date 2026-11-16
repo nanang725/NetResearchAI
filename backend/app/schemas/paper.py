@@ -124,6 +124,35 @@ class PaperDetail(PaperListItem):
     pages: list[PaperPageOut] = Field(default_factory=list)
 
 
+class PaperTranslationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    page_number: int = Field(gt=0)
+    element_id: int | None = Field(default=None, gt=0)
+    direction: Literal["zh_to_en", "en_to_zh"]
+
+
+class PaperTranslationData(BaseModel):
+    paper_id: int
+    page_number: int
+    element_id: int | None
+    scope: Literal["page", "element"]
+    direction: Literal["zh_to_en", "en_to_zh"]
+    source_language: str
+    target_language: str
+    original_text: str
+    translated_text: str
+    protected_token_count: int
+    model: str
+    disclaimer: str
+
+
+class PaperTranslationResponse(BaseModel):
+    success: Literal[True]
+    data: PaperTranslationData
+    error: None
+
+
 class PaperUploadResult(PaperDetail):
     pass
 

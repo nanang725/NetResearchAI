@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     api_port: int = 8000
     database_url: str = f"sqlite:///{(BACKEND_ROOT / 'data' / 'netresearch.db').as_posix()}"
     upload_dir: str = str(BACKEND_ROOT / "data" / "uploads")
+    chroma_dir: str = str(BACKEND_ROOT / "data" / "chroma_db")
     max_upload_mb: int = 50
     max_batch_files: int = Field(default=20, ge=1, le=100)
     max_batch_upload_mb: int = Field(default=200, ge=1)
@@ -44,6 +45,16 @@ class Settings(BaseSettings):
     @property
     def upload_path(self) -> Path:
         return Path(self.upload_dir).resolve()
+
+    @property
+    def chroma_path(self) -> Path:
+        configured = self.chroma_dir.strip()
+        path = (
+            Path(configured)
+            if configured
+            else BACKEND_ROOT / "data" / "chroma_db"
+        )
+        return path.expanduser().resolve()
 
     @property
     def max_upload_bytes(self) -> int:

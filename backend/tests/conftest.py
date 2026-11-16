@@ -56,10 +56,13 @@ def _build_isolated_environment(tmp_path, monkeypatch, *, start_worker: bool):
 
     db_file = tmp_path / "test.db"
     upload_dir = tmp_path / "uploads"
+    chroma_dir = tmp_path / "chroma_db"
     upload_dir.mkdir(parents=True)
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_file.as_posix()}")
     monkeypatch.setenv("UPLOAD_DIR", str(upload_dir))
+    monkeypatch.setenv("CHROMA_DIR", str(chroma_dir))
     monkeypatch.setenv("MAX_UPLOAD_MB", "1")
+    monkeypatch.setenv("OCR_ENABLED", "true")
     get_settings.cache_clear()
 
     test_engine = create_engine(
@@ -135,6 +138,7 @@ def _build_isolated_environment(tmp_path, monkeypatch, *, start_worker: bool):
                 "engine": test_engine,
                 "session_factory": testing_session,
                 "upload_dir": upload_dir,
+                "chroma_dir": chroma_dir,
                 "vector_state": vector_state,
             }
     finally:

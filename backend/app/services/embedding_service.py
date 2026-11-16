@@ -52,8 +52,6 @@ MODEL_NAME = "BAAI/bge-m3"
 MODEL_DIR = BACKEND_ROOT / "data" / "models"
 
 # ChromaDB 持久化目录
-CHROMA_DIR = BACKEND_ROOT / "data" / "chroma_db"
-
 # ChromaDB 集合名称
 COLLECTION_NAME = "netresearch_paper_chunks"
 
@@ -183,12 +181,17 @@ def get_embedding_model() -> SentenceTransformer:
         return _model
 
 
+def get_chroma_dir() -> Path:
+    """Return the configured persistent Chroma directory."""
+    return get_settings().chroma_path
+
+
 def get_chroma_collection():
     """
     获取 ChromaDB 持久化集合。
 
     数据保存在：
-    backend/data/chroma_db
+    CHROMA_DIR, defaulting to backend/data/chroma_db
     """
     global _chroma_client, _collection
 
@@ -199,12 +202,13 @@ def get_chroma_collection():
         if _collection is not None:
             return _collection
 
-        CHROMA_DIR.mkdir(parents=True, exist_ok=True)
+        chroma_dir = get_chroma_dir()
+        chroma_dir.mkdir(parents=True, exist_ok=True)
 
         print("[ChromaDB] 正在初始化本地向量数据库...")
 
         _chroma_client = chromadb.PersistentClient(
-            path=str(CHROMA_DIR)
+            path=str(chroma_dir)
         )
 
         _collection = _chroma_client.get_or_create_collection(
@@ -1662,6 +1666,6 @@ def get_vector_index_stats() -> dict[str, Any]:
     return {
         "collection_name": COLLECTION_NAME,
         "collection_count": collection.count(),
-        "storage_path": str(CHROMA_DIR),
+        "storage_path": str(get_chroma_dir()),
         "model_name": MODEL_NAME,
     }

@@ -47,6 +47,29 @@ export interface PaperDetail extends PaperListItem {
   pages: PaperPage[];
 }
 
+export type TranslationDirection = "zh_to_en" | "en_to_zh";
+
+export interface TranslationRequest {
+  page_number: number;
+  element_id?: number;
+  direction: TranslationDirection;
+}
+
+export interface TranslationResult {
+  paper_id: number;
+  page_number: number;
+  element_id: number | null;
+  scope: "page" | "element";
+  direction: TranslationDirection;
+  source_language: string;
+  target_language: string;
+  original_text: string;
+  translated_text: string;
+  protected_token_count: number;
+  model: string;
+  disclaimer: string;
+}
+
 export interface ImportJobItem {
   id: string;
   original_filename: string;

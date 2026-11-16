@@ -7,6 +7,8 @@ import type {
   PaperListItem,
   PaperVersion,
   SimilarPaperCandidate,
+  TranslationRequest,
+  TranslationResult,
 } from "@/types/paper";
 
 export async function fetchHealth(): Promise<HealthData> {
@@ -21,6 +23,17 @@ export async function fetchPapers(): Promise<PaperListItem[]> {
 
 export async function fetchPaper(id: number): Promise<PaperDetail> {
   const { data } = await http.get<PaperDetail>(`/papers/${id}`);
+  return data;
+}
+
+export async function translatePaperText(
+  id: number,
+  request: TranslationRequest,
+): Promise<TranslationResult> {
+  const { data } = await http.post<TranslationResult>(
+    `/papers/${id}/translate`,
+    request,
+  );
   return data;
 }
 

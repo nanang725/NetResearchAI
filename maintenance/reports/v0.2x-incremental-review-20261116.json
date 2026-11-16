@@ -1,0 +1,352 @@
+{
+  "review": {
+    "title": "NetResearch AI v0.2.x incremental review",
+    "reviewed_at": "2026-11-16",
+    "base_commit": "7db831d844ef629699d8802021fb5990aafb2e81",
+    "base_subject": "7db831d 完成 v0.2.x 文献管理与批量解析功能",
+    "branch": "main",
+    "head": "7db831d844ef629699d8802021fb5990aafb2e81",
+    "read_only": true,
+    "sensitive_files_read": false
+  },
+  "git_increment": {
+    "tracked_modified_files": 15,
+    "tracked_insertions": 777,
+    "tracked_deletions": 32,
+    "untracked_paths": 162,
+    "untracked_count_note": "Inventory excludes the two review report files generated after the read-only scan.",
+    "untracked_code_and_test_paths": 59,
+    "untracked_maintenance_paths": 103,
+    "untracked_visible_binary_files": 80,
+    "untracked_visible_binary_bytes": 135152651,
+    "deleted_files": 0,
+    "renamed_files": 0,
+    "new_backend_product_files": 26,
+    "new_backend_script_files": 2,
+    "new_backend_test_files": 11,
+    "new_frontend_product_files": 16,
+    "new_frontend_test_files": 4,
+    "new_backend_test_functions": 88,
+    "new_frontend_test_cases": 9
+  },
+  "modules": [
+    {
+      "module": "chroma_path_configuration",
+      "implementation_status": "completed",
+      "frontend_status": "not_user_facing",
+      "test_status": "directed_tests_passed",
+      "version_recommendation": "v0.2.x",
+      "evidence": [
+        "backend/app/config.py",
+        "backend/app/services/embedding_service.py",
+        "backend/tests/test_chroma_config.py",
+        "maintenance/demo-20261118-r1/reports/chroma-repair-final.json"
+      ],
+      "main_issues": [
+        "Path isolation itself is complete; broader index-audit algorithm coverage predates this increment."
+      ]
+    },
+    {
+      "module": "index_consistency_and_repair",
+      "implementation_status": "completed_existing_integration",
+      "frontend_status": "existing_library_entry",
+      "test_status": "real_pdf_reports_and_demo_acceptance_available",
+      "version_recommendation": "v0.2.x",
+      "evidence": [
+        "backend/app/services/embedding_service.py",
+        "backend/app/services/ingestion_service.py",
+        "backend/tests/test_index_content_consistency.py",
+        "backend/.pytest_cache/real_pdf_regression_report.json",
+        "maintenance/demo-20261118-r1/reports/chroma-repair-final.json"
+      ],
+      "main_issues": [
+        "Automated index framework largely predates this diff.",
+        "Demo 474/474 success is environment acceptance, not proof for all corpora."
+      ]
+    },
+    {
+      "module": "paper_element_backfill",
+      "implementation_status": "completed_internal_tool",
+      "frontend_status": "not_user_facing",
+      "test_status": "automated_tests_available_full_run_not_found",
+      "version_recommendation": "v0.2.x_internal",
+      "evidence": [
+        "backend/scripts/backfill_paper_elements.py",
+        "backend/tests/test_paper_element_backfill.py",
+        "maintenance/paper-element-staging-20261116-125304/reports/apply-final.json"
+      ],
+      "main_issues": [
+        "Maintenance tooling must not become an automatic production endpoint."
+      ]
+    },
+    {
+      "module": "citation_relations_and_graph",
+      "implementation_status": "completed_code_partial_real_data",
+      "frontend_status": "complete",
+      "test_status": "automated_tests_available_full_run_not_found",
+      "version_recommendation": "v0.3.0_preview_v0.5.0_full",
+      "evidence": [
+        "backend/app/models/citation.py",
+        "backend/app/services/citation_service.py",
+        "backend/app/api/citations.py",
+        "frontend/src/views/CitationGraphView.vue",
+        "backend/tests/test_citation_service.py",
+        "backend/tests/test_citation_api.py"
+      ],
+      "main_issues": [
+        "Demo corpus has 252 references but 0 citation edges.",
+        "Full rebuild is synchronous.",
+        "Per-paper rebuild API has no complete UI action."
+      ]
+    },
+    {
+      "module": "arxiv_discovery",
+      "implementation_status": "partial_complete_loop_status_bug",
+      "frontend_status": "complete_main_flow",
+      "test_status": "automated_tests_available_full_run_not_found",
+      "version_recommendation": "v0.3.0",
+      "evidence": [
+        "backend/app/services/arxiv_service.py",
+        "backend/app/services/discovery_service.py",
+        "backend/app/api/discovery.py",
+        "frontend/src/views/DiscoveryView.vue",
+        "backend/tests/test_discovery_api.py"
+      ],
+      "main_issues": [
+        "discovery_service._serialize_favorite checks item.status == completed while worker success is succeeded.",
+        "Tracking is manual only.",
+        "No live arXiv CI smoke evidence."
+      ]
+    },
+    {
+      "module": "multi_paper_review",
+      "implementation_status": "completed",
+      "frontend_status": "complete",
+      "test_status": "automated_tests_available_full_run_not_found",
+      "version_recommendation": "v0.3.0",
+      "evidence": [
+        "backend/app/services/literature_review_service.py",
+        "backend/app/api/reviews.py",
+        "frontend/src/views/MultiPaperReviewView.vue",
+        "backend/tests/test_literature_review.py",
+        "backend/tests/test_multi_paper_reasoning.py"
+      ],
+      "main_issues": [
+        "Real LLM/provider behavior is not covered by current tests.",
+        "No deterministic fallback review is implemented."
+      ]
+    },
+    {
+      "module": "multi_paper_agent_chat",
+      "implementation_status": "completed_backend",
+      "frontend_status": "not_delivered",
+      "test_status": "automated_tests_available_full_run_not_found",
+      "version_recommendation": "v0.3.0",
+      "evidence": [
+        "backend/app/api/papers.py",
+        "backend/tests/test_multi_paper_reasoning.py",
+        "frontend/src/api/papers.ts",
+        "frontend/src/views/QaView.vue"
+      ],
+      "main_issues": [
+        "Frontend chatWithAgent sends paperId only, not paper_ids.",
+        "QaView has no multi-paper selection workflow."
+      ]
+    },
+    {
+      "module": "academic_writing",
+      "implementation_status": "partial",
+      "frontend_status": "complete_for_outline_references",
+      "test_status": "automated_tests_available_full_run_not_found",
+      "version_recommendation": "v0.3.0",
+      "evidence": [
+        "backend/app/services/academic_writing_service.py",
+        "backend/app/api/writing.py",
+        "frontend/src/views/AcademicWritingView.vue",
+        "backend/tests/test_writing_api.py"
+      ],
+      "main_issues": [
+        "Outline is a deterministic template, not a full drafting editor.",
+        "No DOCX/PDF export, citation insertion or revision history."
+      ]
+    },
+    {
+      "module": "translation_reader",
+      "implementation_status": "completed",
+      "frontend_status": "complete",
+      "test_status": "automated_tests_available_full_run_not_found",
+      "version_recommendation": "v0.3.0",
+      "evidence": [
+        "backend/app/services/translation_service.py",
+        "backend/app/api/papers.py",
+        "frontend/src/views/PaperDetailView.vue",
+        "backend/tests/test_translation_api.py",
+        "frontend/tests/translationReader.test.mjs"
+      ],
+      "main_issues": [
+        "No real provider end-to-end translation regression.",
+        "Translation caching is page-memory only."
+      ]
+    },
+    {
+      "module": "csv_analysis",
+      "implementation_status": "completed_lightweight",
+      "frontend_status": "complete_embedded_tab",
+      "test_status": "automated_tests_available_full_run_not_found",
+      "version_recommendation": "v0.3.0",
+      "evidence": [
+        "backend/app/services/data_analysis_service.py",
+        "backend/app/api/datasets.py",
+        "frontend/src/views/AcademicWritingView.vue",
+        "backend/tests/test_writing_api.py"
+      ],
+      "main_issues": [
+        "Only one chart type and no saved datasets or analysis history."
+      ]
+    },
+    {
+      "module": "research_agent",
+      "implementation_status": "completed_first_read_only_version",
+      "frontend_status": "complete",
+      "test_status": "directed_tests_passed_12",
+      "version_recommendation": "v0.4.0",
+      "evidence": [
+        "backend/app/services/research_agent/planner.py",
+        "backend/app/services/research_agent/executor.py",
+        "backend/app/services/research_agent/tools.py",
+        "backend/app/api/research_agent.py",
+        "frontend/src/views/ResearchAgentView.vue",
+        "backend/tests/test_research_agent.py"
+      ],
+      "main_issues": [
+        "No restart recovery for interrupted runs.",
+        "Cannot force-stop an in-flight synchronous tool.",
+        "No real LLM end-to-end regression.",
+        "No multi-user or multi-run resource governance."
+      ]
+    },
+    {
+      "module": "task_and_database_integration",
+      "implementation_status": "completed_mvp_with_migration_gap",
+      "frontend_status": "used_by_features",
+      "test_status": "mixed_existing_and_new_tests",
+      "version_recommendation": "v0.2.x_engineering",
+      "evidence": [
+        "backend/app/main.py",
+        "backend/app/models/__init__.py",
+        "backend/app/services/ingestion_service.py",
+        "backend/app/database.py"
+      ],
+      "main_issues": [
+        "No Alembic/formal schema versioning.",
+        "Base.metadata.create_all is the primary new-table creation mechanism."
+      ]
+    }
+  ],
+  "test_evidence": {
+    "directly_observed_pass": [
+      "research_agent directed suite: 12 passed",
+      "chroma config plus embedding model loading: 7 passed",
+      "frontend production build: success"
+    ],
+    "existing_reports": [
+      "real PDF deterministic embedding: 4/4 passed, 417 chunks/vectors consistent",
+      "real BGE-M3 P09: 1 passed, 3 skipped, 16 chunks/vectors consistent",
+      "demo Chroma repair: SUCCESS, 474 chunks/vectors, all consistency counters zero",
+      "PaperElement staging apply: success, 1847 elements",
+      "citation staging: 252 references, source unchanged, idempotent"
+    ],
+    "not_fully_verified_in_this_audit": [
+      "All 88 backend tests as one suite",
+      "All 9 new frontend utility tests as one suite",
+      "Live arXiv network behavior",
+      "Live LLM review, translation, writing and research planning",
+      "Real-data citation graph edges",
+      "Agent restart and concurrency behavior"
+    ]
+  },
+  "classification": {
+    "completed": [
+      "Chroma path isolation",
+      "Citation graph code and UI",
+      "PaperElement and citation staging tools",
+      "arXiv discovery main flow",
+      "Multi-paper review",
+      "Academic outline and References",
+      "CSV analysis",
+      "Structured reading and translation",
+      "First read-only Research Agent"
+    ],
+    "partial": [
+      "Discovery final import status",
+      "Real citation graph data coverage",
+      "Academic writing beyond outline/references",
+      "Tracking automation",
+      "Research Agent recovery and production scheduling",
+      "Multi-paper agent chat UI"
+    ],
+    "not_completed": [
+      "Full research knowledge graph",
+      "Long-term research memory",
+      "Full writing editor and export",
+      "Authentication and multi-tenant deployment",
+      "Formal database migration framework",
+      "Version comparison frontend"
+    ]
+  },
+  "release_guidance": {
+    "v0.2.x": [
+      "Chroma path isolation and release hardening",
+      "Internal backfill and staging tools"
+    ],
+    "v0.3.0": [
+      "Structured reader and translation",
+      "Local citation graph preview",
+      "arXiv discovery",
+      "Multi-paper review",
+      "Writing outline/references/CSV workspace"
+    ],
+    "v0.4.0": [
+      "Persistent read-only research agent",
+      "Recovery and production task scheduling follow-up"
+    ],
+    "v0.5.0": [
+      "Full research knowledge graph with broader entities and real corpus coverage"
+    ],
+    "v1.0.0": [
+      "Complete writing Copilot, deployment, auth, migrations and product hardening"
+    ]
+  },
+  "commit_guidance": {
+    "include_in_github": [
+      "backend/app new APIs, models, schemas and services",
+      "backend/scripts controlled maintenance tools",
+      "backend/tests",
+      "frontend/src application code",
+      "frontend/tests",
+      ".env.example",
+      "README and release documentation",
+      "Optionally the two review reports as text documentation"
+    ],
+    "exclude_from_normal_github_commit": [
+      "maintenance/**/*.pdf",
+      "maintenance/**/chroma.sqlite3",
+      "maintenance/**/*.bin",
+      "maintenance/**/*.pickle",
+      "maintenance/**/backups/",
+      "maintenance/**/sqlite/*.db",
+      "maintenance/**/logs/",
+      "all demo databases, uploads and Chroma directories"
+    ]
+  },
+  "highest_priority_actions": [
+    "Add maintenance ignore rules before staging files.",
+    "Fix Discovery ImportItem succeeded-to-imported mapping and add regression test.",
+    "Create CI for the new backend and frontend tests.",
+    "Align README, health metadata and package versions.",
+    "Add QaView multi-paper selection or explicitly defer the backend feature.",
+    "Validate live arXiv and LLM dependencies with sanitized acceptance evidence.",
+    "Add Agent restart recovery and formal database migrations."
+  ],
+  "overall_conclusion": "The local increment contains real integrated products rather than placeholders, including discovery, citation graph, review, writing, CSV, translation and a persistent read-only research agent. It is beyond a v0.2.x patch. Release only after repository asset hygiene, the Discovery status fix, CI, documentation/version alignment and external dependency validation."
+}

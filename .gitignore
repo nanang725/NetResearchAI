@@ -34,3 +34,17 @@ backend/data/models/
 
 # Vector Database
 backend/data/chroma_db/
+
+# Maintenance-generated demonstration assets
+maintenance/**/*.pdf
+maintenance/**/*.sqlite3
+maintenance/**/*.bin
+maintenance/**/*.pickle
+maintenance/**/backups/
+maintenance/**/chroma_db/
+maintenance/**/sqlite/
+maintenance/**/uploads/
+maintenance/**/logs/
+maintenance/**/*.tmp
+maintenance/**/*.bak
+maintenance/**/*.partial

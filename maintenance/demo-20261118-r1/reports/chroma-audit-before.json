@@ -1,0 +1,1136 @@
+﻿{
+    "success":  true,
+    "data":  {
+                 "scope":  "collection",
+                 "sqlite_chunk_count":  474,
+                 "chroma_vector_count":  386,
+                 "missing_vector_count":  88,
+                 "stale_vector_count":  386,
+                 "legacy_vector_count":  384,
+                 "orphan_vector_count":  0,
+                 "unverifiable_vector_count":  0,
+                 "read_error_count":  0,
+                 "parse_incomplete_page_count":  0,
+                 "parse_affected_paper_ids":  [
+
+                                              ],
+                 "parse_issue_details":  [
+
+                                         ],
+                 "missing_vector_ids":  [
+                                            "chunk_3",
+                                            "chunk_4",
+                                            "chunk_5",
+                                            "chunk_6",
+                                            "chunk_7",
+                                            "chunk_8",
+                                            "chunk_9",
+                                            "chunk_10",
+                                            "chunk_11",
+                                            "chunk_12",
+                                            "chunk_13",
+                                            "chunk_14",
+                                            "chunk_15",
+                                            "chunk_16",
+                                            "chunk_17",
+                                            "chunk_18",
+                                            "chunk_19",
+                                            "chunk_20",
+                                            "chunk_21",
+                                            "chunk_22",
+                                            "chunk_23",
+                                            "chunk_24",
+                                            "chunk_25",
+                                            "chunk_26",
+                                            "chunk_27",
+                                            "chunk_28",
+                                            "chunk_29",
+                                            "chunk_30",
+                                            "chunk_31",
+                                            "chunk_32",
+                                            "chunk_33",
+                                            "chunk_34",
+                                            "chunk_35",
+                                            "chunk_36",
+                                            "chunk_37",
+                                            "chunk_38",
+                                            "chunk_39",
+                                            "chunk_40",
+                                            "chunk_41",
+                                            "chunk_42",
+                                            "chunk_43",
+                                            "chunk_44",
+                                            "chunk_45",
+                                            "chunk_46",
+                                            "chunk_47",
+                                            "chunk_48",
+                                            "chunk_49",
+                                            "chunk_50",
+                                            "chunk_51",
+                                            "chunk_52"
+                                        ],
+                 "stale_vector_ids":  [
+                                          "chunk_1",
+                                          "chunk_2",
+                                          "chunk_91",
+                                          "chunk_92",
+                                          "chunk_93",
+                                          "chunk_94",
+                                          "chunk_95",
+                                          "chunk_96",
+                                          "chunk_97",
+                                          "chunk_98",
+                                          "chunk_99",
+                                          "chunk_100",
+                                          "chunk_101",
+                                          "chunk_102",
+                                          "chunk_103",
+                                          "chunk_104",
+                                          "chunk_105",
+                                          "chunk_106",
+                                          "chunk_107",
+                                          "chunk_108",
+                                          "chunk_109",
+                                          "chunk_110",
+                                          "chunk_111",
+                                          "chunk_112",
+                                          "chunk_113",
+                                          "chunk_114",
+                                          "chunk_115",
+                                          "chunk_116",
+                                          "chunk_117",
+                                          "chunk_118",
+                                          "chunk_119",
+                                          "chunk_120",
+                                          "chunk_121",
+                                          "chunk_122",
+                                          "chunk_123",
+                                          "chunk_124",
+                                          "chunk_125",
+                                          "chunk_126",
+                                          "chunk_127",
+                                          "chunk_128",
+                                          "chunk_129",
+                                          "chunk_130",
+                                          "chunk_131",
+                                          "chunk_132",
+                                          "chunk_133",
+                                          "chunk_134",
+                                          "chunk_135",
+                                          "chunk_136",
+                                          "chunk_137",
+                                          "chunk_138"
+                                      ],
+                 "legacy_vector_ids":  [
+                                           "chunk_91",
+                                           "chunk_92",
+                                           "chunk_93",
+                                           "chunk_94",
+                                           "chunk_95",
+                                           "chunk_96",
+                                           "chunk_97",
+                                           "chunk_98",
+                                           "chunk_99",
+                                           "chunk_100",
+                                           "chunk_101",
+                                           "chunk_102",
+                                           "chunk_103",
+                                           "chunk_104",
+                                           "chunk_105",
+                                           "chunk_106",
+                                           "chunk_107",
+                                           "chunk_108",
+                                           "chunk_109",
+                                           "chunk_110",
+                                           "chunk_111",
+                                           "chunk_112",
+                                           "chunk_113",
+                                           "chunk_114",
+                                           "chunk_115",
+                                           "chunk_116",
+                                           "chunk_117",
+                                           "chunk_118",
+                                           "chunk_119",
+                                           "chunk_120",
+                                           "chunk_121",
+                                           "chunk_122",
+                                           "chunk_123",
+                                           "chunk_124",
+                                           "chunk_125",
+                                           "chunk_126",
+                                           "chunk_127",
+                                           "chunk_128",
+                                           "chunk_129",
+                                           "chunk_130",
+                                           "chunk_131",
+                                           "chunk_132",
+                                           "chunk_133",
+                                           "chunk_134",
+                                           "chunk_135",
+                                           "chunk_136",
+                                           "chunk_137",
+                                           "chunk_138",
+                                           "chunk_139",
+                                           "chunk_140"
+                                       ],
+                 "orphan_vector_ids":  [
+
+                                       ],
+                 "affected_paper_ids":  [
+                                            1,
+                                            2,
+                                            3,
+                                            4,
+                                            5,
+                                            6,
+                                            7,
+                                            8
+                                        ],
+                 "orphan_paper_ids":  [
+
+                                      ],
+                 "issues":  [
+                                {
+                                    "status":  "stale",
+                                    "vector_id":  "chunk_1",
+                                    "paper_id":  1,
+                                    "chunk_id":  1,
+                                    "reasons":  [
+                                                    "document_content_changed",
+                                                    "metadata_changed:paper_title",
+                                                    "index_fingerprint_mismatch"
+                                                ]
+                                },
+                                {
+                                    "status":  "stale",
+                                    "vector_id":  "chunk_2",
+                                    "paper_id":  1,
+                                    "chunk_id":  2,
+                                    "reasons":  [
+                                                    "document_content_changed",
+                                                    "metadata_changed:paper_title",
+                                                    "metadata_changed:page_number",
+                                                    "metadata_changed:page_chunk_index",
+                                                    "index_fingerprint_mismatch"
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_3",
+                                    "paper_id":  1,
+                                    "chunk_id":  3,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_4",
+                                    "paper_id":  1,
+                                    "chunk_id":  4,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_5",
+                                    "paper_id":  1,
+                                    "chunk_id":  5,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_6",
+                                    "paper_id":  1,
+                                    "chunk_id":  6,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_7",
+                                    "paper_id":  1,
+                                    "chunk_id":  7,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_8",
+                                    "paper_id":  1,
+                                    "chunk_id":  8,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_9",
+                                    "paper_id":  1,
+                                    "chunk_id":  9,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_10",
+                                    "paper_id":  1,
+                                    "chunk_id":  10,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_11",
+                                    "paper_id":  1,
+                                    "chunk_id":  11,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_12",
+                                    "paper_id":  1,
+                                    "chunk_id":  12,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_13",
+                                    "paper_id":  1,
+                                    "chunk_id":  13,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_14",
+                                    "paper_id":  1,
+                                    "chunk_id":  14,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_15",
+                                    "paper_id":  1,
+                                    "chunk_id":  15,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_16",
+                                    "paper_id":  1,
+                                    "chunk_id":  16,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_17",
+                                    "paper_id":  1,
+                                    "chunk_id":  17,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_18",
+                                    "paper_id":  1,
+                                    "chunk_id":  18,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_19",
+                                    "paper_id":  1,
+                                    "chunk_id":  19,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_20",
+                                    "paper_id":  1,
+                                    "chunk_id":  20,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_21",
+                                    "paper_id":  1,
+                                    "chunk_id":  21,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_22",
+                                    "paper_id":  1,
+                                    "chunk_id":  22,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_23",
+                                    "paper_id":  1,
+                                    "chunk_id":  23,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_24",
+                                    "paper_id":  1,
+                                    "chunk_id":  24,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_25",
+                                    "paper_id":  1,
+                                    "chunk_id":  25,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_26",
+                                    "paper_id":  1,
+                                    "chunk_id":  26,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_27",
+                                    "paper_id":  1,
+                                    "chunk_id":  27,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_28",
+                                    "paper_id":  1,
+                                    "chunk_id":  28,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_29",
+                                    "paper_id":  1,
+                                    "chunk_id":  29,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_30",
+                                    "paper_id":  1,
+                                    "chunk_id":  30,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_31",
+                                    "paper_id":  1,
+                                    "chunk_id":  31,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_32",
+                                    "paper_id":  1,
+                                    "chunk_id":  32,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_33",
+                                    "paper_id":  1,
+                                    "chunk_id":  33,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_34",
+                                    "paper_id":  1,
+                                    "chunk_id":  34,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_35",
+                                    "paper_id":  1,
+                                    "chunk_id":  35,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_36",
+                                    "paper_id":  1,
+                                    "chunk_id":  36,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_37",
+                                    "paper_id":  1,
+                                    "chunk_id":  37,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_38",
+                                    "paper_id":  1,
+                                    "chunk_id":  38,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_39",
+                                    "paper_id":  1,
+                                    "chunk_id":  39,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_40",
+                                    "paper_id":  1,
+                                    "chunk_id":  40,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_41",
+                                    "paper_id":  1,
+                                    "chunk_id":  41,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_42",
+                                    "paper_id":  1,
+                                    "chunk_id":  42,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_43",
+                                    "paper_id":  1,
+                                    "chunk_id":  43,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_44",
+                                    "paper_id":  1,
+                                    "chunk_id":  44,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_45",
+                                    "paper_id":  1,
+                                    "chunk_id":  45,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_46",
+                                    "paper_id":  1,
+                                    "chunk_id":  46,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_47",
+                                    "paper_id":  1,
+                                    "chunk_id":  47,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_48",
+                                    "paper_id":  1,
+                                    "chunk_id":  48,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_49",
+                                    "paper_id":  1,
+                                    "chunk_id":  49,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_50",
+                                    "paper_id":  1,
+                                    "chunk_id":  50,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_51",
+                                    "paper_id":  1,
+                                    "chunk_id":  51,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_52",
+                                    "paper_id":  1,
+                                    "chunk_id":  52,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_53",
+                                    "paper_id":  1,
+                                    "chunk_id":  53,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_54",
+                                    "paper_id":  1,
+                                    "chunk_id":  54,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_55",
+                                    "paper_id":  1,
+                                    "chunk_id":  55,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_56",
+                                    "paper_id":  1,
+                                    "chunk_id":  56,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_57",
+                                    "paper_id":  1,
+                                    "chunk_id":  57,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_58",
+                                    "paper_id":  1,
+                                    "chunk_id":  58,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_59",
+                                    "paper_id":  1,
+                                    "chunk_id":  59,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_60",
+                                    "paper_id":  1,
+                                    "chunk_id":  60,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_61",
+                                    "paper_id":  1,
+                                    "chunk_id":  61,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_62",
+                                    "paper_id":  1,
+                                    "chunk_id":  62,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_63",
+                                    "paper_id":  1,
+                                    "chunk_id":  63,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_64",
+                                    "paper_id":  1,
+                                    "chunk_id":  64,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_65",
+                                    "paper_id":  1,
+                                    "chunk_id":  65,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_66",
+                                    "paper_id":  1,
+                                    "chunk_id":  66,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_67",
+                                    "paper_id":  1,
+                                    "chunk_id":  67,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_68",
+                                    "paper_id":  1,
+                                    "chunk_id":  68,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_69",
+                                    "paper_id":  1,
+                                    "chunk_id":  69,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_70",
+                                    "paper_id":  1,
+                                    "chunk_id":  70,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_71",
+                                    "paper_id":  1,
+                                    "chunk_id":  71,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_72",
+                                    "paper_id":  1,
+                                    "chunk_id":  72,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_73",
+                                    "paper_id":  1,
+                                    "chunk_id":  73,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_74",
+                                    "paper_id":  1,
+                                    "chunk_id":  74,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_75",
+                                    "paper_id":  1,
+                                    "chunk_id":  75,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_76",
+                                    "paper_id":  1,
+                                    "chunk_id":  76,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_77",
+                                    "paper_id":  1,
+                                    "chunk_id":  77,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_78",
+                                    "paper_id":  1,
+                                    "chunk_id":  78,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_79",
+                                    "paper_id":  1,
+                                    "chunk_id":  79,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_80",
+                                    "paper_id":  1,
+                                    "chunk_id":  80,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_81",
+                                    "paper_id":  1,
+                                    "chunk_id":  81,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_82",
+                                    "paper_id":  1,
+                                    "chunk_id":  82,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_83",
+                                    "paper_id":  1,
+                                    "chunk_id":  83,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_84",
+                                    "paper_id":  1,
+                                    "chunk_id":  84,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_85",
+                                    "paper_id":  1,
+                                    "chunk_id":  85,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_86",
+                                    "paper_id":  1,
+                                    "chunk_id":  86,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_87",
+                                    "paper_id":  1,
+                                    "chunk_id":  87,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_88",
+                                    "paper_id":  1,
+                                    "chunk_id":  88,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_89",
+                                    "paper_id":  1,
+                                    "chunk_id":  89,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "missing",
+                                    "vector_id":  "chunk_90",
+                                    "paper_id":  1,
+                                    "chunk_id":  90,
+                                    "reasons":  [
+
+                                                ]
+                                },
+                                {
+                                    "status":  "stale",
+                                    "vector_id":  "chunk_91",
+                                    "paper_id":  2,
+                                    "chunk_id":  91,
+                                    "reasons":  [
+                                                    "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+                                                    "metadata_changed:paper_title",
+                                                    "metadata_changed:page_chunk_index",
+                                                    "metadata_changed:content_type"
+                                                ]
+                                },
+                                {
+                                    "status":  "stale",
+                                    "vector_id":  "chunk_92",
+                                    "paper_id":  2,
+                                    "chunk_id":  92,
+                                    "reasons":  [
+                                                    "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+                                                    "metadata_changed:paper_title",
+                                                    "metadata_changed:page_chunk_index",
+                                                    "metadata_changed:content_type"
+                                                ]
+                                },
+                                {
+                                    "status":  "stale",
+                                    "vector_id":  "chunk_93",
+                                    "paper_id":  2,
+                                    "chunk_id":  93,
+                                    "reasons":  [
+                                                    "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+                                                    "metadata_changed:paper_title",
+                                                    "metadata_changed:page_chunk_index",
+                                                    "metadata_changed:content_type"
+                                                ]
+                                },
+                                {
+                                    "status":  "stale",
+                                    "vector_id":  "chunk_94",
+                                    "paper_id":  2,
+                                    "chunk_id":  94,
+                                    "reasons":  [
+                                                    "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+                                                    "metadata_changed:paper_title",
+                                                    "metadata_changed:page_chunk_index",
+                                                    "metadata_changed:content_type"
+                                                ]
+                                },
+                                {
+                                    "status":  "stale",
+                                    "vector_id":  "chunk_95",
+                                    "paper_id":  2,
+                                    "chunk_id":  95,
+                                    "reasons":  [
+                                                    "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+                                                    "metadata_changed:paper_title",
+                                                    "metadata_changed:page_chunk_index",
+                                                    "metadata_changed:content_type"
+                                                ]
+                                },
+                                {
+                                    "status":  "stale",
+                                    "vector_id":  "chunk_96",
+                                    "paper_id":  2,
+                                    "chunk_id":  96,
+                                    "reasons":  [
+                                                    "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+                                                    "metadata_changed:paper_title",
+                                                    "metadata_changed:page_chunk_index",
+                                                    "metadata_changed:content_type"
+                                                ]
+                                },
+                                {
+                                    "status":  "stale",
+                                    "vector_id":  "chunk_97",
+                                    "paper_id":  2,
+                                    "chunk_id":  97,
+                                    "reasons":  [
+                                                    "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+                                                    "metadata_changed:paper_title",
+                                                    "metadata_changed:page_chunk_index",
+                                                    "metadata_changed:content_type"
+                                                ]
+                                },
+                                {
+                                    "status":  "stale",
+                                    "vector_id":  "chunk_98",
+                                    "paper_id":  2,
+                                    "chunk_id":  98,
+                                    "reasons":  [
+                                                    "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+                                                    "metadata_changed:paper_title",
+                                                    "metadata_changed:page_chunk_index",
+                                                    "metadata_changed:content_type"
+                                                ]
+                                },
+                                {
+                                    "status":  "stale",
+                                    "vector_id":  "chunk_99",
+                                    "paper_id":  2,
+                                    "chunk_id":  99,
+                                    "reasons":  [
+                                                    "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+                                                    "metadata_changed:paper_title",
+                                                    "metadata_changed:page_chunk_index",
+                                                    "metadata_changed:content_type"
+                                                ]
+                                },
+                                {
+                                    "status":  "stale",
+                                    "vector_id":  "chunk_100",
+                                    "paper_id":  2,
+                                    "chunk_id":  100,
+                                    "reasons":  [
+                                                    "legacy_index_missing_content_hash,content_hash_algorithm,content_normalization_version,index_fingerprint,index_schema_version",
+                                                    "metadata_changed:paper_title",
+                                                    "metadata_changed:page_chunk_index",
+                                                    "metadata_changed:content_type"
+                                                ]
+                                }
+                            ],
+                 "index_schema_version":  3,
+                 "content_hash_algorithm":  "sha256",
+                 "content_normalization_version":  "nfkc-lf-strip-v1",
+                 "consistent":  false
+             },
+    "error":  null
+}

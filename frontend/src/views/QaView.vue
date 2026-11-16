@@ -82,7 +82,7 @@
 
         <div class="input-actions">
           <span class="hint">
-            v0.2.0 上下文感知与意图驱动 Agent；论文证据问答支持全库或单篇检索
+            v0.3.0 开发预览包含上下文问答；论文证据检索支持全库或单篇范围
           </span>
 
           <div class="action-buttons">
