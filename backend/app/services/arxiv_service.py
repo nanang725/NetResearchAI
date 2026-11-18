@@ -77,7 +77,7 @@ def _fetch_atom(params: dict[str, Any]) -> bytes:
             follow_redirects=True,
             headers={
                 "User-Agent": (
-                    "NetResearchAI/0.4.0 "
+                    "NetResearchAI/0.5.0 "
                     "(local academic literature discovery MVP)"
                 ),
                 "Accept": "application/atom+xml, application/xml;q=0.9",

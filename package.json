@@ -1,7 +1,7 @@
 {
   "name": "netresearch-ai",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "NetResearch AI - computer networking research assistant",
   "scripts": {
     "dev:web": "npm --prefix frontend run dev",

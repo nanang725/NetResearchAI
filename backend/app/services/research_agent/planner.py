@@ -408,6 +408,24 @@ def fallback_plan(
                 completion_condition="返回引用图节点与统计，不生成不存在的关系。",
                 retry_limit=0,
             ),
+            PlannedNode(
+                id="inspect_knowledge_graph",
+                tool_name="explore_knowledge_graph",
+                arguments={"query": "", "limit": 100},
+                depends_on=["search_local"],
+                reason=(
+                    "读取首篇真实命中论文周边的方法、数据集、结论与跨论文关系，"
+                    "只接受带页码、Chunk 和证据文本的图谱边。"
+                ),
+                completion_condition="返回可定位证据的科研实体与关系子图。",
+                retry_limit=0,
+                input_bindings={
+                    "paper_id": {
+                        "source_node_id": "search_local",
+                        "output_key": "result_paper_ids.0",
+                    }
+                },
+            ),
         ]
     )
     limit = min(budget.max_nodes, budget.max_tool_calls)

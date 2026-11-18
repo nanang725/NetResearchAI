@@ -298,7 +298,7 @@ def download_arxiv_pdf(url: str, max_bytes: int) -> bytes:
             follow_redirects=True,
             headers={
                 "User-Agent": (
-                    "NetResearchAI/0.4.0 "
+                    "NetResearchAI/0.5.0 "
                     "(local academic literature import MVP)"
                 ),
                 "Accept": "application/pdf",

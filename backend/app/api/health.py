@@ -14,7 +14,7 @@ def health_check():
             "name": settings.app_name,
             "status": "ok",
             "env": settings.app_env,
-            "version": "0.4.0",
+            "version": "0.5.0",
             "features": {
                 "pdf_upload": "ready",
                 "pdf_parse": "ready",
@@ -30,7 +30,7 @@ def health_check():
                 "data_analysis": "ready",
                 "research_agent": "ready_read_only",
                 "langgraph_agent": "planned",
-                "scientific_knowledge_graph": "planned_v0.5.0",
+                "scientific_knowledge_graph": "ready_preview",
                 "version_compare": "not_implemented",
             },
         }

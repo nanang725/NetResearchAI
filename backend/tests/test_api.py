@@ -156,7 +156,7 @@ def test_health(client: TestClient):
     body = response.json()
     assert body["success"] is True
     assert body["data"]["status"] == "ok"
-    assert body["data"]["version"] == "0.4.0"
+    assert body["data"]["version"] == "0.5.0"
     assert body["data"]["features"]["research_agent"] == "ready_read_only"
 
 

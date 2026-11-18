@@ -18,6 +18,7 @@ const ROUTES = [
   ["library", "/library"],
   ["search", "/search"],
   ["qa", "/qa"],
+  ["knowledge-graph", "/knowledge-graph"],
   ["graph", "/graph"],
   ["review", "/review"],
   ["writing", "/writing"],

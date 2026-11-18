@@ -69,7 +69,7 @@
           <span>{{ appVersion }}</span>
           <span>正式版本</span>
         </div>
-        <p>真实论文与证据优先。自主科研 Agent 已纳入 v0.4.0 正式能力。</p>
+        <p>真实论文与证据优先。v0.5.0 提供科研知识图谱与跨论文关联。</p>
       </div>
     </aside>
 
@@ -158,7 +158,7 @@ const route = useRoute();
 const router = useRouter();
 const healthOk = ref(false);
 const healthText = ref("正在检查服务");
-const appVersion = ref("v0.4.0");
+const appVersion = ref("v0.5.0");
 const mobileNavOpen = ref(false);
 const { isDark, toggleTheme } = useTheme();
 
@@ -189,6 +189,12 @@ const navSections: NavSection[] = [
     label: "研究分析",
     items: [
       { to: "/qa", label: "智能问答", icon: ChatDotRound },
+      {
+        to: "/knowledge-graph",
+        label: "科研知识图谱",
+        icon: Share,
+        badge: "v0.5",
+      },
       { to: "/graph", label: "引用图谱", icon: Share },
       { to: "/review", label: "多文献综述", icon: Files },
       { to: "/writing", label: "学术写作", icon: EditPen },

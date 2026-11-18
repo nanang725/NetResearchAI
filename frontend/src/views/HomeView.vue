@@ -250,6 +250,7 @@ import {
   EditPen,
   Files,
   Search,
+  Share,
   Tickets,
   Warning,
 } from "@element-plus/icons-vue";
@@ -381,11 +382,18 @@ const features: FeatureLink[] = [
     icon: EditPen,
   },
   {
+    to: "/knowledge-graph",
+    title: "科研知识图谱",
+    description: "实体、关系、方法比较与研究空白",
+    icon: Share,
+    badge: "v0.5.0",
+  },
+  {
     to: "/research-agent",
     title: "自主科研 Agent",
     description: "查看计划、工具轨迹与运行时证据",
     icon: Cpu,
-    badge: "v0.4.0",
+    badge: "v0.4.0 稳定",
   },
 ];
 

@@ -1,4 +1,9 @@
 from app.models.citation import CitationEdge, CitationReference
+from app.models.knowledge_graph import (
+    KnowledgeEdge,
+    KnowledgeExtractionRun,
+    KnowledgeNode,
+)
 from app.models.discovery import (
     DailyRecommendationBatch,
     DailyRecommendationItem,
@@ -40,6 +45,9 @@ __all__ = [
     "PaperVersion",
     "CitationReference",
     "CitationEdge",
+    "KnowledgeNode",
+    "KnowledgeEdge",
+    "KnowledgeExtractionRun",
     "ExternalPaper",
     "ExternalFavorite",
     "TrackingSearch",

@@ -8,7 +8,7 @@
 - **v0.2.x：文献管理、PDF 深度解析与大规模文献处理（已完成）**：包含上下文问答、可选按页 OCR、持久化批量导入任务、页级解析检查点与失败页恢复、语义相似候选、版本关系及索引一致性修复。当前仍会将整篇 PDF 内容读入内存，尚未具备端到端有界内存保证。
 - **v0.3.0：证据增强科研工作台（已完成）**：覆盖文献发现、本地引用图谱预览、多文献证据综述、学术大纲与 References、结构化阅读与翻译、CSV 数据分析。独立版本比较页面和完整科研知识图谱仍不属于该版本完成范围。
 - **v0.4.0：自主科研 Agent（正式版本）**：提供计划预览与编辑、结构化节点数据流、只读工具编排、受控动态重规划、Run 租约与心跳、Generation fencing、服务恢复、节点幂等、取消与超时控制，以及基于真实证据的结构化研究报告。
-- **v0.5.0：科研知识图谱（规划中）**：跨文献实体、关系、时间演化与完整知识图谱查询。
+- **v0.5.0：科研知识图谱与跨论文知识关联（开发版本）**：提供 Paper、Author、Topic、Method、Dataset、Model、Finding、Institution 实体，带页码/Chunk/证据溯源的关系图、加权 PageRank、方法比较、关系路径、研究空白探索和 Agent 只读工具接入。时间演化、外部论文实体扩展和完整领域级图谱仍不在当前完成范围。
 - **v1.0.0：完整科研 Copilot 与正式发布（规划中）**：完整写作、长期记忆、部署、权限和产品化交付。
 
 现有上下文问答会将最近最多 12 条对话历史随请求传给后端，用于理解依赖上下文的追问，并在需要时轻量改写检索查询。服务端不保存持久化会话状态；这不是完整的长期记忆。基础意图识别分为五类：`paper_qa`（论文问答）、`simple_explanation`（通俗解释）、`comparative_analysis`（比较分析）、`research_assistance`（科研辅助）和 `academic_writing`（学术写作）。
@@ -21,7 +21,8 @@
 - 后端：Python + FastAPI + SQLite + ChromaDB
 - PDF 解析：PyMuPDF（保留页码）
 - 检索：BM25、BGE-M3 向量检索与 RRF 融合
-- 规划中：v0.5.0 科研知识图谱、v1.0.0 完整科研 Copilot
+- 知识图谱：SQLite 异构图节点/边、可审计规则抽取和 ECharts 交互图
+- 规划中：v1.0.0 完整科研 Copilot
 
 ## 目录结构
 
@@ -56,6 +57,7 @@ NetResearchAI/
 - 学术写作基础能力：基于真实本地 Chunk 生成带证据状态的大纲，生成不补写未知字段的可核验 References，并支持大纲中英翻译
 - 数据分析：上传 CSV 后执行字段类型、缺失值、描述统计和确定性聚合，生成带数据来源标识与 SHA-256 的图表数据
 - 自主科研 Agent：支持计划预览、编辑、版本固定与确认执行；节点间结构化输入输出绑定；只读工具注册、参数 Schema 校验和标准化结果；Run 租约、心跳、Generation fencing、重启恢复、节点幂等、取消、超时和预算限制；失败策略及有界动态重规划；关键结论保留真实论文 ID、页码、Chunk 和证据来源
+- 科研知识图谱：从现有 SQLite 论文、作者元数据、页面 Chunk 和可靠引用边构建异构实体关系；每条非 Paper 节点关系保留论文、页码、Chunk、证据文本、置信度和抽取方式；支持交互查询、核心论文、方法比较、最短关系路径和研究空白探索
 - 论文列表、详情（含页码文本）、删除
 - 多 PDF 批量导入持久化任务，显示每个文件的解析/索引状态、进度与失败原因；服务重启后在 Worker 租约过期时重新排队未完成项，失败项可重试；Worker generation fencing 拒绝旧 Worker 在任务被接管后继续提交页面或任务状态
 - 使用 DOI、规范化标题等元数据及 BGE-M3 生成相似论文候选及匹配依据；只作人工核对，不自动合并或删除
@@ -110,12 +112,27 @@ Heartbeat 必须明显短于租约有效期。多实例部署时，各实例必�
 
 Agent Run 响应包含 `llm_diagnostics`，用于区分模型空响应、JSON 解析、Schema 校验、输出截断和外部服务异常；最终报告响应包含 `generation_mode`，明确标记 `llm` 或基于真实证据的 `fallback`。
 
+## v0.5.0 科研知识图谱
+
+知识图谱存储在现有 SQLite 中，不依赖 Neo4j。节点类型包括 Paper、Author、Topic、Method、Dataset、Model、Finding 和 Institution；关系包括 CITES、AUTHORED_BY、STUDIES、USES_METHOD、USES_DATASET、USES_MODEL、SUPPORTS、CONTRADICTS、EXTENDS，以及用于表达作者/论文与机构归属的 AFFILIATED_WITH。
+
+当前抽取是可重复、可审计的规则版本：
+
+- 作者来自现有论文元数据，并要求能找到包含作者信息的真实 Chunk。
+- 主题、方法、数据集、模型和机构使用词表与上下文规则匹配。
+- Finding 只从带结果表述线索的完整句子中抽取。
+- CITES 复用现有可靠引用边，并回查同页 Chunk。
+- SUPPORTS、CONTRADICTS 和 EXTENDS 需要同一句中的引用标记与语义线索，无法满足时不生成关系。
+- 关系写入前要求非空论文 ID、页码、Chunk ID 和 evidence_text；无证据候选不会进入图谱。
+
+分析能力包括直接论文关系与共享科研实体投影的加权 PageRank、核心论文识别、2～5 篇论文的方法比较、无向最短关系路径和多类研究空白提示。它们描述当前本地语料，不代表完整学术领域事实。
+
 ## 尚未实现
 
 - 完整学术写作工作流：正文编辑、引用插入、修订历史以及 DOCX/PDF 导出尚未实现
 - 服务端持久化会话状态或完整长期记忆
 - LangGraph Agent 工作流编排
-- v0.5.0 完整科研知识图谱：当前仅提供基于本地引用关系的 v0.3.0 预览
+- 知识图谱时间演化、跨外部论文实体扩展、LLM 实体消歧和领域级完整关系覆盖
 - v1.0.0 完整科研 Copilot 与正式发布
 - 独立版本比较工作台：论文库已有版本关系、差异查看和保留管理，但独立比较页面尚未实现；不将 v0.3.0 描述为已包含该页面
 - 当前解析仍将整个 PDF 内容读入内存，尚不具备端到端有界内存保证
@@ -185,7 +202,7 @@ python -m venv .venv
 
 ### 前端测试
 
-当前前端测试覆盖任务轮询、引用图谱转换、文献发现、比较结论和翻译阅读工具，需要 Node.js 24+ 的 TypeScript type stripping 支持。项目生产构建仍只要求 Node.js 20+。
+当前前端测试覆盖任务轮询、引用图谱与科研知识图谱转换、文献发现、比较结论和翻译阅读工具，需要 Node.js 24+ 的 TypeScript type stripping 支持。项目生产构建仍只要求 Node.js 20+。
 
 ```bat
 cd frontend
@@ -236,6 +253,10 @@ npm run build
 - `POST /api/papers/{paper_id}/versions/{retained_paper_id}/retain`、`GET /api/papers/{paper_id}/versions/{other_paper_id}/diff`、`DELETE /api/papers/{paper_id}/versions/{version_id}`
 - `GET /api/citations/graph`、`GET /api/citations/papers/{paper_id}`：查询本地引用图谱、PageRank 和论文引用详情
 - `POST /api/citations/rebuild`、`POST /api/citations/papers/{paper_id}/rebuild`：全量或单篇幂等重建引用记录和可靠本地引用边
+- `GET /api/knowledge-graph`、`GET /api/knowledge-graph/entities/{node_id}`：查询科研实体关系和逐边证据
+- `POST /api/knowledge-graph/rebuild`：从现有论文、Chunk 和引用边重建知识图谱
+- `GET /api/knowledge-graph/analysis/core-papers`、`GET /api/knowledge-graph/analysis/method-comparison`：核心论文与方法比较
+- `GET /api/knowledge-graph/path`、`GET /api/knowledge-graph/research-gaps`：论文关系路径和研究空白探索
 - `POST /api/reviews`：针对 2～5 篇本地论文逐篇检索证据并生成可回溯的多文献综述和 Future Work
 - `GET /api/discovery/search`：arXiv 官方题录与摘要搜索
 - `POST /api/discovery/favorites`、`GET /api/discovery/favorites`、`POST /api/discovery/favorites/{favorite_id}/import`：收藏、状态刷新和复用现有 ImportJob 的 PDF 入库

@@ -17,6 +17,11 @@ from app.schemas.research_agent import (
     GetPaperStructureOutput,
     InspectLocalLibraryInput,
     InspectLocalLibraryOutput,
+    KnowledgeGapInput,
+    KnowledgeGraphInput,
+    KnowledgeGraphOutput,
+    KnowledgeMethodComparisonInput,
+    KnowledgePathInput,
     ResearchOutlineInput,
     ResearchOutlineOutput,
     SearchArxivInput,
@@ -34,6 +39,12 @@ from app.services.academic_writing_service import (
 )
 from app.services.arxiv_service import search_arxiv
 from app.services.citation_service import get_citation_graph
+from app.services.knowledge_graph_service import (
+    compare_methods,
+    explore_research_gaps,
+    find_relation_path,
+    get_knowledge_graph,
+)
 from app.services.literature_review_service import generate_literature_review
 from app.services.paper_service import get_paper, list_papers
 from app.services.retrieval_service import search_chunks_hybrid
@@ -457,6 +468,125 @@ def _get_citation_graph(
     )
 
 
+def _knowledge_sources(
+    edges: list[dict[str, Any]],
+) -> list[SourceCandidate]:
+    sources: list[SourceCandidate] = []
+    seen: set[tuple[int, int]] = set()
+    for edge in edges:
+        paper_id = edge.get("paper_id")
+        page_number = edge.get("page_number")
+        chunk_id = edge.get("chunk_id")
+        evidence = str(edge.get("evidence_text") or "").strip()
+        if not paper_id or not page_number or not chunk_id or not evidence:
+            continue
+        key = (int(paper_id), int(chunk_id))
+        if key in seen:
+            continue
+        seen.add(key)
+        sources.append(
+            _local_source(
+                paper_id=key[0],
+                page_number=int(page_number),
+                chunk_id=key[1],
+                title=edge.get("paper_title"),
+                excerpt=evidence,
+            )
+        )
+    return sources
+
+
+def _explore_knowledge_graph(
+    context: ToolContext,
+    validated: BaseModel,
+) -> BaseModel:
+    params = KnowledgeGraphInput.model_validate(validated)
+    payload = get_knowledge_graph(
+        context.db,
+        node_types=params.node_types or None,
+        relation_types=params.relation_types or None,
+        paper_id=params.paper_id,
+        query=params.query,
+        limit=params.limit,
+    )
+    sources = _knowledge_sources(payload.get("edges", []))
+    return KnowledgeGraphOutput(
+        result=payload,
+        result_count=len(payload.get("nodes", [])),
+        source="local_scientific_knowledge_graph",
+        sources=sources,
+        warnings=(
+            []
+            if sources
+            else ["当前图谱筛选结果没有可定位的本地 Chunk 证据。"]
+        ),
+    )
+
+
+def _compare_knowledge_methods(
+    context: ToolContext,
+    validated: BaseModel,
+) -> BaseModel:
+    params = KnowledgeMethodComparisonInput.model_validate(validated)
+    payload = compare_methods(context.db, paper_ids=params.paper_ids)
+    edges = [
+        evidence
+        for method in payload.get("methods", [])
+        for evidence in method.get("evidence", [])
+    ]
+    sources = _knowledge_sources(edges)
+    return KnowledgeGraphOutput(
+        result=payload,
+        result_count=len(payload.get("methods", [])),
+        source="local_scientific_knowledge_graph",
+        sources=sources,
+    )
+
+
+def _find_knowledge_path(
+    context: ToolContext,
+    validated: BaseModel,
+) -> BaseModel:
+    params = KnowledgePathInput.model_validate(validated)
+    payload = find_relation_path(
+        context.db,
+        source_paper_id=params.source_paper_id,
+        target_paper_id=params.target_paper_id,
+        max_depth=params.max_depth,
+    )
+    sources = _knowledge_sources(payload.get("edges", []))
+    return KnowledgeGraphOutput(
+        result=payload,
+        result_count=len(payload.get("nodes", [])),
+        source="local_scientific_knowledge_graph",
+        sources=sources,
+    )
+
+
+def _explore_knowledge_gaps(
+    context: ToolContext,
+    validated: BaseModel,
+) -> BaseModel:
+    params = KnowledgeGapInput.model_validate(validated)
+    payload = explore_research_gaps(
+        context.db,
+        topic=params.topic,
+        limit=params.limit,
+    )
+    edges = [
+        evidence
+        for gap in payload.get("gaps", [])
+        for evidence in gap.get("evidence", [])
+    ]
+    sources = _knowledge_sources(edges)
+    return KnowledgeGraphOutput(
+        result=payload,
+        result_count=len(payload.get("gaps", [])),
+        source="local_scientific_knowledge_graph",
+        sources=sources,
+    )
+
+
 def _generate_outline(
     context: ToolContext,
     validated: BaseModel,
@@ -630,6 +760,65 @@ TOOL_REGISTRY.register(
         max_calls_per_run=1,
         cost_class="local",
         handler=_inspect_local_library,
+    )
+)
+TOOL_REGISTRY.register(
+    ToolSpec(
+        name="explore_knowledge_graph",
+        description=(
+            "查询本地科研知识图谱，返回带论文、页码、Chunk 和证据文本的"
+            "科研实体、跨论文关系与 PageRank 指标。"
+        ),
+        input_schema=KnowledgeGraphInput,
+        output_schema=KnowledgeGraphOutput,
+        side_effect="read_only",
+        timeout=30.0,
+        max_attempts=1,
+        max_calls_per_run=2,
+        cost_class="local",
+        handler=_explore_knowledge_graph,
+    )
+)
+TOOL_REGISTRY.register(
+    ToolSpec(
+        name="compare_knowledge_methods",
+        description="比较 2 至 5 篇本地论文中带证据的方法实体。",
+        input_schema=KnowledgeMethodComparisonInput,
+        output_schema=KnowledgeGraphOutput,
+        side_effect="read_only",
+        timeout=30.0,
+        max_attempts=1,
+        max_calls_per_run=1,
+        cost_class="local",
+        handler=_compare_knowledge_methods,
+    )
+)
+TOOL_REGISTRY.register(
+    ToolSpec(
+        name="find_knowledge_path",
+        description="查找两篇本地论文之间的最短知识关系路径及逐边证据。",
+        input_schema=KnowledgePathInput,
+        output_schema=KnowledgeGraphOutput,
+        side_effect="read_only",
+        timeout=20.0,
+        max_attempts=1,
+        max_calls_per_run=1,
+        cost_class="local",
+        handler=_find_knowledge_path,
+    )
+)
+TOOL_REGISTRY.register(
+    ToolSpec(
+        name="explore_research_gaps",
+        description="基于本地图谱覆盖和关系证据探索主题、方法与矛盾研究空白。",
+        input_schema=KnowledgeGapInput,
+        output_schema=KnowledgeGraphOutput,
+        side_effect="read_only",
+        timeout=20.0,
+        max_attempts=1,
+        max_calls_per_run=1,
+        cost_class="local",
+        handler=_explore_knowledge_gaps,
     )
 )
 TOOL_REGISTRY.register(

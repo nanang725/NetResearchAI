@@ -43,13 +43,23 @@ const router = createRouter({
           meta: { title: "智能检索" },
         },
         {
+          path: "knowledge-graph",
+          name: "knowledge-graph",
+          component: () => import("@/views/KnowledgeGraphView.vue"),
+          meta: {
+            title: "科研知识图谱",
+            stage: "v0.5.0 开发版本",
+            feature: "科研实体、跨论文关系、PageRank、方法比较、路径与研究空白探索",
+          },
+        },
+        {
           path: "graph",
           name: "graph",
           component: () => import("@/views/CitationGraphView.vue"),
           meta: {
             title: "引用图谱",
             stage: "v0.4.0 正式版本",
-            feature: "本地引用关系、PageRank 与核心论文识别；完整知识图谱规划于 v0.5.0",
+            feature: "本地引用关系、PageRank 与核心论文识别；科研实体图谱见 v0.5.0",
           },
         },
         {

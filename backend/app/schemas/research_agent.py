@@ -421,6 +421,59 @@ class CitationGraphOutput(BaseModel):
     sources: list[SourceCandidate] = Field(default_factory=list)
 
 
+class KnowledgeGraphInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(default="", max_length=300)
+    paper_id: int | None = Field(default=None, gt=0)
+    node_types: list[str] = Field(default_factory=list, max_length=8)
+    relation_types: list[str] = Field(default_factory=list, max_length=12)
+    limit: int = Field(default=100, ge=1, le=300)
+
+
+class KnowledgeMethodComparisonInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    paper_ids: list[int] = Field(min_length=2, max_length=5)
+
+    @field_validator("paper_ids")
+    @classmethod
+    def validate_method_paper_ids(cls, value: list[int]) -> list[int]:
+        if len(value) != len(set(value)):
+            raise ValueError("paper_ids 不能重复。")
+        if any(
+            isinstance(item, bool) or not isinstance(item, int) or item <= 0
+            for item in value
+        ):
+            raise ValueError("paper_ids 只能包含正整数。")
+        return value
+
+
+class KnowledgePathInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source_paper_id: int = Field(gt=0)
+    target_paper_id: int = Field(gt=0)
+    max_depth: int = Field(default=5, ge=1, le=8)
+
+
+class KnowledgeGapInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    topic: str = Field(default="", max_length=200)
+    limit: int = Field(default=20, ge=1, le=100)
+
+
+class KnowledgeGraphOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    result: dict[str, Any]
+    result_count: int = Field(ge=0)
+    source: Literal["local_scientific_knowledge_graph"]
+    sources: list[SourceCandidate] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
 class ResearchOutlineOutput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

@@ -14,6 +14,7 @@ from app.api.papers import router as papers_router
 from app.api.citations import router as citations_router
 from app.api.datasets import router as datasets_router
 from app.api.discovery import router as discovery_router
+from app.api.knowledge_graph import router as knowledge_graph_router
 from app.api.reviews import router as reviews_router
 from app.api.research_agent import router as research_agent_router
 from app.api.writing import router as writing_router
@@ -44,6 +45,9 @@ from app.models import (  # noqa: F401
     ResearchAgentRun,
     ResearchAgentToolCall,
     LiteratureReviewRecord,
+    KnowledgeEdge,
+    KnowledgeExtractionRun,
+    KnowledgeNode,
 )
 from app.services.paper_service import ensure_storage, retry_pending_deletions
 from app.services.review_record_service import recover_interrupted_review_records
@@ -96,11 +100,11 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     description=(
-        "面向计算机网络领域的科研助手。v0.4.0 提供可靠论文检索、"
+        "面向计算机网络领域的科研助手。v0.5.0 提供可靠论文检索、"
         "文献发现、引用图谱预览、多文献证据综述、基础学术写作、"
         "结构化阅读翻译、CSV 数据分析与自主科研 Agent。"
     ),
-    version="0.4.0",
+    version="0.5.0",
     lifespan=lifespan,
 )
 
@@ -155,4 +159,5 @@ app.include_router(reviews_router, prefix="/api")
 app.include_router(writing_router, prefix="/api")
 app.include_router(datasets_router, prefix="/api")
 app.include_router(discovery_router, prefix="/api")
+app.include_router(knowledge_graph_router, prefix="/api")
 app.include_router(research_agent_router, prefix="/api")
