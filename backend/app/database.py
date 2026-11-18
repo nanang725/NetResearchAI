@@ -191,6 +191,29 @@ def ensure_additive_schema(bind) -> None:
                 "INTEGER NOT NULL DEFAULT 0"
             ),
         },
+        "research_agent_runs": {
+            "max_replans": (
+                "ALTER TABLE research_agent_runs ADD COLUMN max_replans "
+                "INTEGER NOT NULL DEFAULT 1"
+            ),
+            "lease_owner": (
+                "ALTER TABLE research_agent_runs ADD COLUMN lease_owner VARCHAR(36)"
+            ),
+            "lease_expires_at": (
+                "ALTER TABLE research_agent_runs ADD COLUMN lease_expires_at DATETIME"
+            ),
+            "lease_generation": (
+                "ALTER TABLE research_agent_runs ADD COLUMN lease_generation "
+                "INTEGER NOT NULL DEFAULT 0"
+            ),
+            "heartbeat_at": (
+                "ALTER TABLE research_agent_runs ADD COLUMN heartbeat_at DATETIME"
+            ),
+            "resume_count": (
+                "ALTER TABLE research_agent_runs ADD COLUMN resume_count "
+                "INTEGER NOT NULL DEFAULT 0"
+            ),
+        },
     }
 
     missing_columns: list[str] = []
@@ -251,6 +274,15 @@ def ensure_additive_schema(bind) -> None:
                 text(
                     "CREATE INDEX IF NOT EXISTS ix_paper_import_items_lease_expires_at "
                     "ON paper_import_items (lease_expires_at)"
+                )
+            )
+    if "research_agent_runs" in tables:
+        with bind.begin() as connection:
+            connection.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS "
+                    "ix_research_agent_runs_lease_expires_at "
+                    "ON research_agent_runs (lease_expires_at)"
                 )
             )
     if "paper_pages" in tables:

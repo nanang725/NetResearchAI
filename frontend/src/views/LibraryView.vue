@@ -1,50 +1,87 @@
 <template>
-  <div class="page-card library">
-    <section class="uploader">
-      <el-upload
-        ref="uploadRef"
-        drag
-        multiple
-        :limit="20"
-        :auto-upload="false"
-        :file-list="fileList"
-        accept="application/pdf,.pdf"
-        :disabled="uploading"
-        :on-change="onFilesChange"
-        :on-remove="onFileRemove"
-        :on-exceed="onFileExceed"
-      >
-        <div class="upload-copy">
-          <strong>将 PDF 拖到此处，或点击选择单篇/多篇论文</strong>
-          <p class="muted">每个文件分别解析和索引；上传传输完成不代表后台处理已完成。</p>
-        </div>
-      </el-upload>
-      <ul v-if="fileList.length" class="selected-files">
-        <li v-for="file in fileList" :key="file.uid">
-          <span>{{ file.name }} · {{ formatBytes(file.raw?.size ?? file.size ?? 0) }}</span>
-          <el-tag v-if="fileValidationError(file)" type="warning" size="small">
-            {{ fileValidationError(file) }}
-          </el-tag>
-        </li>
-      </ul>
-      <p class="muted">文件大小按服务端配置校验；超限文件会单独显示失败原因，不影响其他文件。</p>
-      <p v-if="uploading" class="muted">文件传输中并创建任务；解析与索引进度会在任务列表中显示。</p>
-      <el-button
-        type="primary"
-        :disabled="!selectedFiles.length || uploading"
-        :loading="uploading"
-        @click="submitBatch"
-      >
-        创建导入任务（{{ selectedFiles.length }}）
-      </el-button>
+  <div class="library-page">
+    <section class="library-header page-card">
+      <div>
+        <p class="eyebrow">LOCAL EVIDENCE LIBRARY</p>
+        <h2>论文库</h2>
+        <p class="muted">
+          管理已解析 PDF、索引状态与版本关系。列表只展示当前工作区真实馆藏。
+        </p>
+      </div>
+      <div class="header-actions">
+        <el-button plain @click="maintenanceOpen = !maintenanceOpen">
+          {{ maintenanceOpen ? "收起高级维护" : "高级维护" }}
+        </el-button>
+        <el-button type="primary" :icon="Upload" @click="uploadDialog = true">
+          导入 PDF
+        </el-button>
+      </div>
     </section>
 
-    <section v-if="jobs.length" class="jobs">
-      <h3>导入任务</h3>
+    <section class="library-stats">
+      <article>
+        <span>馆藏论文</span>
+        <strong>{{ loading ? "—" : papers.length }}</strong>
+        <small>{{ loading ? "正在读取馆藏" : "真实 PDF 记录" }}</small>
+      </article>
+      <article>
+        <span>可用证据</span>
+        <strong>{{ loading ? "—" : readyPaperCount }}</strong>
+        <small>{{ loading ? "正在读取状态" : "解析且已索引" }}</small>
+      </article>
+      <article>
+        <span>解析页数</span>
+        <strong>{{ loading ? "—" : totalPageCount }}</strong>
+        <small>{{ loading ? "正在读取页面" : "已持久化页面" }}</small>
+      </article>
+      <article>
+        <span>活跃任务</span>
+        <strong>{{ loading ? "—" : activeJobs.length }}</strong>
+        <small>{{ loading ? "正在读取任务" : "排队或处理中" }}</small>
+      </article>
+    </section>
+
+    <section v-if="maintenanceOpen" class="maintenance-panel page-card">
+      <div>
+        <p class="eyebrow">ADVANCED MAINTENANCE</p>
+        <h3>索引一致性维护</h3>
+        <p class="muted">
+          维护操作会检查 SQLite 与向量库的一致性。普通阅读和检索不需要执行这些操作。
+        </p>
+      </div>
+      <div class="maintenance-actions">
+        <el-button :loading="checkingIndex" @click="checkIndex">检查索引一致性</el-button>
+        <el-button :loading="rebuildingIndex" @click="rebuildIndex">
+          审计并定向修复索引
+        </el-button>
+      </div>
+    </section>
+
+    <section v-if="jobs.length" class="jobs page-card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">IMPORT QUEUE</p>
+          <h3>导入与索引任务</h3>
+          <p class="muted">
+            {{ activeJobs.length ? `${activeJobs.length} 个任务正在处理` : "当前没有活跃任务" }}
+          </p>
+        </div>
+        <el-button :loading="jobsLoading" @click="refreshJobs">刷新任务</el-button>
+      </div>
       <el-table :data="jobs" row-key="id" size="small">
         <el-table-column label="任务" min-width="180">
           <template #default="{ row }">
-            {{ row.id.slice(0, 8) }} · {{ statusLabel(row.status) }}
+            <div class="job-id">
+              <strong>{{ row.kind === "index_rebuild" ? "索引修复" : "PDF 导入" }}</strong>
+              <span class="mono">{{ row.id.slice(0, 8) }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="jobStatusType(row.status)" size="small">
+              {{ statusLabel(row.status) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="进度" min-width="170">
@@ -76,7 +113,7 @@
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column type="expand">
+        <el-table-column type="expand" width="40">
           <template #default="{ row }">
             <el-table :data="row.items" size="small">
               <el-table-column prop="original_filename" label="文件" min-width="220" />
@@ -117,45 +154,169 @@
       </el-table>
     </section>
 
-    <section class="toolbar">
-      <el-input v-model="keyword" placeholder="按标题、文件名或作者筛选当前列表" clearable />
-      <el-button :loading="loading" @click="loadPapers">刷新</el-button>
-      <el-button :loading="checkingIndex" @click="checkIndex">检查索引</el-button>
-      <el-button :loading="rebuildingIndex" @click="rebuildIndex">审计并定向修复索引</el-button>
+    <section class="library-workspace page-card">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">PAPER COLLECTION</p>
+          <h3>馆藏文献</h3>
+          <p class="muted">
+            显示 {{ filteredPapers.length }} / {{ papers.length }} 篇
+          </p>
+        </div>
+        <span class="selection-count" v-if="selectedPapers.length">
+          已选择 {{ selectedPapers.length }} 篇
+        </span>
+      </div>
+
+      <div class="toolbar">
+        <el-input
+          v-model="keyword"
+          :prefix-icon="Search"
+          clearable
+          placeholder="搜索标题、文件名或作者"
+        />
+        <el-select v-model="statusFilter" aria-label="筛选状态">
+          <el-option label="全部状态" value="all" />
+          <el-option label="可用证据" value="ready" />
+          <el-option label="处理中" value="processing" />
+          <el-option label="需关注" value="attention" />
+        </el-select>
+        <el-select v-model="sortMode" aria-label="排序方式">
+          <el-option label="最近上传" value="newest" />
+          <el-option label="标题 A-Z" value="title" />
+          <el-option label="页数优先" value="pages" />
+        </el-select>
+        <el-button :loading="loading" :icon="Refresh" @click="loadPapers">刷新</el-button>
+      </div>
+
+      <div v-if="selectedPapers.length" class="selection-toolbar">
+        <span>批量操作仅作用于已选择的本地论文。</span>
+        <div>
+          <el-button size="small" @click="clearPaperSelection">取消选择</el-button>
+          <el-button
+            size="small"
+            type="danger"
+            plain
+            :loading="batchDeleting"
+            @click="onBatchDelete"
+          >
+            删除所选
+          </el-button>
+        </div>
+      </div>
+
+      <div v-if="loadError" class="inline-error">
+        <span>{{ loadError }}</span>
+        <el-button link type="primary" @click="loadPapers">重试</el-button>
+      </div>
+
+      <div class="table-wrap">
+        <el-table
+          ref="tableRef"
+          :data="filteredPapers"
+          row-key="id"
+          v-loading="loading"
+          @selection-change="onPaperSelectionChange"
+        >
+          <el-table-column type="selection" width="44" />
+          <el-table-column label="论文" min-width="330">
+            <template #default="{ row }">
+              <button type="button" class="paper-title-cell" @click="openPaper(row.id)">
+                <strong>{{ row.title }}</strong>
+                <span>{{ row.authors || "PDF 元数据中未提供作者" }}</span>
+              </button>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" min-width="150">
+            <template #default="{ row }">
+              <div class="paper-statuses">
+                <el-tag :type="paperStatusType(row.parse_status)" size="small">
+                  {{ statusLabel(row.parse_status) }}
+                </el-tag>
+                <el-tag :type="paperStatusType(row.index_status)" size="small" effect="plain">
+                  索引 {{ statusLabel(row.index_status) }}
+                </el-tag>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="页数 / 大小" width="120">
+            <template #default="{ row }">
+              <span class="table-meta">{{ row.page_count }} 页 · {{ formatBytes(row.file_size) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="上传时间" width="170">
+            <template #default="{ row }">
+              <span class="table-meta">{{ formatDateTime(row.created_at) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="210" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="openPaper(row.id)">阅读</el-button>
+              <el-button link type="primary" @click="openVersionManager(row)">版本</el-button>
+              <el-button link type="danger" @click="onDelete(row)">删除</el-button>
+            </template>
+          </el-table-column>
+          <template #empty>
+            <div v-if="loading" class="table-loading-state">
+              <el-skeleton :rows="4" animated />
+            </div>
+            <el-empty v-else description="没有符合条件的真实论文记录">
+              <el-button v-if="!papers.length" type="primary" @click="uploadDialog = true">
+                导入第一篇论文
+              </el-button>
+            </el-empty>
+          </template>
+        </el-table>
+      </div>
     </section>
 
-    <el-table
-      :data="filteredPapers"
-      v-loading="loading"
-      empty-text="论文库为空。请上传 PDF，不会展示任何模拟论文。"
-    >
-      <el-table-column prop="title" label="标题" min-width="280" />
-      <el-table-column prop="authors" label="作者" min-width="160">
-        <template #default="{ row }">{{ row.authors || "PDF 元数据中未提供" }}</template>
-      </el-table-column>
-      <el-table-column label="页数" width="80" prop="page_count" />
-      <el-table-column label="大小" width="110">
-        <template #default="{ row }">{{ formatBytes(row.file_size) }}</template>
-      </el-table-column>
-      <el-table-column label="解析" width="90">
-        <template #default="{ row }">{{ statusLabel(row.parse_status) }}</template>
-      </el-table-column>
-      <el-table-column label="索引" width="90">
-        <template #default="{ row }">
-          <el-tag type="info" size="small">{{ statusLabel(row.index_status) }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="上传时间" width="180">
-        <template #default="{ row }">{{ formatDateTime(row.created_at) }}</template>
-      </el-table-column>
-      <el-table-column label="操作" width="220" fixed="right">
-        <template #default="{ row }">
-          <el-button link type="primary" @click="openPaper(row.id)">查看</el-button>
-          <el-button link type="primary" @click="openVersionManager(row)">相似/版本</el-button>
-          <el-button link type="danger" @click="onDelete(row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-dialog v-model="uploadDialog" title="导入论文 PDF" width="760px">
+      <section class="uploader">
+        <p class="muted upload-help">
+          每个文件分别解析和索引。文件传输完成不代表后台处理完成，进度会在任务队列中持续更新。
+        </p>
+        <el-upload
+          ref="uploadRef"
+          drag
+          multiple
+          :limit="20"
+          :auto-upload="false"
+          :file-list="fileList"
+          accept="application/pdf,.pdf"
+          :disabled="uploading"
+          :on-change="onFilesChange"
+          :on-remove="onFileRemove"
+          :on-exceed="onFileExceed"
+        >
+          <div class="upload-copy">
+            <strong>将 PDF 拖到此处，或点击选择单篇/多篇论文</strong>
+            <p class="muted">单次最多 20 个文件；服务端会逐文件校验大小与格式。</p>
+          </div>
+        </el-upload>
+        <ul v-if="fileList.length" class="selected-files">
+          <li v-for="file in fileList" :key="file.uid">
+            <span>{{ file.name }} · {{ formatBytes(file.raw?.size ?? file.size ?? 0) }}</span>
+            <el-tag v-if="fileValidationError(file)" type="warning" size="small">
+              {{ fileValidationError(file) }}
+            </el-tag>
+          </li>
+        </ul>
+        <p v-if="uploading" class="muted">
+          文件传输中并创建任务；请保持页面打开，解析与索引进度会在任务队列显示。
+        </p>
+      </section>
+      <template #footer>
+        <el-button :disabled="uploading" @click="uploadDialog = false">取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="!selectedFiles.length || uploading"
+          :loading="uploading"
+          @click="submitBatch"
+        >
+          创建导入任务（{{ selectedFiles.length }}）
+        </el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog v-model="versionDialog" title="相似论文与版本管理" width="900px">
       <template v-if="selectedPaper">
@@ -212,6 +373,7 @@ import {
   type UploadInstance,
   type UploadUserFile,
 } from "element-plus";
+import { Refresh, Search, Upload } from "@element-plus/icons-vue";
 import {
   addPaperVersion,
   comparePaperVersions,
@@ -238,12 +400,21 @@ const router = useRouter();
 const papers = ref<PaperListItem[]>([]);
 const loading = ref(false);
 const uploading = ref(false);
+const jobsLoading = ref(false);
 const checkingIndex = ref(false);
 const rebuildingIndex = ref(false);
+const uploadDialog = ref(route.query.upload === "1");
+const maintenanceOpen = ref(false);
+const loadError = ref("");
 const keyword = ref("");
+const statusFilter = ref<"all" | "ready" | "processing" | "attention">("all");
+const sortMode = ref<"newest" | "title" | "pages">("newest");
 const uploadRef = ref<UploadInstance>();
+const tableRef = ref<{ clearSelection: () => void }>();
 const fileList = ref<UploadUserFile[]>([]);
 const jobs = ref<ImportJob[]>([]);
+const selectedPapers = ref<PaperListItem[]>([]);
+const batchDeleting = ref(false);
 const versionDialog = ref(false);
 const selectedPaper = ref<PaperListItem | null>(null);
 const similarCandidates = ref<SimilarPaperCandidate[]>([]);
@@ -280,21 +451,77 @@ const selectedFiles = computed(() =>
 
 const filteredPapers = computed(() => {
   const q = keyword.value.trim().toLowerCase();
-  if (!q) return papers.value;
-  return papers.value.filter((item) =>
-    [item.title, item.original_filename, item.authors ?? ""].join(" ").toLowerCase().includes(q),
-  );
+  const filtered = papers.value.filter((item) => {
+    if (
+      q
+      && ![item.title, item.original_filename, item.authors ?? ""]
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    ) {
+      return false;
+    }
+    if (statusFilter.value === "ready") {
+      return item.parse_status === "parsed" && item.index_status === "indexed";
+    }
+    if (statusFilter.value === "processing") {
+      return ["queued", "running", "parsing", "indexing", "pending"].includes(
+        item.index_status,
+      ) || ["queued", "running", "parsing", "indexing"].includes(item.parse_status);
+    }
+    if (statusFilter.value === "attention") {
+      return ["failed", "partial", "ocr_failed", "ocr_unavailable", "ocr_no_text"]
+        .includes(item.parse_status)
+        || ["failed", "partial", "error"].includes(item.index_status);
+    }
+    return true;
+  });
+  return [...filtered].sort((left, right) => {
+    if (sortMode.value === "title") {
+      return left.title.localeCompare(right.title, "zh-CN");
+    }
+    if (sortMode.value === "pages") return right.page_count - left.page_count;
+    return new Date(right.created_at).getTime() - new Date(left.created_at).getTime();
+  });
 });
+
+const activeJobs = computed(() =>
+  jobs.value.filter((job) => ["queued", "running"].includes(job.status)),
+);
+const readyPaperCount = computed(
+  () =>
+    papers.value.filter(
+      (paper) => paper.parse_status === "parsed" && paper.index_status === "indexed",
+    ).length,
+);
+const totalPageCount = computed(() =>
+  papers.value.reduce((total, paper) => total + paper.page_count, 0),
+);
 
 async function loadPapers() {
   loading.value = true;
+  loadError.value = "";
   try {
     papers.value = await fetchPapers();
   } catch (error) {
     const message = error instanceof ApiError ? error.message : "加载论文列表失败";
+    loadError.value = message;
     ElMessage.error(message);
   } finally {
     loading.value = false;
+  }
+}
+
+async function refreshJobs() {
+  jobsLoading.value = true;
+  try {
+    jobs.value = await fetchImportJobs();
+    showJobLoadError = false;
+  } catch (error) {
+    const message = error instanceof ApiError ? error.message : "加载导入任务失败";
+    ElMessage.error(message);
+  } finally {
+    jobsLoading.value = false;
   }
 }
 
@@ -356,6 +583,41 @@ function hasRetryableItems(job: ImportJob): boolean {
   return job.items.some((item) => item.can_retry);
 }
 
+function paperStatusType(
+  status: string,
+): "success" | "warning" | "danger" | "info" {
+  if (status === "indexed" || status === "parsed" || status === "succeeded") {
+    return "success";
+  }
+  if (status === "failed" || status === "partial" || status === "ocr_failed") {
+    return "danger";
+  }
+  if (
+    ["queued", "running", "parsing", "indexing", "pending", "needs_ocr"].includes(status)
+  ) {
+    return "warning";
+  }
+  return "info";
+}
+
+function jobStatusType(
+  status: string,
+): "success" | "warning" | "danger" | "info" {
+  if (status === "completed") return "success";
+  if (status === "failed" || status === "partial") return "danger";
+  if (status === "queued" || status === "running") return "warning";
+  return "info";
+}
+
+function onPaperSelectionChange(rows: PaperListItem[]) {
+  selectedPapers.value = rows;
+}
+
+function clearPaperSelection() {
+  tableRef.value?.clearSelection();
+  selectedPapers.value = [];
+}
+
 async function submitBatch() {
   if (!selectedFiles.value.length) return;
   uploading.value = true;
@@ -364,6 +626,7 @@ async function submitBatch() {
     ElMessage.success(`已创建导入任务，包含 ${job.total_count} 个文件。`);
     fileList.value = [];
     uploadRef.value?.clearFiles();
+    uploadDialog.value = false;
     acceptJobUpdate(job);
   } catch (error) {
     const message = error instanceof ApiError ? error.message : "创建导入任务失败";
@@ -549,6 +812,40 @@ async function onDelete(row: PaperListItem) {
   }
 }
 
+async function onBatchDelete() {
+  if (!selectedPapers.value.length || batchDeleting.value) return;
+  const count = selectedPapers.value.length;
+  try {
+    await ElMessageBox.confirm(
+      `将删除所选的 ${count} 篇论文及其解析文本，且不可恢复。`,
+      "批量删除论文",
+      { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消" },
+    );
+  } catch {
+    return;
+  }
+
+  batchDeleting.value = true;
+  const failures: string[] = [];
+  for (const paper of selectedPapers.value) {
+    try {
+      await deletePaper(paper.id);
+    } catch (error) {
+      failures.push(
+        `${paper.title}：${error instanceof ApiError ? error.message : "删除失败"}`,
+      );
+    }
+  }
+  await loadPapers();
+  clearPaperSelection();
+  batchDeleting.value = false;
+  if (failures.length) {
+    ElMessage.warning(`批量删除完成，${failures.length} 篇失败：${failures[0]}`);
+  } else {
+    ElMessage.success(`已删除 ${count} 篇论文。`);
+  }
+}
+
 onMounted(() => {
   viewMounted = true;
   void loadPapers();
@@ -564,23 +861,246 @@ onUnmounted(() => {
 watch(
   () => route.query.upload,
   (value) => {
-    if (value === "1") ElMessage.info("请在下方上传区域选择 PDF 文件");
+    uploadDialog.value = value === "1";
   },
 );
 </script>
 
 <style scoped>
-.library {
+.library-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.library-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px;
+}
+
+.library-header h2 {
+  margin: 4px 0 6px;
+  font-size: 24px;
+  letter-spacing: -0.03em;
+}
+
+.library-header p {
+  max-width: 720px;
+  margin: 0;
+}
+
+.header-actions,
+.maintenance-actions,
+.section-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.library-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.library-stats article {
+  display: flex;
+  min-width: 0;
+  padding: 16px 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  flex-direction: column;
+}
+
+.library-stats span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.library-stats strong {
+  margin: 3px 0 0;
+  font-size: 25px;
+  letter-spacing: -0.04em;
+}
+
+.library-stats small {
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+}
+
+.maintenance-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 20px;
+  background: var(--color-warning-soft);
+  border-color: color-mix(in srgb, var(--color-warning) 26%, transparent);
+}
+
+.maintenance-panel h3,
+.jobs h3,
+.library-workspace h3 {
+  margin: 3px 0;
+  font-size: 17px;
+}
+
+.maintenance-panel p,
+.jobs p,
+.library-workspace p {
+  margin: 0;
+}
+
+.jobs,
+.library-workspace {
   padding: 20px;
 }
 
-.uploader {
-  margin-bottom: 18px;
+.library-workspace {
+  order: 3;
+}
+
+.jobs {
+  order: 4;
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.job-id {
+  display: flex;
+  flex-direction: column;
+}
+
+.job-id span {
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 150px 150px auto;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.selection-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  margin-bottom: 10px;
+  color: var(--color-text-secondary);
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+}
+
+.selection-toolbar > div,
+.paper-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.selection-count {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.inline-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 24%, transparent);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+
+.inline-error :deep(.el-button) {
+  margin-left: auto;
+}
+
+.table-wrap {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.table-loading-state {
+  padding: 22px;
+}
+
+.paper-title-cell {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  flex-direction: column;
+}
+
+.paper-title-cell strong {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.paper-title-cell span,
+.table-meta {
+  overflow: hidden;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-help {
+  margin: 0 0 12px;
+  line-height: 1.65;
+}
+
+.upload-copy {
+  padding: 12px;
+}
+
+.upload-copy strong {
+  color: var(--color-text-primary);
+}
+
+.upload-copy p {
+  margin: 6px 0 0;
 }
 
 .selected-files {
-  margin: 8px 0 12px;
-  padding-left: 20px;
+  max-height: 180px;
+  padding: 0;
+  margin: 12px 0 0;
+  overflow-y: auto;
+  list-style: none;
 }
 
 .selected-files li {
@@ -588,26 +1108,9 @@ watch(
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin: 4px 0;
+  padding: 8px 4px;
+  border-top: 1px solid var(--color-border-subtle);
   overflow-wrap: anywhere;
-}
-
-.upload-copy {
-  padding: 12px;
-}
-
-.jobs {
-  margin-bottom: 20px;
-}
-
-.jobs h3 {
-  margin: 0 0 12px;
-}
-
-.toolbar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
 }
 
 .version-diff {
@@ -615,7 +1118,50 @@ watch(
   overflow: auto;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  background: #f7fafc;
+  color: var(--color-text-primary);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
   padding: 12px;
+}
+
+@media (max-width: 900px) {
+  .library-header,
+  .maintenance-panel,
+  .selection-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .library-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .toolbar :deep(.el-input) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .library-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar :deep(.el-input) {
+    grid-column: auto;
+  }
+
+  .jobs,
+  .library-workspace {
+    padding: 16px;
+  }
 }
 </style>

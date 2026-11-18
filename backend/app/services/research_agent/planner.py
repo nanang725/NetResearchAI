@@ -8,7 +8,15 @@ from typing import Any
 from pydantic import ValidationError
 
 from app.config import get_settings
-from app.core.exceptions import AppError
+from app.services.llm_json import (
+    LLMJSONError,
+    classify_llm_exception,
+    finish_reason,
+    parse_json_object,
+    repair_messages,
+    response_content,
+    safe_diagnostics,
+)
 from app.schemas.research_agent import (
     AgentBudgetRequest,
     PlannedNode,
@@ -38,9 +46,71 @@ class PlanValidationError(Exception):
         self.details = details or {}
 
 
+def _schema_placeholder(schema: dict[str, Any]) -> Any:
+    if "const" in schema:
+        return schema["const"]
+    if schema.get("enum"):
+        return schema["enum"][0]
+    if "anyOf" in schema:
+        candidates = [
+            item
+            for item in schema["anyOf"]
+            if item.get("type") != "null"
+        ]
+        return _schema_placeholder(candidates[0]) if candidates else None
+    schema_type = schema.get("type")
+    if schema_type == "array":
+        minimum = max(1, int(schema.get("minItems", 0)))
+        item_schema = schema.get("items", {})
+        placeholder = _schema_placeholder(item_schema)
+        return [
+            placeholder + index if isinstance(placeholder, int) else placeholder
+            for index in range(minimum)
+        ]
+    if schema_type == "integer":
+        return max(1, int(schema.get("minimum", 1)))
+    if schema_type == "number":
+        return max(1.0, float(schema.get("minimum", 1.0)))
+    if schema_type == "boolean":
+        return False
+    if schema_type == "object":
+        return {}
+    minimum_length = max(1, int(schema.get("minLength", 1)))
+    return "x" * minimum_length
+
+
 def _validated_parameters(node: PlannedNode, registry: ToolRegistry) -> None:
+    spec = registry.get(node.tool_name)
+    candidate_arguments = dict(node.arguments)
+    properties = spec.input_schema.model_json_schema().get("properties", {})
+    for target, binding in node.input_bindings.items():
+        if target not in properties:
+            raise PlanValidationError(
+                f"节点 {node.id} 的数据绑定目标 {target!r} 不是工具输入参数。",
+                code="AGENT_PLAN_UNKNOWN_BINDING_TARGET",
+                details={"node_id": node.id, "target": target},
+            )
+        if target in candidate_arguments:
+            raise PlanValidationError(
+                f"节点 {node.id} 的参数 {target!r} 同时存在静态值和数据绑定。",
+                code="AGENT_PLAN_BINDING_ARGUMENT_CONFLICT",
+                details={"node_id": node.id, "target": target},
+            )
+        candidate_arguments[target] = _schema_placeholder(properties[target])
     try:
-        registry.validate_arguments(node.tool_name, node.arguments)
+        registry.validate_arguments(node.tool_name, candidate_arguments)
+        if node.failure_strategy == "fallback_tool" and node.fallback_tool:
+            fallback_spec = registry.get(node.fallback_tool)
+            if fallback_spec.side_effect != "read_only":
+                raise ToolExecutionError(
+                    "替代工具必须是只读工具。",
+                    code="AGENT_PLAN_WRITE_TOOL_FORBIDDEN",
+                    retryable=False,
+                )
+            registry.validate_arguments(
+                node.fallback_tool,
+                node.fallback_arguments,
+            )
     except ToolExecutionError as exc:
         raise PlanValidationError(
             f"节点 {node.id} 的参数不合法。",
@@ -86,6 +156,18 @@ def _validate_dag(
             "计划包含循环依赖。",
             code="AGENT_PLAN_CYCLE",
         )
+    for node in nodes:
+        for input_name, binding in node.input_bindings.items():
+            if binding.source_node_id not in node_ids and binding.source_node_id not in existing_node_ids:
+                raise PlanValidationError(
+                    f"节点 {node.id} 的输入 {input_name} 引用了不存在的节点。",
+                    code="AGENT_PLAN_UNKNOWN_INPUT_SOURCE",
+                )
+            if binding.source_node_id not in node.depends_on:
+                raise PlanValidationError(
+                    f"节点 {node.id} 的输入 {input_name} 必须同时声明依赖。",
+                    code="AGENT_PLAN_INPUT_DEPENDENCY_REQUIRED",
+                )
 
 
 def validate_plan(
@@ -96,6 +178,7 @@ def validate_plan(
     generated_by: str = "llm",
     registry: ToolRegistry = TOOL_REGISTRY,
     existing_nodes: list[PlannedNode] | None = None,
+    edited_by_user: bool = False,
 ) -> ValidatedPlan:
     existing_nodes = existing_nodes or []
     existing_ids = {node.id for node in existing_nodes}
@@ -118,15 +201,24 @@ def validate_plan(
         )
 
     tool_counts = Counter(node.tool_name for node in all_nodes)
+    for node in all_nodes:
+        if node.failure_strategy == "fallback_tool" and node.fallback_tool:
+            tool_counts[node.fallback_tool] += 1
+    fallback_call_count = sum(
+        node.failure_strategy == "fallback_tool"
+        and node.fallback_tool is not None
+        for node in all_nodes
+    )
     arxiv_count = tool_counts.get("search_arxiv", 0)
     if arxiv_count > budget.max_arxiv_requests:
         raise PlanValidationError(
             f"计划中的 arXiv 请求数 {arxiv_count} 超过预算。",
             code="AGENT_PLAN_ARXIV_BUDGET_EXCEEDED",
         )
-    if len(all_nodes) > budget.max_tool_calls:
+    if len(all_nodes) + fallback_call_count > budget.max_tool_calls:
         raise PlanValidationError(
-            f"计划工具调用数 {len(all_nodes)} 超过预算。",
+            "计划最坏工具调用数 "
+            f"{len(all_nodes) + fallback_call_count} 超过预算。",
             code="AGENT_PLAN_CALL_BUDGET_EXCEEDED",
         )
     llm_calls = 0
@@ -145,6 +237,24 @@ def validate_plan(
                 code="AGENT_PLAN_WRITE_TOOL_FORBIDDEN",
             )
         llm_calls += spec.llm_calls_per_execution
+        if node.failure_strategy == "fallback_tool" and node.fallback_tool:
+            try:
+                fallback_spec = registry.get(node.fallback_tool)
+            except ToolExecutionError as exc:
+                raise PlanValidationError(
+                    f"计划引用了未注册替代工具 {node.fallback_tool!r}。",
+                    code="AGENT_PLAN_UNREGISTERED_TOOL",
+                    details={
+                        "node_id": node.id,
+                        "fallback_tool": node.fallback_tool,
+                    },
+                ) from exc
+            if fallback_spec.side_effect != "read_only":
+                raise PlanValidationError(
+                    "计划中的替代工具必须是只读工具。",
+                    code="AGENT_PLAN_WRITE_TOOL_FORBIDDEN",
+                )
+            llm_calls += fallback_spec.llm_calls_per_execution
         _validated_parameters(node, registry)
     for tool_name, count in tool_counts.items():
         spec = registry.get(tool_name)
@@ -172,6 +282,7 @@ def validate_plan(
         analysis_dimensions=plan.analysis.analysis_dimensions,
         nodes=all_nodes,
         generated_by=generated_by,
+        edited_by_user=edited_by_user,
     )
 
 
@@ -188,11 +299,88 @@ def _fallback_analysis(goal: str) -> PlannerAnalysis:
     )
 
 
-def fallback_plan(goal: str) -> PlannerPlan:
+def fallback_plan(
+    goal: str,
+    budget: AgentBudgetRequest | None = None,
+) -> PlannerPlan:
+    budget = budget or AgentBudgetRequest()
     analysis = _fallback_analysis(goal)
-    return PlannerPlan(
-        analysis=analysis,
-        nodes=[
+    candidates: list[PlannedNode] = [
+        PlannedNode(
+            id="search_local",
+            tool_name="search_local_papers",
+            arguments={"query": analysis.topic, "limit": 6},
+            depends_on=[],
+            reason="使用现有混合检索寻找可定位页码和 Chunk 的本地全文证据。",
+            completion_condition="返回本地全文证据及对应论文 ID。",
+            retry_limit=1,
+        )
+    ]
+    # The planner reserves one call for comparison (including one repair),
+    # one call for the final report, and one call for plan generation.
+    if budget.max_llm_calls >= 4:
+        candidates.append(
+            PlannedNode(
+                id="compare_local",
+                tool_name="compare_papers",
+                arguments={
+                    "topic": analysis.topic,
+                    "include_future_work": True,
+                },
+                depends_on=["search_local"],
+                reason=(
+                    "将全库检索得到的真实论文 ID 自动绑定到多论文比较工具，"
+                    "避免手工填写或推测论文范围。"
+                ),
+                completion_condition="对命中的 2 至 5 篇真实本地论文完成证据比较。",
+                retry_limit=0,
+                input_bindings={
+                    "paper_ids": {
+                        "source_node_id": "search_local",
+                        "output_key": "result_paper_ids",
+                        "max_items": 5,
+                    }
+                },
+            )
+        )
+        candidates.append(
+            PlannedNode(
+                id="draft_outline",
+                tool_name="generate_research_outline",
+                arguments={"topic": analysis.topic},
+                depends_on=["compare_local"],
+                reason="读取比较结果中的首篇真实本地论文 ID，生成可回溯证据大纲。",
+                completion_condition="为比较命中论文生成带真实 Chunk 的证据大纲。",
+                retry_limit=0,
+                input_bindings={
+                    "paper_id": {
+                        "source_node_id": "compare_local",
+                        "output_key": "selected_paper_ids.0",
+                    }
+                },
+            )
+        )
+    candidates.extend(
+        [
+            PlannedNode(
+                id="paper_structure",
+                tool_name="get_paper_structure",
+                arguments={
+                    "max_pages": 5,
+                    "max_elements_per_page": 10,
+                    "include_text": True,
+                },
+                depends_on=["search_local"],
+                reason="读取首篇真实命中论文的页面和结构化元素。",
+                completion_condition="返回真实页面、章节和 Chunk 关联。",
+                retry_limit=0,
+                input_bindings={
+                    "paper_id": {
+                        "source_node_id": "search_local",
+                        "output_key": "result_paper_ids.0",
+                    }
+                },
+            ),
             PlannedNode(
                 id="inspect_library",
                 tool_name="inspect_local_library",
@@ -201,15 +389,6 @@ def fallback_plan(goal: str) -> PlannerPlan:
                 reason="先确认本地论文库规模与可用状态，避免在空库上执行无效检索。",
                 completion_condition="获得本地论文总数及可用论文元数据。",
                 retry_limit=0,
-            ),
-            PlannedNode(
-                id="search_local",
-                tool_name="search_local_papers",
-                arguments={"query": analysis.topic, "limit": 6},
-                depends_on=["inspect_library"],
-                reason="使用现有混合检索寻找可定位页码和 Chunk 的本地全文证据。",
-                completion_condition="返回本地全文证据及对应论文 ID。",
-                retry_limit=1,
             ),
             PlannedNode(
                 id="verify_references",
@@ -229,21 +408,66 @@ def fallback_plan(goal: str) -> PlannerPlan:
                 completion_condition="返回引用图节点与统计，不生成不存在的关系。",
                 retry_limit=0,
             ),
-        ],
+        ]
     )
+    limit = min(budget.max_nodes, budget.max_tool_calls)
+    nodes = candidates[:limit]
+    allowed_ids = {node.id for node in nodes}
+    dependent_nodes = []
+    for node in nodes:
+        dependencies = [
+            dependency
+            for dependency in node.depends_on
+            if dependency in allowed_ids
+        ]
+        bindings = {
+            argument: binding
+            for argument, binding in node.input_bindings.items()
+            if binding.source_node_id in allowed_ids
+        }
+        if len(bindings) != len(node.input_bindings):
+            continue
+        dependent_nodes.append(
+            node.model_copy(
+                update={
+                    "depends_on": dependencies,
+                    "input_bindings": bindings,
+                }
+            )
+        )
+    return PlannerPlan(analysis=analysis, nodes=dependent_nodes)
 
 
 def _extract_json(content: str) -> dict[str, Any]:
-    raw = re.sub(
-        r"^```(?:json)?\s*|\s*```$",
-        "",
-        (content or "").strip(),
-        flags=re.IGNORECASE,
-    )
-    parsed = json.loads(raw)
-    if not isinstance(parsed, dict):
-        raise ValueError("Planner response must be a JSON object.")
-    return parsed
+    return parse_json_object(content)
+
+
+def _normalize_binding_dependencies(plan: PlannerPlan) -> PlannerPlan:
+    nodes = []
+    for node in plan.nodes:
+        arguments = {
+            name: value
+            for name, value in node.arguments.items()
+            if name not in node.input_bindings
+        }
+        dependencies = list(dict.fromkeys(
+            [
+                *node.depends_on,
+                *(
+                    binding.source_node_id
+                    for binding in node.input_bindings.values()
+                ),
+            ]
+        ))
+        nodes.append(
+            node.model_copy(
+                update={
+                    "depends_on": dependencies,
+                    "arguments": arguments,
+                }
+            )
+        )
+    return plan.model_copy(update={"nodes": nodes})
 
 
 class ResearchPlanner:
@@ -253,6 +477,9 @@ class ResearchPlanner:
         registry: ToolRegistry = TOOL_REGISTRY,
     ) -> None:
         self.registry = registry
+        self.last_llm_calls_used = 0
+        self.last_llm_diagnostics: dict[str, Any] | None = None
+        self.last_raw_content: str | None = None
 
     def _tool_catalog(self) -> str:
         return json.dumps(
@@ -274,6 +501,19 @@ class ResearchPlanner:
         goal: str,
         budget: AgentBudgetRequest,
     ) -> ValidatedPlan:
+        self.last_llm_calls_used = 0
+        self.last_llm_diagnostics = None
+        self.last_raw_content = None
+        if budget.max_llm_calls <= 0:
+            return validate_plan(
+                fallback_plan(goal, budget),
+                budget,
+                version=1,
+                generated_by="fallback",
+                registry=self.registry,
+            )
+        response = None
+        content: str | None = None
         try:
             settings = get_settings()
             client = get_llm_client()
@@ -298,12 +538,19 @@ class ResearchPlanner:
                             f"工具目录：{self._tool_catalog()}\n\n"
                             "请识别主题、核心研究问题、时间范围和分析维度，并生成"
                             "具有明确依赖的 DAG。节点 arguments 必须符合对应 Schema。"
+                            "需要前序输出时使用 input_bindings，格式为"
+                            '{"目标参数":{"source_node_id":"前序节点",'
+                            '"output_key":"data.字段或数组.索引","max_items":5}}；'
+                            "source_node_id 必须同时出现在 depends_on。"
+                            "多论文比较应从 search_local_papers 的 result_paper_ids 绑定"
+                            "最多 5 篇真实论文；后续大纲可从比较结果的 "
+                            "selected_paper_ids.0 绑定真实 paper_id。"
                             "每个节点必须说明执行理由和完成条件。优先使用本地全文，"
                             "仅在需要时使用 arXiv。输出结构："
                             '{"analysis":{"topic":"...","research_question":"...",'
                             '"time_range":null,"analysis_dimensions":["..."]},'
                             '"nodes":[{"id":"node_id","tool_name":"...",'
-                            '"arguments":{},"depends_on":[],"reason":"...",'
+                            '"arguments":{},"input_bindings":{},"depends_on":[],"reason":"...",'
                             '"completion_condition":"...","retry_limit":1}]}'
                         ),
                     },
@@ -312,10 +559,12 @@ class ResearchPlanner:
                 response_format={"type": "json_object"},
                 timeout=60,
             )
-            content = response.choices[0].message.content
-            if not content:
-                raise ValueError("Planner returned an empty response.")
-            plan = PlannerPlan.model_validate(_extract_json(content))
+            self.last_llm_calls_used = 1
+            content = response_content(response)
+            self.last_raw_content = content
+            plan = _normalize_binding_dependencies(
+                PlannerPlan.model_validate(_extract_json(content))
+            )
             return validate_plan(
                 plan,
                 budget,
@@ -323,10 +572,121 @@ class ResearchPlanner:
                 generated_by="llm",
                 registry=self.registry,
             )
-        except (AppError, Exception) as exc:
+        except Exception as exc:
             if isinstance(exc, PlanValidationError):
                 raise
-            fallback = fallback_plan(goal)
+            first_failure_kind = (
+                exc.kind
+                if isinstance(exc, LLMJSONError)
+                else (
+                    "schema_validation_error"
+                    if isinstance(exc, ValidationError)
+                    else classify_llm_exception(exc)
+                )
+            )
+            first_diagnostic = safe_diagnostics(
+                stage="planner",
+                attempt=self.last_llm_calls_used or 1,
+                content=self.last_raw_content or content,
+                finish_reason=finish_reason(response),
+                failure_kind=first_failure_kind,
+                error=exc,
+            )
+            if (
+                isinstance(exc, (LLMJSONError, ValidationError))
+                and content
+                and budget.max_llm_calls >= 4
+            ):
+                try:
+                    self.last_llm_calls_used = 2
+                    repair_response = client.chat.completions.create(
+                        model=settings.llm_model_name,
+                        messages=repair_messages(
+                            invalid_content=content,
+                            schema_text=json.dumps(
+                                PlannerPlan.model_json_schema(),
+                                ensure_ascii=False,
+                            ),
+                            instruction=(
+                                "Preserve the requested research goal and "
+                                "every existing node. Keep only registered "
+                                "tool names and valid binding sources."
+                            ),
+                        ),
+                        temperature=0,
+                        response_format={"type": "json_object"},
+                        timeout=30,
+                    )
+                    response = repair_response
+                    repaired_content = response_content(repair_response)
+                    self.last_raw_content = repaired_content
+                    repaired_plan = _normalize_binding_dependencies(
+                        PlannerPlan.model_validate(
+                            _extract_json(repaired_content)
+                        )
+                    )
+                    validated = validate_plan(
+                        repaired_plan,
+                        budget,
+                        version=1,
+                        generated_by="llm",
+                        registry=self.registry,
+                    )
+                    self.last_llm_diagnostics = {
+                        "stage": "planner",
+                        "attempts": [
+                            first_diagnostic,
+                            safe_diagnostics(
+                                stage="planner",
+                                attempt=2,
+                                content=repaired_content,
+                                finish_reason=finish_reason(response),
+                                failure_kind="repair_succeeded",
+                            ),
+                        ],
+                        "repaired": True,
+                    }
+                    return validated
+                except Exception as repair_exc:
+                    self.last_llm_diagnostics = {
+                        "stage": "planner",
+                        "attempts": [
+                            first_diagnostic,
+                            safe_diagnostics(
+                                stage="planner",
+                                attempt=2,
+                                content=self.last_raw_content,
+                                finish_reason=finish_reason(response),
+                                failure_kind=(
+                                    repair_exc.kind
+                                    if isinstance(repair_exc, LLMJSONError)
+                                    else "schema_error"
+                                ),
+                                error=repair_exc,
+                            ),
+                        ],
+                        "repaired": False,
+                    }
+                    exc = repair_exc
+            failure_kind = (
+                exc.kind
+                if isinstance(exc, LLMJSONError)
+                else (
+                    "schema_validation_error"
+                    if isinstance(exc, ValidationError)
+                    else classify_llm_exception(exc)
+                )
+            )
+            if self.last_llm_diagnostics is None:
+                self.last_llm_diagnostics = safe_diagnostics(
+                    stage="planner",
+                    attempt=self.last_llm_calls_used or 1,
+                    content=self.last_raw_content or content,
+                    finish_reason=finish_reason(response),
+                    failure_kind=failure_kind,
+                    error=exc,
+                )
+            fallback = fallback_plan(goal, budget)
             return validate_plan(
                 fallback,
                 budget,

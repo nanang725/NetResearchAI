@@ -3,16 +3,70 @@ from __future__ import annotations
 import json
 import re
 from collections import defaultdict
-from typing import Any
+from typing import Any, Callable, Literal
 
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.core.exceptions import AppError
 from app.models.paper import Paper, PaperChunk
+from app.services.llm_json import (
+    LLMJSONError,
+    finish_reason,
+    parse_json_object,
+    repair_messages,
+    response_content,
+    safe_diagnostics,
+)
 from app.services.llm_service import get_llm_client
 from app.services.retrieval_service import search_chunks_hybrid
+
+
+class ReviewSectionOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    heading: str = Field(min_length=1, max_length=160)
+    content: str = Field(min_length=1, max_length=8000)
+    citation_ids: list[int] = Field(default_factory=list, max_length=20)
+
+
+class ReviewComparisonItemOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    paper_id: int
+    summary: str = Field(min_length=1, max_length=1500)
+    claim_kind: Literal["evidence", "inference"]
+    citation_ids: list[int] = Field(default_factory=list, max_length=20)
+
+
+class ReviewComparisonOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    methods: list[ReviewComparisonItemOutput] = Field(default_factory=list)
+    results: list[ReviewComparisonItemOutput] = Field(default_factory=list)
+    conclusions: list[ReviewComparisonItemOutput] = Field(default_factory=list)
+    limitations: list[ReviewComparisonItemOutput] = Field(default_factory=list)
+
+
+class ReviewFutureWorkOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Literal["explicit", "inferred"]
+    summary: str = Field(min_length=1, max_length=1000)
+    citation_ids: list[int] = Field(min_length=1, max_length=20)
+
+
+class LiteratureReviewOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(min_length=1, max_length=300)
+    sections: list[ReviewSectionOutput] = Field(min_length=1, max_length=20)
+    comparison: ReviewComparisonOutput = Field(
+        default_factory=ReviewComparisonOutput,
+    )
+    future_work: list[ReviewFutureWorkOutput] = Field(default_factory=list)
 
 
 REVIEW_EVIDENCE_PER_PAPER = 4
@@ -447,7 +501,9 @@ def _build_review_prompt(
 """.strip()
 
 
-def _call_review_model(prompt: str) -> tuple[dict[str, Any], str]:
+# Retained for v0.4 module-surface compatibility. Runtime generation always
+# uses `_call_review_model_bounded` so every model call is budget-aware.
+def _legacy_call_review_model(prompt: str) -> tuple[dict[str, Any], str]:
     settings = get_settings()
     try:
         client = get_llm_client()
@@ -518,12 +574,187 @@ def _call_review_model(prompt: str) -> tuple[dict[str, Any], str]:
     return parsed, settings.llm_model_name
 
 
+def _call_review_model_bounded(
+    prompt: str,
+    consume_llm_call: Callable[[], None] | None = None,
+) -> tuple[dict[str, Any], str]:
+    settings = get_settings()
+    try:
+        client = get_llm_client()
+    except AppError:
+        raise
+    except Exception as exc:
+        raise AppError(
+            "Review LLM client could not be created.",
+            code="REVIEW_LLM_ERROR",
+            status_code=502,
+            details={"provider_error": type(exc).__name__},
+        ) from exc
+
+    messages: list[dict[str, str]] = [
+        {
+            "role": "system",
+            "content": (
+                "You are a strict evidence-grounded literature review "
+                "generator. Return one valid JSON object only. Keep the "
+                "output compact: at most 3 sections, at most one comparison "
+                "item per paper and dimension, and at most 2 future_work "
+                "items. Do not add unsupported detail."
+            ),
+        },
+        {"role": "user", "content": prompt},
+    ]
+    schema_text = json.dumps(
+        LiteratureReviewOutput.model_json_schema(),
+        ensure_ascii=False,
+    )
+    diagnostics: list[dict[str, Any]] = []
+
+    for attempt in (1, 2):
+        if consume_llm_call is not None:
+            consume_llm_call()
+        try:
+            response = client.chat.completions.create(
+                model=settings.llm_model_name,
+                messages=messages,
+                temperature=0.1,
+                max_tokens=6000 if attempt == 1 else 3000,
+                timeout=55 if attempt == 1 else 25,
+                response_format={"type": "json_object"},
+            )
+        except AppError:
+            raise
+        except Exception as exc:
+            exception_name = type(exc).__name__.casefold()
+            raise AppError(
+                "Review generation timed out."
+                if "timeout" in exception_name
+                else "Review generation service is unavailable.",
+                code=(
+                    "REVIEW_TIMEOUT"
+                    if "timeout" in exception_name
+                    else "REVIEW_LLM_ERROR"
+                ),
+                status_code=504 if "timeout" in exception_name else 502,
+                details={
+                    "provider_error": type(exc).__name__,
+                    "attempt": attempt,
+                },
+            ) from exc
+
+        content: str | None = None
+        try:
+            content = response_content(response)
+            parsed = parse_json_object(content)
+            validated = LiteratureReviewOutput.model_validate(parsed)
+        except (LLMJSONError, ValidationError) as exc:
+            response_finish_reason = finish_reason(response)
+            failure_kind = (
+                "output_truncated"
+                if response_finish_reason == "length"
+                else (
+                    exc.kind
+                    if isinstance(exc, LLMJSONError)
+                    else "schema_validation_error"
+                )
+            )
+            diagnostics.append(
+                safe_diagnostics(
+                    stage="literature_review",
+                    attempt=attempt,
+                    content=content,
+                    finish_reason=response_finish_reason,
+                    failure_kind=failure_kind,
+                    error=exc,
+                )
+            )
+            if attempt == 1:
+                if response_finish_reason == "length":
+                    messages = [
+                        {
+                            "role": "system",
+                            "content": (
+                                "Return one compact, complete JSON object. "
+                                "Do not add facts or sources. No Markdown."
+                            ),
+                        },
+                        {
+                            "role": "user",
+                            "content": (
+                                f"{prompt}\n\n"
+                                "The previous response was truncated by the "
+                                "output limit. Return a compact complete "
+                                "object with at most 3 sections, at most one "
+                                "comparison item per paper per dimension, "
+                                "short section content, and at most 2 "
+                                "future_work items. Keep only citations that "
+                                "are valid for the relevant evidence."
+                            ),
+                        },
+                    ]
+                else:
+                    messages = repair_messages(
+                        invalid_content=content or "",
+                        schema_text=schema_text,
+                        instruction=(
+                            "Keep the existing sections and comparison "
+                            "items. Every item must keep evidence-based "
+                            "claim kinds and only source identifiers "
+                            "supplied by the original response."
+                        ),
+                    )
+                continue
+            raise AppError(
+                (
+                    "Review LLM output was truncated after one compact "
+                    "repair attempt."
+                    if failure_kind == "output_truncated"
+                    else
+                    "Review LLM JSON parsing failed after one repair attempt."
+                    if failure_kind == "json_parse_error"
+                    else "Review LLM output failed Schema validation after "
+                    "one repair attempt."
+                ),
+                code=(
+                    "REVIEW_LLM_OUTPUT_TRUNCATED"
+                    if failure_kind == "output_truncated"
+                    else (
+                        "REVIEW_LLM_SCHEMA_ERROR"
+                        if failure_kind == "schema_validation_error"
+                        else (
+                            "REVIEW_LLM_JSON_ERROR"
+                            if failure_kind
+                            in {"json_parse_error", "json_shape_error"}
+                            else "REVIEW_LLM_RESPONSE_ERROR"
+                        )
+                    )
+                ),
+                status_code=502,
+                details={
+                    "attempts": attempt,
+                    "diagnostics": diagnostics,
+                },
+            ) from exc
+        payload = validated.model_dump(mode="json")
+        if diagnostics:
+            payload["_llm_diagnostics"] = diagnostics
+        return payload, settings.llm_model_name
+
+    raise AppError(
+        "Review LLM did not return valid structured output.",
+        code="REVIEW_LLM_SCHEMA_ERROR",
+        status_code=502,
+        details={"diagnostics": diagnostics},
+    )
+
+
 def generate_literature_review(
     db: Session,
     *,
     paper_ids: list[int],
     topic: str,
     include_future_work: bool,
+    consume_llm_call: Callable[[], None] | None = None,
 ) -> dict:
     if len(paper_ids) < 2 or len(paper_ids) > 5:
         raise AppError(
@@ -559,7 +790,7 @@ def generate_literature_review(
         )
 
     dimension_map = _dimension_evidence_map(evidence, papers)
-    parsed, model_name = _call_review_model(
+    parsed, model_name = _call_review_model_bounded(
         _build_review_prompt(
             topic,
             papers,
@@ -568,7 +799,8 @@ def generate_literature_review(
             dimension_map,
             future_evidence,
             include_future_work,
-        )
+        ),
+        consume_llm_call=consume_llm_call,
     )
     evidence_by_id = {
         int(item["citation_id"]): item
@@ -799,5 +1031,6 @@ def generate_literature_review(
         "future_work": future_work,
         "sources": list(source_map.values()),
         "model": model_name,
+        "llm_diagnostics": parsed.get("_llm_diagnostics", []),
         "disclaimer": REVIEW_DISCLAIMER,
     }

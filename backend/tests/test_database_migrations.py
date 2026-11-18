@@ -91,6 +91,56 @@ def test_additive_schema_adds_worker_lease_columns_idempotently():
     engine.dispose()
 
 
+def test_additive_schema_adds_research_agent_lease_columns_idempotently():
+    engine = create_engine("sqlite:///:memory:")
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "CREATE TABLE research_agent_runs ("
+                "id VARCHAR(36) PRIMARY KEY, status VARCHAR(32) NOT NULL)"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO research_agent_runs (id, status) "
+                "VALUES ('run-1', 'pending')"
+            )
+        )
+
+    ensure_additive_schema(engine)
+    ensure_additive_schema(engine)
+
+    columns = {
+        column["name"]
+        for column in inspect(engine).get_columns("research_agent_runs")
+    }
+    assert {
+        "max_replans",
+        "lease_owner",
+        "lease_expires_at",
+        "lease_generation",
+        "heartbeat_at",
+        "resume_count",
+    } <= columns
+    with engine.connect() as connection:
+        row = connection.execute(
+            text(
+                "SELECT status, max_replans, lease_generation, resume_count "
+                "FROM research_agent_runs WHERE id='run-1'"
+            )
+        ).one()
+    assert row.status == "pending"
+    assert row.max_replans == 1
+    assert row.lease_generation == 0
+    assert row.resume_count == 0
+    indexes = {
+        index["name"]
+        for index in inspect(engine).get_indexes("research_agent_runs")
+    }
+    assert "ix_research_agent_runs_lease_expires_at" in indexes
+    engine.dispose()
+
+
 def test_additive_schema_adds_pdf_checkpoint_identity_columns():
     engine = create_engine("sqlite:///:memory:")
     with engine.begin() as connection:

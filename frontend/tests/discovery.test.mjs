@@ -7,6 +7,7 @@ import {
   favoriteImportStatusLabel,
   favoriteImportStatusType,
   formatArxivDate,
+  hasActiveFavoriteImport,
 } from "../src/utils/discovery.ts";
 
 
@@ -79,4 +80,41 @@ test("maps ImportItem-backed favorite statuses consistently", () => {
   assert.equal(favoriteImportStatusType("failed"), "danger");
   assert.equal(favoriteImportStatusLabel("imported"), "已导入");
   assert.equal(favoriteImportStatusType("imported"), "success");
+});
+
+
+test("keeps favorite import polling active until the job reaches a terminal state", () => {
+  assert.equal(
+    hasActiveFavoriteImport([
+      { import_status: "queued", import_job: null },
+    ]),
+    true,
+  );
+  assert.equal(
+    hasActiveFavoriteImport([
+      {
+        import_status: "not_imported",
+        import_job: {
+          status: "running",
+          progress: 60,
+        },
+      },
+    ]),
+    true,
+  );
+
+  for (const status of ["completed", "partial", "failed"]) {
+    assert.equal(
+      hasActiveFavoriteImport([
+        {
+          import_status: status,
+          import_job: {
+            status,
+            progress: 100,
+          },
+        },
+      ]),
+      false,
+    );
+  }
 });

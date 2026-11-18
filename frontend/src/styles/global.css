@@ -1,20 +1,3 @@
-:root {
-  --bg: #eef2f4;
-  --bg-deep: #0f2a3d;
-  --panel: #ffffff;
-  --ink: #16324a;
-  --muted: #5b7386;
-  --line: #d7e1e8;
-  --accent: #0f6e8c;
-  --accent-2: #c9842a;
-  --ok: #2f7d5a;
-  --danger: #b42318;
-  --shadow: 0 18px 40px rgba(15, 42, 61, 0.08);
-  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-  color: var(--ink);
-  background: var(--bg);
-}
-
 * {
   box-sizing: border-box;
 }
@@ -26,10 +9,31 @@ body,
   min-height: 100%;
 }
 
+html {
+  background: var(--color-bg-canvas);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
 body {
-  background:
-    radial-gradient(circle at top right, rgba(201, 132, 42, 0.12), transparent 28%),
-    linear-gradient(180deg, #f5f8fa 0%, #e8eef2 100%);
+  min-width: 320px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-canvas);
+  line-height: var(--line-height-base);
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: var(--font-sans);
+}
+
+button {
+  color: inherit;
 }
 
 a {
@@ -37,17 +41,198 @@ a {
   text-decoration: none;
 }
 
+::selection {
+  color: var(--color-text-primary);
+  background: var(--color-primary-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-strong);
+  background-clip: padding-box;
+}
+
 .page-card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  box-shadow: var(--shadow);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
 }
 
 .muted {
-  color: var(--muted);
+  color: var(--color-text-secondary);
 }
 
 .mono {
-  font-family: "Cascadia Code", "Consolas", monospace;
+  font-family: var(--font-mono);
+}
+
+.page-title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: var(--line-height-tight);
+}
+
+.section-title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.eyebrow {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+:root {
+  --el-color-primary: #345fcf;
+  --el-color-primary-light-3: #718ee0;
+  --el-color-primary-light-5: #9aafea;
+  --el-color-primary-light-7: #c2cff3;
+  --el-color-primary-light-8: #d7e0f7;
+  --el-color-primary-light-9: #edf2ff;
+  --el-color-primary-dark-2: #294fb4;
+  --el-color-success: #16774f;
+  --el-color-warning: #a25f08;
+  --el-color-danger: #bd3a32;
+  --el-color-info: #607080;
+  --el-bg-color: var(--color-surface);
+  --el-bg-color-page: var(--color-bg-canvas);
+  --el-bg-color-overlay: var(--color-surface-overlay);
+  --el-fill-color-blank: var(--color-surface);
+  --el-fill-color-light: var(--color-bg-subtle);
+  --el-fill-color-lighter: var(--color-bg-canvas);
+  --el-fill-color-extra-light: var(--color-bg-subtle);
+  --el-text-color-primary: var(--color-text-primary);
+  --el-text-color-regular: var(--color-text-secondary);
+  --el-text-color-secondary: var(--color-text-tertiary);
+  --el-text-color-placeholder: var(--color-text-tertiary);
+  --el-border-color: var(--color-border-default);
+  --el-border-color-light: var(--color-border-subtle);
+  --el-border-color-lighter: var(--color-border-subtle);
+  --el-border-radius-base: var(--radius-md);
+  --el-border-radius-small: var(--radius-sm);
+  --el-box-shadow-light: var(--shadow-sm);
+  --el-box-shadow: var(--shadow-md);
+  --el-mask-color: rgba(17, 19, 22, 0.45);
+}
+
+html.dark {
+  --el-color-primary: #8aa5ff;
+  --el-color-primary-light-3: #697fbd;
+  --el-color-primary-light-5: #4d5e8e;
+  --el-color-primary-light-7: #303e62;
+  --el-color-primary-light-8: #26334e;
+  --el-color-primary-light-9: #1c2948;
+  --el-color-primary-dark-2: #a5b8ff;
+  --el-color-success: #63c99b;
+  --el-color-warning: #e4ac62;
+  --el-color-danger: #ed8d86;
+  --el-color-info: #a8b0b9;
+  --el-text-color-primary: var(--color-text-primary);
+  --el-text-color-regular: var(--color-text-secondary);
+  --el-text-color-secondary: var(--color-text-tertiary);
+  --el-text-color-placeholder: var(--color-text-tertiary);
+  --el-border-color-darker: var(--color-border-strong);
+  --el-mask-color: rgba(0, 0, 0, 0.62);
+}
+
+html.dark .el-button--primary {
+  --el-button-text-color: #111316;
+  --el-button-hover-text-color: #111316;
+  --el-button-active-text-color: #111316;
+  --el-button-disabled-text-color: rgba(17, 19, 22, 0.55);
+}
+
+.el-button {
+  font-weight: 550;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  background: var(--color-surface);
+  box-shadow: 0 0 0 1px var(--color-border-default) inset;
+}
+
+.el-input__wrapper:hover,
+.el-select__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--color-border-strong) inset;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused,
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px var(--color-primary) inset;
+}
+
+.el-card,
+.el-dialog,
+.el-message-box,
+.el-dropdown-menu,
+.el-picker-panel {
+  color: var(--color-text-primary);
+  background: var(--color-surface-overlay);
+  border-color: var(--color-border-subtle);
+}
+
+.el-table {
+  --el-table-bg-color: var(--color-surface);
+  --el-table-tr-bg-color: var(--color-surface);
+  --el-table-header-bg-color: var(--color-bg-subtle);
+  --el-table-row-hover-bg-color: var(--color-surface-hover);
+  --el-table-border-color: var(--color-border-subtle);
+  --el-table-text-color: var(--color-text-primary);
+  --el-table-header-text-color: var(--color-text-secondary);
+}
+
+.el-tabs__item {
+  color: var(--color-text-secondary);
+}
+
+.el-tabs__item.is-active {
+  color: var(--color-text-primary);
+}
+
+pre,
+code {
+  font-family: var(--font-mono);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

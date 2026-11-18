@@ -1,0 +1,132 @@
+:root {
+  color-scheme: light;
+
+  --color-bg-canvas: #f7f8f8;
+  --color-bg-subtle: #f1f3f4;
+  --color-bg-muted: #e9ecee;
+  --color-sidebar: #fbfbfa;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-overlay: #ffffff;
+  --color-surface-hover: #f4f6f7;
+  --color-surface-active: #edf1f6;
+  --color-text-primary: #1a232d;
+  --color-text-secondary: #56616d;
+  --color-text-tertiary: #78838e;
+  --color-text-inverse: #ffffff;
+  --color-border-subtle: #e8ebed;
+  --color-border-default: #dce1e5;
+  --color-border-strong: #c8d0d7;
+  --color-primary: #345fcf;
+  --color-primary-hover: #294fb4;
+  --color-primary-soft: #edf2ff;
+  --color-primary-border: #cbd8ff;
+  --color-accent: #9a681b;
+  --color-accent-soft: #fff7e8;
+  --color-success: #16774f;
+  --color-success-soft: #eaf8f1;
+  --color-warning: #a25f08;
+  --color-warning-soft: #fff6e7;
+  --color-danger: #bd3a32;
+  --color-danger-soft: #fff0ef;
+  --color-info: #356e9f;
+  --color-info-soft: #edf5fb;
+  --color-focus: rgba(52, 95, 207, 0.3);
+
+  --font-sans: "Inter", "SF Pro Text", "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-display: 32px;
+  --line-height-tight: 1.25;
+  --line-height-base: 1.6;
+  --line-height-reading: 1.75;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-pill: 999px;
+
+  --shadow-xs: 0 1px 2px rgba(20, 30, 40, 0.05);
+  --shadow-sm: 0 4px 12px rgba(20, 30, 40, 0.05);
+  --shadow-md: 0 12px 28px rgba(20, 30, 40, 0.08);
+  --shadow-overlay: 0 20px 48px rgba(20, 30, 40, 0.16);
+
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --layout-sidebar-width: 252px;
+  --layout-topbar-height: 72px;
+  --layout-content-max: 1480px;
+  --layout-content-gutter: 32px;
+
+  /* Legacy aliases keep existing page styles readable during the batch migration. */
+  --bg: var(--color-bg-canvas);
+  --bg-deep: var(--color-sidebar);
+  --panel: var(--color-surface);
+  --ink: var(--color-text-primary);
+  --muted: var(--color-text-secondary);
+  --line: var(--color-border-default);
+  --accent: var(--color-primary);
+  --accent-2: var(--color-accent);
+  --ok: var(--color-success);
+  --danger: var(--color-danger);
+  --shadow: var(--shadow-sm);
+}
+
+html.dark,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg-canvas: #111316;
+  --color-bg-subtle: #171a1e;
+  --color-bg-muted: #1d2126;
+  --color-sidebar: #131518;
+  --color-surface: #181b1f;
+  --color-surface-raised: #1d2025;
+  --color-surface-overlay: #23272d;
+  --color-surface-hover: #22262b;
+  --color-surface-active: #28303b;
+  --color-text-primary: #f0f2f4;
+  --color-text-secondary: #a8b0b9;
+  --color-text-tertiary: #7e8893;
+  --color-text-inverse: #111316;
+  --color-border-subtle: #252a30;
+  --color-border-default: #30363d;
+  --color-border-strong: #434b54;
+  --color-primary: #8aa5ff;
+  --color-primary-hover: #a5b8ff;
+  --color-primary-soft: #1c2948;
+  --color-primary-border: #334b83;
+  --color-accent: #e0b169;
+  --color-accent-soft: #2b2418;
+  --color-success: #63c99b;
+  --color-success-soft: #15291f;
+  --color-warning: #e4ac62;
+  --color-warning-soft: #2b2318;
+  --color-danger: #ed8d86;
+  --color-danger-soft: #2d1c1d;
+  --color-info: #8abce5;
+  --color-info-soft: #182631;
+  --color-focus: rgba(138, 165, 255, 0.38);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.18);
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 14px 32px rgba(0, 0, 0, 0.24);
+  --shadow-overlay: 0 24px 56px rgba(0, 0, 0, 0.42);
+}

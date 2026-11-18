@@ -4,7 +4,21 @@ import type {
 } from "@/types/citation";
 
 
-export function citationEChartsSeries(data: CitationGraphData) {
+export interface CitationGraphPalette {
+  foundational: string;
+  connected: string;
+  isolated: string;
+}
+
+
+export function citationEChartsSeries(
+  data: CitationGraphData,
+  palette: CitationGraphPalette = {
+    foundational: "#c9842a",
+    connected: "#2d6f95",
+    isolated: "#9aa8b3",
+  },
+) {
   return {
     data: data.nodes.map((node) => ({
       id: node.id,
@@ -22,10 +36,10 @@ export function citationEChartsSeries(data: CitationGraphData) {
       ),
       itemStyle: {
         color: node.is_foundational
-          ? "#c9842a"
+          ? palette.foundational
           : node.in_degree === 0 && node.out_degree === 0
-            ? "#9aa8b3"
-            : "#2d6f95",
+            ? palette.isolated
+            : palette.connected,
       },
       raw: node,
     })),

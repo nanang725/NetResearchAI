@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AppLayout from "@/layouts/AppLayout.vue";
-import SearchView from '../views/SearchView.vue'
-
 
 const router = createRouter({
   history: createWebHistory(),
@@ -12,6 +10,12 @@ const router = createRouter({
       children: [
         {
           path: "",
+          name: "home",
+          component: () => import("@/views/HomeView.vue"),
+          meta: { title: "科研工作台" },
+        },
+        {
+          path: "library",
           name: "library",
           component: () => import("@/views/LibraryView.vue"),
           meta: { title: "论文库" },
@@ -20,7 +24,7 @@ const router = createRouter({
           path: "papers/:id",
           name: "paper-detail",
           component: () => import("@/views/PaperDetailView.vue"),
-          meta: { title: "论文详情" },
+          meta: { title: "论文阅读器" },
         },
         {
           path: "qa",
@@ -33,18 +37,18 @@ const router = createRouter({
           },
         },
         {
-          path: 'search', // 或者 '/search'
-          name: 'Search',
-          component: SearchView,
-          meta: { title: '智能检索' }
-        },  
+          path: "search",
+          name: "Search",
+          component: () => import("@/views/SearchView.vue"),
+          meta: { title: "智能检索" },
+        },
         {
           path: "graph",
           name: "graph",
           component: () => import("@/views/CitationGraphView.vue"),
           meta: {
             title: "引用图谱",
-            stage: "v0.3.0 开发预览",
+            stage: "v0.4.0 正式版本",
             feature: "本地引用关系、PageRank 与核心论文识别；完整知识图谱规划于 v0.5.0",
           },
         },
@@ -54,8 +58,8 @@ const router = createRouter({
           component: () => import("@/views/MultiPaperReviewView.vue"),
           meta: {
             title: "多文献综述",
-            stage: "v0.3.0 开发预览",
-            feature: "2～5 篇本地论文的逐篇证据检索与综合综述",
+            stage: "v0.4.0 正式版本",
+            feature: "2～8 篇本地论文的逐篇证据检索与综合综述",
           },
         },
         {
@@ -63,8 +67,8 @@ const router = createRouter({
           name: "writing",
           component: () => import("@/views/AcademicWritingView.vue"),
           meta: {
-            title: "学术写作与可视化",
-            stage: "v0.3.0 开发预览",
+            title: "学术写作",
+            stage: "v0.4.0 正式版本",
             feature: "论文大纲、文献综述、References 与 CSV 数据可视化",
           },
         },
@@ -74,7 +78,7 @@ const router = createRouter({
           component: () => import("@/views/DiscoveryView.vue"),
           meta: {
             title: "文献发现",
-            stage: "v0.3.0 开发预览",
+            stage: "v0.4.0 正式版本",
             feature: "官方 arXiv 搜索、收藏入库、关键词追踪与本地/外部推荐",
           },
         },
@@ -84,8 +88,8 @@ const router = createRouter({
           component: () => import("@/views/ResearchAgentView.vue"),
           meta: {
             title: "自主科研 Agent",
-            stage: "v0.4.0 提前预览，不属于 v0.3.0 正式目标",
-            feature: "只读工具白名单、持久化计划、运行时证据校验与受控重规划",
+            stage: "v0.4.0 正式版本",
+            feature: "计划编辑、结构化数据流、工具编排、租约恢复与运行时证据校验",
           },
         },
         {
@@ -96,8 +100,12 @@ const router = createRouter({
             title: "版本比较",
             stage: "尚未实现",
             feature: "论文库已有版本关系与差异查看；独立比较工作台尚未交付",
-            roadmap: "v0.3.0 不将独立版本比较页面列为已完成能力，后续版本再规划。",
+            roadmap: "v0.4.0 仍不将独立版本比较页面列为已完成能力，后续版本再规划。",
           },
+        },
+        {
+          path: ":pathMatch(.*)*",
+          redirect: "/",
         },
       ],
     },
@@ -105,7 +113,7 @@ const router = createRouter({
 });
 
 router.afterEach((to) => {
-  const title = (to.meta.title as string | undefined) ?? "工作台";
+  const title = (to.meta.title as string | undefined) ?? "研究工作台";
   document.title = `${title} · NetResearch AI`;
 });
 

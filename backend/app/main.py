@@ -47,6 +47,7 @@ from app.services.ingestion_service import (
     recover_interrupted_jobs,
     run_import_worker,
 )
+from app.services.research_agent.worker import run_research_agent_dispatcher
 
 settings = get_settings()
 
@@ -68,21 +69,31 @@ async def lifespan(_app: FastAPI):
         daemon=True,
     )
     worker.start()
+    agent_stop = Event()
+    agent_worker = Thread(
+        target=run_research_agent_dispatcher,
+        args=(SessionLocal, agent_stop),
+        name="research-agent-dispatcher",
+        daemon=True,
+    )
+    agent_worker.start()
     try:
         yield
     finally:
+        agent_stop.set()
         stop_worker.set()
+        agent_worker.join(timeout=10)
         worker.join(timeout=10)
 
 
 app = FastAPI(
     title=settings.app_name,
     description=(
-        "面向计算机网络领域的科研助手。v0.3.0 开发预览提供可靠论文检索、"
+        "面向计算机网络领域的科研助手。v0.4.0 提供可靠论文检索、"
         "文献发现、引用图谱预览、多文献证据综述、基础学术写作、"
-        "结构化阅读翻译与 CSV 数据分析；自主科研 Agent 为 v0.4.0 提前预览。"
+        "结构化阅读翻译、CSV 数据分析与自主科研 Agent。"
     ),
-    version="0.3.0-dev.0",
+    version="0.4.0",
     lifespan=lifespan,
 )
 

@@ -2,6 +2,7 @@
   <div class="citation-page">
     <section class="page-card toolbar">
       <div>
+        <p class="eyebrow">LOCAL CITATION NETWORK</p>
         <h2>本地引用图谱</h2>
         <p class="muted">
           节点和箭头只来自当前本地论文库及可靠匹配的参考文献。
@@ -9,14 +10,20 @@
       </div>
       <div class="toolbar-actions">
         <el-checkbox v-model="includeIsolated">显示孤立论文</el-checkbox>
-        <el-input-number
-          v-model="minCitations"
-          :min="0"
-          :max="50"
-          size="small"
-          controls-position="right"
-        />
+        <label class="citation-filter">
+          <span>最少引用</span>
+          <el-input-number
+            v-model="minCitations"
+            :min="0"
+            :max="50"
+            size="small"
+            controls-position="right"
+          />
+        </label>
         <el-button size="small" :loading="loading" @click="loadGraph">刷新</el-button>
+        <el-button size="small" plain @click="graphExpanded = !graphExpanded">
+          {{ graphExpanded ? "显示详情面板" : "扩大图谱" }}
+        </el-button>
         <el-button
           size="small"
           type="primary"
@@ -69,17 +76,34 @@
       {{ 20 - graph.stats.independent_paper_count }} 篇。图谱不会用测试数据补足。
     </div>
 
-    <div class="graph-layout">
+    <div v-if="graph && graph.stats.edge_count === 0" class="page-card relation-gap">
+      <strong>当前没有可靠本地引用关系</strong>
+      <span>
+        系统中存在 {{ graph.stats.reference_count }} 条参考文献条目，但没有可以确定连接到当前本地论文的边。
+        图谱不会生成推测关系；可在需要时重建引用匹配。
+      </span>
+    </div>
+
+    <div class="graph-layout" :class="{ expanded: graphExpanded }">
       <section class="page-card graph-card" v-loading="loading || selectingPaper">
+        <div v-if="graph?.nodes.length" class="graph-legend" aria-label="图谱图例">
+          <span><i class="legend-node foundational"></i>核心论文</span>
+          <span><i class="legend-node connected"></i>引用网络论文</span>
+          <span><i class="legend-node isolated"></i>孤立论文</span>
+          <span><i class="legend-arrow">→</i>引用方向</span>
+        </div>
         <div ref="graphElement" class="graph-canvas"></div>
         <el-empty
           v-if="graph && !graph.nodes.length && !loading"
           description="当前没有可展示的本地论文引用数据"
         />
+        <p v-if="graph?.nodes.length" class="graph-guide">
+          拖拽节点调整位置 · 滚轮缩放 · 点击节点查看引用详情
+        </p>
         <p v-if="graph" class="graph-note">{{ graph.disclaimer }}</p>
       </section>
 
-      <aside class="page-card detail-panel">
+      <aside v-if="!graphExpanded" class="page-card detail-panel">
         <template v-if="selectedPaper">
           <div class="detail-head">
             <div>
@@ -190,6 +214,7 @@ import {
   citationEChartsSeries,
   paperPageRoute,
 } from "@/utils/citationGraph";
+import { useTheme } from "@/composables/useTheme";
 
 const router = useRouter();
 const graphElement = ref<HTMLElement | null>(null);
@@ -201,7 +226,9 @@ const rebuilding = ref(false);
 const includeIsolated = ref(true);
 const minCitations = ref(0);
 const errorMessage = ref("");
+const graphExpanded = ref(false);
 let chart: echarts.ECharts | null = null;
+const { theme } = useTheme();
 
 async function loadGraph() {
   loading.value = true;
@@ -235,10 +262,19 @@ function renderGraph() {
       if (Number.isInteger(paperId)) void selectPaper(paperId);
     });
   }
-  const series = citationEChartsSeries(graph.value);
+  const styles = getComputedStyle(document.documentElement);
+  const cssValue = (name: string) => styles.getPropertyValue(name).trim();
+  const series = citationEChartsSeries(graph.value, {
+    foundational: cssValue("--color-accent"),
+    connected: cssValue("--color-primary"),
+    isolated: cssValue("--color-text-tertiary"),
+  });
   chart.setOption(
     {
       tooltip: {
+        backgroundColor: cssValue("--color-surface-overlay"),
+        borderColor: cssValue("--color-border-default"),
+        textStyle: { color: cssValue("--color-text-primary") },
         formatter: (params: any) => {
           if (params.dataType === "edge") {
             return `引用方向：${params.data.source} → ${params.data.target}`;
@@ -252,7 +288,8 @@ function renderGraph() {
           ].join("<br/>");
         },
       },
-      legend: [{ data: series.categories.map((item) => item.name) }],
+      legend: { show: false },
+      textStyle: { color: cssValue("--color-text-secondary") },
       animationDurationUpdate: 400,
       series: [
         {
@@ -269,12 +306,17 @@ function renderGraph() {
           label: {
             show: true,
             position: "right",
+            color: cssValue("--color-text-primary"),
             formatter: (params: any) =>
               params.data.name.length > 22
                 ? `${params.data.name.slice(0, 22)}…`
                 : params.data.name,
           },
-          lineStyle: { color: "#8ca2b3", width: 1.4, curveness: 0.08 },
+          lineStyle: {
+            color: cssValue("--color-border-strong"),
+            width: 1.4,
+            curveness: 0.08,
+          },
           emphasis: { focus: "adjacency", lineStyle: { width: 3 } },
         },
       ],
@@ -329,6 +371,14 @@ watch([includeIsolated, minCitations], () => {
   void loadGraph();
 });
 
+watch(theme, async () => {
+  if (!graph.value) return;
+  chart?.dispose();
+  chart = null;
+  await nextTick();
+  renderGraph();
+});
+
 onMounted(() => {
   window.addEventListener("resize", resizeChart);
   void loadGraph();
@@ -362,6 +412,10 @@ onUnmounted(() => {
 }
 
 .toolbar h2 {
+  font-size: 22px;
+}
+
+.toolbar h2 {
   margin: 0 0 6px;
 }
 
@@ -370,6 +424,18 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.citation-filter {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+.citation-filter :deep(.el-input-number) {
+  width: 104px;
 }
 
 .stats-grid {
@@ -394,23 +460,44 @@ onUnmounted(() => {
 }
 
 .corpus-gap,
-.error-box {
+.error-box,
+.relation-gap {
   padding: 12px 16px;
-  color: #8a5b16;
-  background: #fff8e8;
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.relation-gap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-color: color-mix(in srgb, var(--color-warning) 28%, transparent);
+}
+
+.relation-gap strong {
+  flex: 0 0 auto;
+}
+
+.relation-gap span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
 }
 
 .error-box {
   display: flex;
   justify-content: space-between;
-  color: #b42318;
-  background: #fff1f0;
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
 }
 
 .graph-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 390px;
+  grid-template-columns: minmax(0, 1fr) 350px;
   gap: 16px;
+}
+
+.graph-layout.expanded {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .graph-card {
@@ -419,9 +506,67 @@ onUnmounted(() => {
   padding: 8px;
 }
 
+.graph-layout.expanded .graph-card,
+.graph-layout.expanded .graph-canvas {
+  min-height: 720px;
+  height: 720px;
+}
+
 .graph-canvas {
   width: 100%;
   height: 610px;
+}
+
+.graph-legend {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 7px 9px;
+  color: var(--color-text-secondary);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(10px);
+  font-size: 10px;
+}
+
+.graph-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-node {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+.legend-node.foundational {
+  background: var(--color-accent);
+}
+
+.legend-node.isolated {
+  background: var(--color-text-tertiary);
+}
+
+.legend-arrow {
+  color: var(--color-text-tertiary);
+  font-style: normal;
+}
+
+.graph-guide {
+  position: absolute;
+  right: 20px;
+  bottom: 36px;
+  margin: 0;
+  color: var(--color-text-tertiary);
+  font-size: 10px;
 }
 
 .graph-note {
@@ -466,8 +611,8 @@ onUnmounted(() => {
 .relation blockquote {
   margin: 8px 0 0;
   padding: 8px 10px;
-  background: #f7fafc;
-  color: #566573;
+  background: var(--color-bg-subtle);
+  color: var(--color-text-secondary);
   font-size: 12px;
   overflow-wrap: anywhere;
 }
@@ -481,6 +626,34 @@ onUnmounted(() => {
   }
   .detail-panel {
     max-height: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .toolbar,
+  .toolbar-actions,
+  .relation-gap {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+  }
+
+  .graph-legend {
+    position: static;
+    margin: 4px;
+  }
+
+  .graph-canvas {
+    min-height: 480px;
+    height: 480px;
+  }
+
+  .graph-guide {
+    position: static;
+    padding: 0 10px 8px;
   }
 }
 </style>

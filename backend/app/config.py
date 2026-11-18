@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     ocr_min_text_chars: int = Field(default=30, ge=0)
     semantic_duplicate_threshold: float = Field(default=0.90, ge=0, le=1)
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    agent_max_concurrent_runs: int = Field(default=2, ge=1, le=16)
+    agent_lease_seconds: int = Field(default=30, ge=10, le=300)
+    agent_heartbeat_seconds: int = Field(default=10, ge=2, le=60)
+    agent_poll_seconds: float = Field(default=1.0, ge=0.2, le=10)
 
     # ================= 新增：大模型配置 =================
     llm_api_key: str = ""

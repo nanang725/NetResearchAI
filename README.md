@@ -6,8 +6,8 @@
 
 - **v0.1.0：工程基础与可靠论文检索（已完成）**：提供论文 PDF 管理、解析、混合检索及基础问答能力。
 - **v0.2.x：文献管理、PDF 深度解析与大规模文献处理（已完成）**：包含上下文问答、可选按页 OCR、持久化批量导入任务、页级解析检查点与失败页恢复、语义相似候选、版本关系及索引一致性修复。当前仍会将整篇 PDF 内容读入内存，尚未具备端到端有界内存保证。
-- **v0.3.0：证据增强科研工作台（开发预览）**：覆盖文献发现、本地引用图谱预览、多文献证据综述、学术大纲与 References、结构化阅读与翻译、CSV 数据分析。当前处于发布前验收阶段，不将独立版本比较页面或完整科研知识图谱列为已完成。
-- **v0.4.0：自主科研 Agent（规划中）**：持久化 Planner、白名单工具、受控 Executor 和运行时证据校验。仓库已包含只读 Agent 的提前预览，但不属于 v0.3.0 正式完成目标。
+- **v0.3.0：证据增强科研工作台（已完成）**：覆盖文献发现、本地引用图谱预览、多文献证据综述、学术大纲与 References、结构化阅读与翻译、CSV 数据分析。独立版本比较页面和完整科研知识图谱仍不属于该版本完成范围。
+- **v0.4.0：自主科研 Agent（正式版本）**：提供计划预览与编辑、结构化节点数据流、只读工具编排、受控动态重规划、Run 租约与心跳、Generation fencing、服务恢复、节点幂等、取消与超时控制，以及基于真实证据的结构化研究报告。
 - **v0.5.0：科研知识图谱（规划中）**：跨文献实体、关系、时间演化与完整知识图谱查询。
 - **v1.0.0：完整科研 Copilot 与正式发布（规划中）**：完整写作、长期记忆、部署、权限和产品化交付。
 
@@ -21,7 +21,7 @@
 - 后端：Python + FastAPI + SQLite + ChromaDB
 - PDF 解析：PyMuPDF（保留页码）
 - 检索：BM25、BGE-M3 向量检索与 RRF 融合
-- 规划中：v0.4.0 自主科研 Agent 正式版本、v0.5.0 科研知识图谱、v1.0.0 完整科研 Copilot
+- 规划中：v0.5.0 科研知识图谱、v1.0.0 完整科研 Copilot
 
 ## 目录结构
 
@@ -43,7 +43,7 @@ NetResearchAI/
 └── start.bat
 ```
 
-## 当前开发预览已接入的真实能力
+## 当前正式版本已接入的真实能力
 
 - 后端健康检查 `GET /api/health`
 - 论文 PDF 上传、文件校验（扩展名、PDF 文件头、大小、空文件、加密文档）
@@ -55,7 +55,7 @@ NetResearchAI/
 - 文献发现：调用 arXiv 官方 API 搜索题录与摘要，支持收藏、PDF 入库任务、关键词手动追踪和本地/外部来源分离的推荐。收藏入库复用现有导入 Worker 与 SHA 去重
 - 学术写作基础能力：基于真实本地 Chunk 生成带证据状态的大纲，生成不补写未知字段的可核验 References，并支持大纲中英翻译
 - 数据分析：上传 CSV 后执行字段类型、缺失值、描述统计和确定性聚合，生成带数据来源标识与 SHA-256 的图表数据
-- 自主科研 Agent 提前预览：实现持久化只读工具计划、依赖调度、运行时证据校验和受控重规划；该能力属于 v0.4.0，不计入 v0.3.0 正式完成范围
+- 自主科研 Agent：支持计划预览、编辑、版本固定与确认执行；节点间结构化输入输出绑定；只读工具注册、参数 Schema 校验和标准化结果；Run 租约、心跳、Generation fencing、重启恢复、节点幂等、取消、超时和预算限制；失败策略及有界动态重规划；关键结论保留真实论文 ID、页码、Chunk 和证据来源
 - 论文列表、详情（含页码文本）、删除
 - 多 PDF 批量导入持久化任务，显示每个文件的解析/索引状态、进度与失败原因；服务重启后在 Worker 租约过期时重新排队未完成项，失败项可重试；Worker generation fencing 拒绝旧 Worker 在任务被接管后继续提交页面或任务状态
 - 使用 DOI、规范化标题等元数据及 BGE-M3 生成相似论文候选及匹配依据；只作人工核对，不自动合并或删除
@@ -68,12 +68,53 @@ NetResearchAI/
 - 前后端开发期通过 Vite `/api` 代理通信
 - 批量任务使用 SQLite 条件更新领取，并通过租约心跳、过期接管和 generation fencing 防止过期 Worker 更新任务结果；索引通过稳定 chunk ID 幂等写入，Chroma metadata 保存内容哈希、关键元数据指纹和 schema 版本，未变化的块可跳过重复向量化
 
+## v0.4.0 自主科研 Agent
+
+研究任务采用“计划草稿 → 用户预览与编辑 → 确认 → 执行”的生命周期。确认前只生成并校验计划，不启动执行线程；确认后固定计划版本并交给现有 Executor。
+
+Agent 支持：
+
+- 计划来源、节点依赖、完成条件、输入输出定义和执行预算审计。
+- 受控节点数据绑定，仅允许引用已声明依赖节点中的结构化字段。
+- 只读工具白名单、参数与输出 Pydantic Schema 校验。
+- 节点输入、输出、错误、策略决策、重规划、恢复和最终报告 Artifact。
+- `completed_with_warnings`、`partial`、`failed` 和 `cancelled` 等可区分配终态。
+- 真实本地论文 ID、页码、Chunk、来源和证据哈希回溯。
+
+可靠执行：
+
+- Run 通过数据库原子领取租约，同一 Run 同时只允许一个有效 Worker。
+- Worker 定期续约 Heartbeat；租约过期后允许其他 Worker 接管。
+- 每次接管增加 Generation，旧 Generation 的 Node、ToolCall 和 Artifact 提交会被 fencing 拒绝。
+- 服务启动时恢复 `pending` 和租约过期的 `running/cancelling` Run；不自动启动 `draft`、完成、失败或取消任务。
+- 已成功节点的有效输出会被复用；中断 ToolCall 保留历史审计并使用只读安全重试。
+- 支持协作取消、工具超时、Run 时间预算、工具/LLM/arXiv 预算和全局并发限制。
+
+LLM 与时间预算：
+
+- `max_llm_calls` 默认 4，硬上限 4；Planner、JSON 修复、多论文比较和最终报告均按真实调用记账。
+- 最终报告至少保留 1 次 LLM 调用预算。
+- `max_execution_seconds` 默认 180 秒，允许范围 10～600 秒。
+- 最终报告请求超时受 Run 截止时间约束。同步工具无法被强制终止时，会依靠协作取消和 Generation fencing 阻止旧任务提交结果。
+
+Agent Worker 配置：
+
+| 环境变量 | 默认值 | 作用 |
+| --- | ---: | --- |
+| `AGENT_MAX_CONCURRENT_RUNS` | 2 | 同时持有有效租约的 Run 上限，范围 1～16 |
+| `AGENT_LEASE_SECONDS` | 30 | Run 租约有效时间，范围 10～300 秒 |
+| `AGENT_HEARTBEAT_SECONDS` | 10 | Worker 心跳续租间隔，范围 2～60 秒 |
+| `AGENT_POLL_SECONDS` | 1.0 | Dispatcher 扫描待执行和可恢复 Run 的间隔，范围 0.2～10 秒 |
+
+Heartbeat 必须明显短于租约有效期。多实例部署时，各实例必须共享同一个 SQLite 数据库路径和兼容的 Agent Schema。
+
+Agent Run 响应包含 `llm_diagnostics`，用于区分模型空响应、JSON 解析、Schema 校验、输出截断和外部服务异常；最终报告响应包含 `generation_mode`，明确标记 `llm` 或基于真实证据的 `fallback`。
+
 ## 尚未实现
 
 - 完整学术写作工作流：正文编辑、引用插入、修订历史以及 DOCX/PDF 导出尚未实现
 - 服务端持久化会话状态或完整长期记忆
 - LangGraph Agent 工作流编排
-- v0.4.0 自主科研 Agent 正式版本：当前仅提供只读提前预览，尚未完成中断恢复、生产调度和完整真实依赖验收
 - v0.5.0 完整科研知识图谱：当前仅提供基于本地引用关系的 v0.3.0 预览
 - v1.0.0 完整科研 Copilot 与正式发布
 - 独立版本比较工作台：论文库已有版本关系、差异查看和保留管理，但独立比较页面尚未实现；不将 v0.3.0 描述为已包含该页面
@@ -202,7 +243,7 @@ npm run build
 - `GET /api/discovery/recommendations`：区分 arXiv 外部与本地 RAG 的推荐结果
 - `POST /api/writing/outline`、`POST /api/writing/references`、`POST /api/writing/translate`：证据大纲、可核验 References 与学术翻译
 - `POST /api/datasets/analyze`：CSV 字段分析、统计摘要和确定性图表数据
-- `/api/research-agent/runs`：自主科研 Agent 的 v0.4.0 提前预览 API，不属于 v0.3.0 正式验收范围
+- `/api/research-agent/plans`、`/api/research-agent/runs`：v0.4.0 自主科研 Agent 的计划生成、编辑、确认、执行、取消与报告 API；支持结构化节点数据流、租约恢复和运行时证据校验
 - `GET /api/papers/search?q=...`：混合检索
 - `POST /api/papers/agent/chat?query=...&paper_id=...`：论文问答；可选的 `paper_id` 限定单篇，后端也支持 2～5 篇的 `paper_ids` 查询参数；最近最多 12 条对话历史通过请求体传递；省略论文范围时检索全库；需要配置 `LLM_API_KEY`
 - `GET /api/papers/{paper_id}`：获取论文详情及分页文本

@@ -387,12 +387,18 @@ def test_new_pdf_creates_existing_import_job(
 
 
 @pytest.mark.parametrize(
-    ("item_status", "job_status", "expected_status", "expected_index_status"),
+    (
+        "item_status",
+        "job_status",
+        "expected_status",
+        "expected_index_status",
+        "expected_progress",
+    ),
     [
-        ("queued", "running", "queued", "pending"),
-        ("running", "running", "running", "indexing"),
-        ("succeeded", "completed", "imported", "indexed"),
-        ("failed", "partial", "failed", "failed"),
+        ("queued", "running", "queued", "pending", 0),
+        ("running", "running", "running", "indexing", 0),
+        ("succeeded", "completed", "imported", "indexed", 100),
+        ("failed", "partial", "failed", "failed", 100),
     ],
 )
 def test_favorite_serializes_import_item_status_not_job_status(
@@ -402,6 +408,7 @@ def test_favorite_serializes_import_item_status_not_job_status(
     job_status,
     expected_status,
     expected_index_status,
+    expected_progress,
 ):
     factory = isolated_environment["session_factory"]
     client = isolated_environment["client"]
@@ -474,6 +481,7 @@ def test_favorite_serializes_import_item_status_not_job_status(
     )
     assert favorite["import_status"] == expected_status
     assert favorite["import_job"]["status"] == job_status
+    assert favorite["import_job"]["progress"] == expected_progress
     assert favorite["import_job"]["items"][0]["status"] == item_status
     if item_status == "succeeded":
         assert favorite["local_paper_id"] == paper_id

@@ -246,6 +246,19 @@ def serialize_import_item(item: PaperImportItem, job_kind: str) -> dict:
     }
 
 
+def _import_job_progress(job: PaperImportJob) -> int:
+    if job.total_count <= 0:
+        return 100
+    processed_count = max(
+        0,
+        min(
+            job.total_count,
+            job.completed_count + job.failed_count,
+        ),
+    )
+    return min(100, int(processed_count * 100 / job.total_count))
+
+
 def serialize_import_job(job: PaperImportJob, include_items: bool = True) -> dict:
     items = job.items if include_items else []
     data = {
@@ -257,11 +270,7 @@ def serialize_import_job(job: PaperImportJob, include_items: bool = True) -> dic
         "failed_count": job.failed_count,
         "queued_count": sum(item.status == "queued" for item in items),
         "running_count": sum(item.status == "running" for item in items),
-        "progress": (
-            int((job.completed_count + job.failed_count) * 100 / job.total_count)
-            if job.total_count
-            else 100
-        ),
+        "progress": _import_job_progress(job),
         "created_at": job.created_at.isoformat() if job.created_at else None,
         "updated_at": job.updated_at.isoformat() if job.updated_at else None,
     }

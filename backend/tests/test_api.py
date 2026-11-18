@@ -128,6 +128,15 @@ def _make_encrypted_pdf_bytes() -> bytes:
     return buffer.getvalue()
 
 
+def _wait_for_import_job(client: TestClient, job_id: str) -> dict:
+    for _ in range(100):
+        job = client.get(f"/api/papers/import-jobs/{job_id}").json()["data"]
+        if job["status"] in {"completed", "partial", "failed"}:
+            return job
+        time.sleep(0.05)
+    raise AssertionError(f"import job {job_id} did not reach a terminal state")
+
+
 def _upload(client: TestClient, content: bytes | None = None, filename: str = "networks.pdf"):
     return client.post(
         "/api/papers/upload",
@@ -147,6 +156,8 @@ def test_health(client: TestClient):
     body = response.json()
     assert body["success"] is True
     assert body["data"]["status"] == "ok"
+    assert body["data"]["version"] == "0.4.0"
+    assert body["data"]["features"]["research_agent"] == "ready_read_only"
 
 
 def test_upload_list_detail_and_serialization(isolated_environment):
@@ -513,6 +524,7 @@ def test_batch_import_job_tracks_partial_failure_and_retry(
     assert job["status"] == "partial"
     assert job["completed_count"] == 1
     assert job["failed_count"] == 1
+    assert job["progress"] == 100
     assert {item["status"] for item in job["items"]} == {"succeeded", "failed"}
     assert all(item["parse_status"] != "pending" for item in job["items"])
 
@@ -576,6 +588,7 @@ def test_batch_import_keeps_valid_files_when_other_uploads_fail(
     assert job["total_count"] == 3
     assert job["completed_count"] == 1
     assert job["failed_count"] == 2
+    assert job["progress"] == 100
     assert job["queued_count"] == 0
     assert job["running_count"] == 0
     valid_item = next(item for item in job["items"] if item["original_filename"] == "valid.pdf")
@@ -655,6 +668,78 @@ def test_batch_duplicate_isolated_to_its_item_and_retry_is_per_item(
     retried_item = next(item for item in job["items"] if item["id"] == failed["id"])
     assert retried_item["attempts"] == 2
     assert retried_item["can_retry"] is True
+
+
+def test_single_and_batch_import_success_report_full_progress(
+    isolated_environment,
+    monkeypatch,
+):
+    import app.services.ingestion_service as ingestion_service
+
+    def fake_index(db, paper_id, progress_callback=None):
+        paper = db.query(Paper).filter_by(id=paper_id).one()
+        paper.index_status = "indexed"
+        db.commit()
+        if progress_callback:
+            progress_callback(1, 1)
+        return {"paper_id": paper_id, "status": "indexed", "indexed_count": 1}
+
+    monkeypatch.setattr(ingestion_service, "index_paper", fake_index)
+    client = isolated_environment["client"]
+
+    single = client.post(
+        "/api/papers/import-jobs",
+        files=[
+            (
+                "files",
+                (
+                    "single-success.pdf",
+                    _make_pdf_bytes("Single Import Success"),
+                    "application/pdf",
+                ),
+            )
+        ],
+    )
+    assert single.status_code == 202, single.text
+    single_job = _wait_for_import_job(client, single.json()["data"]["id"])
+    assert single_job["status"] == "completed"
+    assert single_job["total_count"] == 1
+    assert single_job["completed_count"] == 1
+    assert single_job["failed_count"] == 0
+    assert single_job["progress"] == 100
+    assert single_job["items"][0]["status"] == "succeeded"
+    assert single_job["items"][0]["progress"] == 100
+
+    batch = client.post(
+        "/api/papers/import-jobs",
+        files=[
+            (
+                "files",
+                (
+                    "batch-one.pdf",
+                    _make_pdf_bytes("Batch Import One"),
+                    "application/pdf",
+                ),
+            ),
+            (
+                "files",
+                (
+                    "batch-two.pdf",
+                    _make_pdf_bytes("Batch Import Two"),
+                    "application/pdf",
+                ),
+            ),
+        ],
+    )
+    assert batch.status_code == 202, batch.text
+    batch_job = _wait_for_import_job(client, batch.json()["data"]["id"])
+    assert batch_job["status"] == "completed"
+    assert batch_job["total_count"] == 2
+    assert batch_job["completed_count"] == 2
+    assert batch_job["failed_count"] == 0
+    assert batch_job["progress"] == 100
+    assert all(item["status"] == "succeeded" for item in batch_job["items"])
+    assert all(item["progress"] == 100 for item in batch_job["items"])
 
 
 def test_import_job_restart_recovery_requeues_existing_stage_file(

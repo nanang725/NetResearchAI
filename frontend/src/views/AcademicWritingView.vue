@@ -55,6 +55,17 @@
               </el-button>
             </el-form>
             <p v-if="outlineError" class="error-text">{{ outlineError }}</p>
+            <p v-else-if="outlineElapsedMs !== null" class="request-meta">
+              最近一次大纲生成实测 {{ outlineElapsedMs }} ms。
+            </p>
+          </section>
+
+          <section v-if="outlineLoading" class="page-card loading-panel" aria-live="polite">
+            <div>
+              <h3>正在生成证据约束大纲</h3>
+              <p class="muted">系统会检索真实论文 Chunk，证据不足的章节不会被填充。</p>
+            </div>
+            <el-skeleton :rows="6" animated />
           </section>
 
           <template v-if="outline">
@@ -194,6 +205,13 @@
               核验并生成 References
             </el-button>
             <p v-if="referencesError" class="error-text">{{ referencesError }}</p>
+            <p v-else-if="referencesElapsedMs !== null" class="request-meta">
+              最近一次核验实测 {{ referencesElapsedMs }} ms。
+            </p>
+          </section>
+
+          <section v-if="referencesLoading" class="page-card loading-panel">
+            <el-skeleton :rows="5" animated />
           </section>
 
           <template v-if="references">
@@ -258,14 +276,41 @@
               class="hidden-input"
               @change="handleCsvFile"
             />
-            <el-button
-              type="primary"
-              :loading="csvLoading"
+            <button
+              type="button"
+              class="csv-dropzone"
+              :disabled="csvLoading"
               @click="csvInput?.click()"
+              @dragover.prevent
+              @drop.prevent="handleCsvDrop"
             >
-              选择 CSV
-            </el-button>
-            <p v-if="csvError" class="error-text">{{ csvError }}</p>
+              <UploadFilled />
+              <span>
+                <strong>{{ csvLoading ? "正在分析 CSV" : "拖入 CSV 或点击选择文件" }}</strong>
+                <small>文件只用于当前真实统计与图表，不生成模拟数值</small>
+              </span>
+              <el-tag v-if="csvFile" effect="plain">{{ formatBytes(csvFile.size) }}</el-tag>
+            </button>
+            <div v-if="csvFile" class="csv-file-info">
+              <div>
+                <span>当前文件</span>
+                <strong>{{ csvFile.name }}</strong>
+              </div>
+              <span v-if="csvElapsedMs !== null">
+                分析实测 {{ csvElapsedMs }} ms
+              </span>
+            </div>
+            <div v-if="csvError" class="inline-error">
+              <span>{{ csvError }}</span>
+              <el-button link type="primary" :disabled="!csvFile" @click="retryCsvAnalysis">
+                重试
+              </el-button>
+            </div>
+          </section>
+
+          <section v-if="csvLoading" class="page-card loading-panel">
+            <h3>正在读取真实数据</h3>
+            <el-skeleton :rows="6" animated />
           </section>
 
           <template v-if="csvAnalysis">
@@ -330,7 +375,10 @@
               </div>
               <div ref="csvChartElement" class="csv-chart"></div>
               <p class="chart-analysis">{{ csvAnalysis.chart.analysis }}</p>
-              <p class="muted mono">Data SHA-256: {{ csvAnalysis.chart.data_sha256 }}</p>
+              <div class="data-provenance">
+                <span>数据来源：{{ csvFile?.name || "本次上传文件" }}</span>
+                <span class="mono">SHA-256：{{ csvAnalysis.chart.data_sha256 }}</span>
+              </div>
               <p class="disclaimer">{{ csvAnalysis.disclaimer }}</p>
             </section>
           </template>
@@ -345,6 +393,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { ElMessage } from "element-plus";
+import { UploadFilled } from "@element-plus/icons-vue";
 import MultiPaperReviewView from "@/views/MultiPaperReviewView.vue";
 import { fetchPapers } from "@/api/papers";
 import {
@@ -363,6 +412,8 @@ import type {
   TranslationDirection,
   VerifiableReferences,
 } from "@/types/writing";
+import { useTheme } from "@/composables/useTheme";
+import { formatBytes } from "@/utils/format";
 
 const router = useRouter();
 const activeTab = ref("outline");
@@ -373,6 +424,7 @@ const outlineTopic = ref("");
 const outline = ref<AcademicOutline | null>(null);
 const outlineLoading = ref(false);
 const outlineError = ref("");
+const outlineElapsedMs = ref<number | null>(null);
 const translationDirection = ref<TranslationDirection>("zh_to_en");
 const translation = ref<AcademicTranslation | null>(null);
 const translationLoading = ref(false);
@@ -381,13 +433,17 @@ const referencePaperIds = ref<number[]>([]);
 const references = ref<VerifiableReferences | null>(null);
 const referencesLoading = ref(false);
 const referencesError = ref("");
+const referencesElapsedMs = ref<number | null>(null);
 
 const csvInput = ref<HTMLInputElement | null>(null);
 const csvChartElement = ref<HTMLElement | null>(null);
 const csvAnalysis = ref<CsvAnalysis | null>(null);
+const csvFile = ref<File | null>(null);
 const csvLoading = ref(false);
 const csvError = ref("");
+const csvElapsedMs = ref<number | null>(null);
 let csvChart: echarts.ECharts | null = null;
+const { theme } = useTheme();
 
 const numericProfiles = computed(() =>
   (csvAnalysis.value?.profiles ?? []).filter(
@@ -404,6 +460,8 @@ async function createOutline() {
   outlineLoading.value = true;
   outlineError.value = "";
   translation.value = null;
+  outlineElapsedMs.value = null;
+  const startedAt = performance.now();
   try {
     outline.value = await generateAcademicOutline(
       outlinePaperId.value,
@@ -414,6 +472,7 @@ async function createOutline() {
       ? error.message
       : "大纲生成失败";
   } finally {
+    outlineElapsedMs.value = Math.round(performance.now() - startedAt);
     outlineLoading.value = false;
   }
 }
@@ -460,6 +519,8 @@ function openEvidence(evidence: OutlineEvidence) {
 async function loadReferences() {
   referencesLoading.value = true;
   referencesError.value = "";
+  referencesElapsedMs.value = null;
+  const startedAt = performance.now();
   try {
     references.value = await fetchVerifiableReferences(referencePaperIds.value);
   } catch (error) {
@@ -467,6 +528,7 @@ async function loadReferences() {
       ? error.message
       : "References 核验失败";
   } finally {
+    referencesElapsedMs.value = Math.round(performance.now() - startedAt);
     referencesLoading.value = false;
   }
 }
@@ -476,8 +538,20 @@ async function handleCsvFile(event: Event) {
   const file = input.files?.[0];
   input.value = "";
   if (!file) return;
+  await analyzeSelectedCsv(file);
+}
+
+async function handleCsvDrop(event: DragEvent) {
+  const file = event.dataTransfer?.files?.[0];
+  if (file) await analyzeSelectedCsv(file);
+}
+
+async function analyzeSelectedCsv(file: File) {
+  csvFile.value = file;
   csvLoading.value = true;
   csvError.value = "";
+  csvElapsedMs.value = null;
+  const startedAt = performance.now();
   try {
     csvAnalysis.value = await analyzeCsv(file);
     await nextTick();
@@ -490,8 +564,13 @@ async function handleCsvFile(event: Event) {
       ? error.message
       : "CSV 分析失败";
   } finally {
+    csvElapsedMs.value = Math.round(performance.now() - startedAt);
     csvLoading.value = false;
   }
+}
+
+function retryCsvAnalysis() {
+  if (csvFile.value) void analyzeSelectedCsv(csvFile.value);
 }
 
 function renderCsvChart() {
@@ -500,22 +579,41 @@ function renderCsvChart() {
     csvChart = echarts.init(csvChartElement.value);
   }
   const chart = csvAnalysis.value.chart;
+  const styles = getComputedStyle(document.documentElement);
+  const cssValue = (name: string) => styles.getPropertyValue(name).trim();
+  const textSecondary = cssValue("--color-text-secondary");
+  const borderSubtle = cssValue("--color-border-subtle");
   csvChart.setOption({
-    tooltip: { trigger: "axis" },
+    tooltip: {
+      trigger: "axis",
+      backgroundColor: cssValue("--color-surface-overlay"),
+      borderColor: cssValue("--color-border-default"),
+      textStyle: { color: cssValue("--color-text-primary") },
+    },
+    textStyle: { color: textSecondary },
     grid: { left: 60, right: 30, top: 30, bottom: 100 },
     xAxis: {
       type: "category",
       data: chart.categories,
-      axisLabel: { rotate: 24, interval: 0 },
+      axisLabel: { rotate: 24, interval: 0, color: textSecondary },
+      axisLine: { lineStyle: { color: borderSubtle } },
     },
-    yAxis: { type: "value", name: chart.series_name },
+    yAxis: {
+      type: "value",
+      name: chart.series_name,
+      axisLabel: { color: textSecondary },
+      splitLine: { lineStyle: { color: borderSubtle } },
+    },
     series: [
       {
         type: "bar",
         name: chart.series_name,
         data: chart.values,
         barMaxWidth: 52,
-        itemStyle: { color: "#0f6e8c", borderRadius: [6, 6, 0, 0] },
+        itemStyle: {
+          color: cssValue("--color-primary"),
+          borderRadius: [6, 6, 0, 0],
+        },
       },
     ],
   }, true);
@@ -531,6 +629,11 @@ watch(activeTab, async (tab) => {
     await nextTick();
     renderCsvChart();
   }
+});
+
+watch(theme, async () => {
+  await nextTick();
+  renderCsvChart();
 });
 
 onMounted(async () => {
@@ -614,11 +717,33 @@ onUnmounted(() => {
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .form-panel {
   max-width: 760px;
+}
+
+.request-meta {
+  margin: 8px 0 0;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.loading-panel {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 20px;
+  padding: 18px;
+}
+
+.loading-panel h3 {
+  margin: 0 0 5px;
+}
+
+.loading-panel p {
+  margin: 0;
 }
 
 .form-panel h3,
@@ -630,15 +755,15 @@ onUnmounted(() => {
 
 .result-cover {
   flex-wrap: wrap;
-  background: linear-gradient(135deg, #f8fbfc, #eef7f8);
+  background: var(--color-primary-soft);
 }
 
 .disclaimer {
   width: 100%;
   margin: 4px 0 0;
   padding: 9px 12px;
-  color: #7b5417;
-  background: #fff8e8;
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
   border-radius: 8px;
   font-size: 12px;
 }
@@ -654,7 +779,7 @@ onUnmounted(() => {
 .data-labels article {
   padding: 12px 14px;
   border-left: 4px solid var(--accent);
-  background: #f7fafb;
+  background: var(--color-bg-subtle);
   border-radius: 8px;
 }
 
@@ -683,8 +808,8 @@ onUnmounted(() => {
 }
 
 .outline-section.unsupported {
-  border-color: #ecc36d;
-  background: #fffdf4;
+  border-color: color-mix(in srgb, var(--color-warning) 32%, transparent);
+  background: var(--color-warning-soft);
 }
 
 .outline-section ul {
@@ -695,7 +820,7 @@ onUnmounted(() => {
 
 .unsupported-note,
 .error-text {
-  color: #a26316;
+  color: var(--color-warning);
 }
 
 .evidence-grid {
@@ -706,12 +831,12 @@ onUnmounted(() => {
 
 .evidence-card {
   padding: 12px;
-  background: #f6f9fb;
+  background: var(--color-bg-subtle);
   border-radius: 10px;
 }
 
 .evidence-card p {
-  color: #405b6d;
+  color: var(--color-text-secondary);
   line-height: 1.6;
 }
 
@@ -720,7 +845,7 @@ onUnmounted(() => {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   padding: 12px;
-  background: #f7fafb;
+  background: var(--color-bg-subtle);
   border-radius: 8px;
 }
 
@@ -750,7 +875,7 @@ onUnmounted(() => {
 .csv-stats div {
   padding: 16px;
   border-radius: 12px;
-  background: #f3f8fa;
+  background: var(--color-bg-subtle);
 }
 
 .reference-summary strong,
@@ -784,13 +909,122 @@ onUnmounted(() => {
 
 .reference-card blockquote {
   padding: 10px 12px;
-  color: #536c7c;
-  background: #f7fafb;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-subtle);
   border-left: 3px solid var(--accent);
 }
 
 .hidden-input {
   display: none;
+}
+
+.csv-dropzone {
+  display: flex;
+  width: 100%;
+  min-height: 104px;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  color: var(--color-text-secondary);
+  text-align: left;
+  cursor: pointer;
+  background: var(--color-bg-subtle);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
+}
+
+.csv-dropzone:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-primary);
+}
+
+.csv-dropzone:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.csv-dropzone > svg {
+  width: 26px;
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+.csv-dropzone > span {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.csv-dropzone strong {
+  color: var(--color-text-primary);
+  font-size: 13px;
+}
+
+.csv-dropzone small {
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+}
+
+.csv-file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  margin-top: 9px;
+  background: var(--color-primary-soft);
+  border-radius: var(--radius-md);
+  font-size: 10px;
+}
+
+.csv-file-info > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.csv-file-info span {
+  color: var(--color-text-tertiary);
+}
+
+.csv-file-info strong {
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inline-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-top: 10px;
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+}
+
+.inline-error :deep(.el-button) {
+  margin-left: auto;
+}
+
+.data-provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding: 9px 12px;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-md);
+  font-size: 10px;
+  overflow-wrap: anywhere;
 }
 
 .data-grid {
@@ -818,6 +1052,26 @@ onUnmounted(() => {
 
   .csv-stats {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+
+  .loading-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .writing-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .csv-file-info {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .csv-chart {
+    height: 340px;
   }
 }
 </style>

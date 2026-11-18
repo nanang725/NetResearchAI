@@ -22,6 +22,7 @@ from app.services.ingestion_service import (
     create_index_rebuild_job,
     recover_interrupted_jobs,
     retry_import_item,
+    serialize_import_job,
 )
 
 
@@ -162,6 +163,11 @@ def test_item_and_job_summary_commit_together(isolated_sessions):
         )
 
         assert committed_states == [("succeeded", "completed")]
+        db.expire_all()
+        item = db.query(PaperImportItem).filter_by(id=item_ids[0]).one()
+        job = db.query(PaperImportJob).filter_by(id=job_id).one()
+        assert item.progress == 100
+        assert serialize_import_job(job)["progress"] == 100
 
 
 def test_item_and_job_summary_roll_back_together_on_commit_failure(isolated_sessions):
@@ -186,6 +192,77 @@ def test_item_and_job_summary_roll_back_together_on_commit_failure(isolated_sess
         assert item.status == "running"
         assert job.status == "running"
         assert job.completed_count == 0
+
+
+@pytest.mark.parametrize(
+    (
+        "item_statuses",
+        "expected_status",
+        "expected_completed",
+        "expected_failed",
+        "expected_queued",
+        "expected_running",
+        "expected_progress",
+    ),
+    [
+        (["queued", "queued"], "queued", 0, 0, 2, 0, 0),
+        (["succeeded", "running"], "running", 1, 0, 0, 1, 50),
+        (["succeeded", "succeeded"], "completed", 2, 0, 0, 0, 100),
+        (["succeeded", "failed"], "partial", 1, 1, 0, 0, 100),
+        (["failed", "failed"], "failed", 0, 2, 0, 0, 100),
+    ],
+)
+def test_import_job_progress_tracks_processed_items_for_every_lifecycle_state(
+    isolated_sessions,
+    item_statuses,
+    expected_status,
+    expected_completed,
+    expected_failed,
+    expected_queued,
+    expected_running,
+    expected_progress,
+):
+    job_id, _ = _create_job(
+        isolated_sessions,
+        "running",
+        [(status, None) for status in item_statuses],
+    )
+
+    with isolated_sessions() as db:
+        ingestion_service._refresh_job_state(db, job_id)
+        db.commit()
+        job = db.query(PaperImportJob).filter_by(id=job_id).one()
+        payload = serialize_import_job(job)
+
+    assert payload["status"] == expected_status
+    assert payload["total_count"] == len(item_statuses)
+    assert payload["completed_count"] == expected_completed
+    assert payload["failed_count"] == expected_failed
+    assert payload["queued_count"] == expected_queued
+    assert payload["running_count"] == expected_running
+    assert payload["progress"] == expected_progress
+
+
+def test_completed_status_does_not_fake_progress_before_all_items_are_processed(
+    isolated_sessions,
+):
+    job_id, _ = _create_job(
+        isolated_sessions,
+        "completed",
+        [("succeeded", None), ("queued", None)],
+    )
+    with isolated_sessions() as db:
+        job = db.query(PaperImportJob).filter_by(id=job_id).one()
+        job.total_count = 2
+        job.completed_count = 1
+        job.failed_count = 0
+        db.commit()
+        payload = serialize_import_job(job)
+
+    assert payload["status"] == "completed"
+    assert payload["completed_count"] == 1
+    assert payload["failed_count"] == 0
+    assert payload["progress"] == 50
 
 
 def test_recovery_reconciles_stale_running_job_with_completed_items(isolated_sessions):

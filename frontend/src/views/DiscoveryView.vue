@@ -20,60 +20,99 @@
       <el-tab-pane label="外部搜索" name="search">
         <div class="tab-body">
           <section class="search-panel">
-            <el-form label-position="top">
-              <div class="search-row">
-                <el-form-item label="关键词" class="query-field">
-                  <el-input
-                    v-model="searchQuery"
-                    clearable
-                    placeholder="例如：retrieval augmented generation"
-                    @keyup.enter="runSearch(1)"
-                  />
-                </el-form-item>
-                <el-form-item label="检索字段">
-                  <el-select v-model="searchField">
-                    <el-option label="全部字段" value="all" />
-                    <el-option label="标题" value="title" />
-                    <el-option label="摘要" value="abstract" />
-                    <el-option label="作者" value="author" />
-                  </el-select>
-                </el-form-item>
-                <el-form-item label="排序">
-                  <el-select v-model="searchSort">
-                    <el-option label="相关度" value="relevance" />
-                    <el-option label="最近更新" value="last_updated" />
-                    <el-option label="提交日期" value="submitted" />
-                  </el-select>
-                </el-form-item>
-                <el-form-item label="方向">
-                  <el-select v-model="searchOrder">
-                    <el-option label="降序" value="descending" />
-                    <el-option label="升序" value="ascending" />
-                  </el-select>
-                </el-form-item>
+            <div class="search-panel-head">
+              <div>
+                <p class="eyebrow">ARXIV OFFICIAL SEARCH</p>
+                <h3>发现外部研究文献</h3>
+                <p class="muted">直接查询 arXiv 官方元数据，结果与本地馆藏分别标识。</p>
               </div>
-              <div class="search-actions">
-                <span class="muted">每页 {{ searchPageSize }} 条</span>
+              <el-tag effect="plain">来源：arXiv</el-tag>
+            </div>
+            <form class="search-form" @submit.prevent="runSearch(1)">
+              <div class="primary-query">
+                <el-input
+                  v-model="searchQuery"
+                  size="large"
+                  clearable
+                  placeholder="输入主题、方法、作者或论文关键词"
+                  @keyup.enter="runSearch(1)"
+                />
                 <el-button
                   type="primary"
+                  size="large"
+                  native-type="submit"
                   :loading="searchLoading"
                   :disabled="searchQuery.trim().length < 2"
-                  @click="runSearch(1)"
                 >
                   搜索 arXiv
                 </el-button>
               </div>
-            </el-form>
-            <p v-if="searchError" class="error-text">{{ searchError }}</p>
+              <div class="search-options-line">
+                <button
+                  type="button"
+                  class="advanced-toggle"
+                  :aria-expanded="showAdvancedSearch"
+                  @click="showAdvancedSearch = !showAdvancedSearch"
+                >
+                  {{ showAdvancedSearch ? "收起高级筛选" : "高级筛选" }}
+                  <span>{{ searchFieldLabel }} · {{ searchSortLabel }}</span>
+                </button>
+                <span v-if="searchElapsedMs !== null" class="elapsed">
+                  API 耗时 {{ searchElapsedMs }} ms
+                </span>
+              </div>
+              <div v-if="showAdvancedSearch" class="advanced-filters">
+                <el-form label-position="top">
+                  <div class="advanced-grid">
+                    <el-form-item label="检索字段">
+                      <el-select v-model="searchField">
+                        <el-option label="全部字段" value="all" />
+                        <el-option label="标题" value="title" />
+                        <el-option label="摘要" value="abstract" />
+                        <el-option label="作者" value="author" />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item label="排序依据">
+                      <el-select v-model="searchSort">
+                        <el-option label="相关度" value="relevance" />
+                        <el-option label="最近更新" value="last_updated" />
+                        <el-option label="提交日期" value="submitted" />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item label="排序方向">
+                      <el-select v-model="searchOrder">
+                        <el-option label="降序" value="descending" />
+                        <el-option label="升序" value="ascending" />
+                      </el-select>
+                    </el-form-item>
+                  </div>
+                </el-form>
+              </div>
+            </form>
+            <div v-if="searchError" class="inline-error">
+              <span>{{ searchError }}</span>
+              <el-button link type="primary" @click="runSearch(1)">重试</el-button>
+            </div>
           </section>
 
-          <template v-if="searchResult">
+          <div v-if="searchLoading" class="result-skeleton-list" aria-live="polite">
+            <div v-for="index in 3" :key="index" class="result-skeleton">
+              <el-skeleton :rows="4" animated />
+            </div>
+          </div>
+
+          <template v-else-if="searchResult">
             <div class="result-toolbar">
               <div>
                 <strong>{{ searchResult.total_results }}</strong>
                 <span class="muted"> 条官方结果 · 第 {{ searchResult.page }} 页</span>
               </div>
-              <el-tag type="success">来源：{{ searchResult.source }}</el-tag>
+              <div class="result-status">
+                <span v-if="searchElapsedMs !== null" class="muted">
+                  实测 {{ searchElapsedMs }} ms
+                </span>
+                <el-tag type="success">官方 API</el-tag>
+              </div>
             </div>
             <el-empty
               v-if="!searchResult.results.length"
@@ -81,13 +120,14 @@
             />
             <section class="external-list">
               <article
-                v-for="paper in searchResult.results"
+                v-for="(paper, index) in searchResult.results"
                 :key="paper.arxiv_id"
                 class="external-card"
               >
-                <div class="card-head">
-                  <div>
-                    <div class="tag-row">
+                <span class="result-index">{{ index + 1 }}</span>
+                <div class="card-main">
+                  <div class="card-head">
+                    <div class="result-meta">
                       <el-tag
                         :type="paper.in_local_library ? 'success' : 'info'"
                         size="small"
@@ -98,34 +138,46 @@
                       <el-tag v-if="paper.primary_category" size="small" type="warning">
                         {{ paper.primary_category }}
                       </el-tag>
+                      <span class="date muted">{{ formatArxivDate(paper.published) }}</span>
                     </div>
                     <h3>{{ paper.title }}</h3>
+                    <p class="authors">{{ paper.authors.join(", ") || "作者未知" }}</p>
                   </div>
-                  <span class="date muted">{{ formatArxivDate(paper.published) }}</span>
-                </div>
-                <p class="authors">{{ paper.authors.join(", ") || "作者未知" }}</p>
-                <p class="summary">{{ paper.summary }}</p>
-                <div class="card-actions">
-                  <a :href="paper.abs_url" target="_blank" rel="noreferrer">
-                    <el-button size="small" plain>打开 arXiv</el-button>
-                  </a>
-                  <el-button
-                    v-if="paper.local_paper_id"
-                    size="small"
-                    type="success"
-                    @click="openLocalPaper(paper.local_paper_id)"
+                  <p
+                    class="summary"
+                    :class="{ expanded: expandedAbstracts.includes(paper.arxiv_id) }"
                   >
-                    打开本地论文
-                  </el-button>
-                  <el-button
-                    v-else
-                    size="small"
-                    type="primary"
-                    :loading="favoritingId === paper.arxiv_id"
-                    @click="favoritePaper(paper)"
+                    {{ paper.summary }}
+                  </p>
+                  <button
+                    type="button"
+                    class="summary-toggle"
+                    @click="toggleAbstract(paper.arxiv_id)"
                   >
-                    {{ paper.favorite_id ? "已收藏" : "收藏" }}
-                  </el-button>
+                    {{ expandedAbstracts.includes(paper.arxiv_id) ? "收起摘要" : "展开摘要" }}
+                  </button>
+                  <div class="card-actions">
+                    <a :href="paper.abs_url" target="_blank" rel="noreferrer">
+                      <el-button size="small" plain>打开 arXiv</el-button>
+                    </a>
+                    <el-button
+                      v-if="paper.local_paper_id"
+                      size="small"
+                      type="success"
+                      @click="openLocalPaper(paper.local_paper_id)"
+                    >
+                      打开本地论文
+                    </el-button>
+                    <el-button
+                      v-else
+                      size="small"
+                      type="primary"
+                      :loading="favoritingId === paper.arxiv_id"
+                      @click="favoritePaper(paper)"
+                    >
+                      {{ paper.favorite_id ? "已收藏" : "收藏并准备入库" }}
+                    </el-button>
+                  </div>
                 </div>
               </article>
             </section>
@@ -146,12 +198,55 @@
         <div class="tab-body">
           <div class="section-toolbar">
             <div>
-              <h3>外部文献收藏</h3>
-              <p class="muted">下载失败会保留收藏记录并显示失败原因。</p>
+              <p class="eyebrow">FAVORITES & IMPORT</p>
+              <h3>收藏与入库队列</h3>
+              <p class="muted">
+                下载失败会保留收藏记录与具体原因；批量入库逐篇执行，单篇失败不会中断。
+              </p>
             </div>
-            <el-button :loading="favoritesLoading" @click="loadFavorites">刷新状态</el-button>
+            <div class="section-actions">
+              <el-button :loading="favoritesLoading" @click="loadFavorites">刷新状态</el-button>
+              <el-button
+                v-if="selectableFavorites.length"
+                plain
+                @click="toggleAllImportable"
+              >
+                {{ allImportableSelected ? "取消全选" : "全选可入库" }}
+              </el-button>
+              <el-button
+                type="primary"
+                :disabled="!batchSelectedIds.length || batchImporting"
+                :loading="batchImporting"
+                @click="batchImportFavorites"
+              >
+                批量入库（{{ batchSelectedIds.length }}）
+              </el-button>
+            </div>
           </div>
-          <p v-if="favoritesError" class="error-text">{{ favoritesError }}</p>
+          <div v-if="batchImporting || batchTotal" class="batch-progress" aria-live="polite">
+            <div>
+              <strong>
+                {{ batchImporting ? "正在创建入库任务" : "上次批量入库结果" }}
+              </strong>
+              <span>
+                {{ batchProcessed }} / {{ batchTotal }} 篇已处理
+                <template v-if="batchFailures.length">
+                  · {{ batchFailures.length }} 篇失败
+                </template>
+              </span>
+            </div>
+            <el-progress :percentage="batchProgress" />
+          </div>
+          <div v-if="batchFailures.length" class="batch-failures">
+            <strong>失败明细</strong>
+            <p v-for="failure in batchFailures" :key="failure.title">
+              {{ failure.title }}：{{ failure.message }}
+            </p>
+          </div>
+          <div v-if="favoritesError" class="inline-error">
+            <span>{{ favoritesError }}</span>
+            <el-button link type="primary" @click="loadFavorites">重试</el-button>
+          </div>
           <el-empty v-if="!favoritesLoading && !favorites.length" description="还没有收藏外部文献" />
           <section class="external-list">
             <article
@@ -159,6 +254,14 @@
               :key="favorite.favorite_id ?? favorite.arxiv_id"
               class="external-card"
             >
+              <el-checkbox
+                v-if="favorite.favorite_id"
+                class="favorite-check"
+                :model-value="batchSelectedIds.includes(favorite.favorite_id)"
+                :disabled="!isFavoriteSelectable(favorite) || batchImporting"
+                :aria-label="`选择 ${favorite.title}`"
+                @change="toggleFavoriteSelection(favorite, Boolean($event))"
+              />
               <div class="card-head">
                 <div>
                   <div class="tag-row">
@@ -409,9 +512,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
   createDiscoveryTracking,
   favoriteExternal,
@@ -440,7 +543,9 @@ import {
   favoriteImportStatusLabel,
   favoriteImportStatusType,
   formatArxivDate,
+  hasActiveFavoriteImport,
 } from "@/utils/discovery";
+import { createTaskPoller } from "@/utils/taskPoller";
 
 const router = useRouter();
 const activeTab = ref("search");
@@ -453,11 +558,52 @@ const searchResult = ref<ExternalSearchResult | null>(null);
 const searchLoading = ref(false);
 const searchError = ref("");
 const favoritingId = ref("");
+const searchElapsedMs = ref<number | null>(null);
+const showAdvancedSearch = ref(false);
+const expandedAbstracts = ref<string[]>([]);
+const searchFieldLabel = computed(
+  () =>
+    ({
+      all: "全部字段",
+      title: "标题",
+      abstract: "摘要",
+      author: "作者",
+    })[searchField.value],
+);
+const searchSortLabel = computed(
+  () =>
+    ({
+      relevance: "相关度",
+      last_updated: "最近更新",
+      submitted: "提交日期",
+    })[searchSort.value],
+);
 
 const favorites = ref<ExternalFavorite[]>([]);
 const favoritesLoading = ref(false);
 const favoritesError = ref("");
 const importingFavoriteId = ref<number | null>(null);
+const batchSelectedIds = ref<number[]>([]);
+const batchImporting = ref(false);
+const batchProcessed = ref(0);
+const batchTotal = ref(0);
+const batchFailures = ref<Array<{ title: string; message: string }>>([]);
+const favoritesPoller = createTaskPoller({
+  fetchValue: fetchExternalFavorites,
+  isActive: hasActiveFavoriteImport,
+  onValue: (loadedFavorites) => {
+    favorites.value = loadedFavorites;
+    favoritesError.value = "";
+    if (!hasActiveFavoriteImport(loadedFavorites)) favoritesPoller.stop();
+  },
+  onError: (error) => {
+    if (activeTab.value !== "favorites") return;
+    favoritesError.value = error instanceof ApiError
+      ? error.message
+      : "加载收藏失败";
+  },
+  intervalMs: 1500,
+});
 
 const trackingName = ref("");
 const trackingQuery = ref("");
@@ -473,11 +619,28 @@ const recommendations = ref<DiscoveryRecommendations | null>(null);
 const recommendationLoading = ref(false);
 const recommendationError = ref("");
 
+const selectableFavorites = computed(() =>
+  favorites.value.filter(isFavoriteSelectable),
+);
+const allImportableSelected = computed(() =>
+  selectableFavorites.value.length > 0
+  && selectableFavorites.value.every((favorite) =>
+    batchSelectedIds.value.includes(favorite.favorite_id as number),
+  ),
+);
+const batchProgress = computed(() =>
+  batchTotal.value
+    ? Math.round((batchProcessed.value / batchTotal.value) * 100)
+    : 0,
+);
+
 async function runSearch(page: number) {
   const query = searchQuery.value.trim();
   if (query.length < 2) return;
   searchLoading.value = true;
   searchError.value = "";
+  searchElapsedMs.value = null;
+  const startedAt = performance.now();
   try {
     searchResult.value = await searchExternalLiterature({
       query,
@@ -487,9 +650,11 @@ async function runSearch(page: number) {
       sortBy: searchSort.value,
       sortOrder: searchOrder.value,
     });
+    expandedAbstracts.value = [];
   } catch (error) {
     searchError.value = error instanceof ApiError ? error.message : "arXiv 搜索失败";
   } finally {
+    searchElapsedMs.value = Math.round(performance.now() - startedAt);
     searchLoading.value = false;
   }
 }
@@ -517,12 +682,107 @@ async function loadFavorites() {
   favoritesLoading.value = true;
   favoritesError.value = "";
   try {
-    favorites.value = await fetchExternalFavorites();
+    const loadedFavorites = await fetchExternalFavorites();
+    favorites.value = loadedFavorites;
+    const availableIds = new Set(
+      loadedFavorites
+        .filter(isFavoriteSelectable)
+        .map((favorite) => favorite.favorite_id),
+    );
+    batchSelectedIds.value = batchSelectedIds.value.filter((id) =>
+      availableIds.has(id),
+    );
+    if (
+      activeTab.value === "favorites"
+      && hasActiveFavoriteImport(loadedFavorites)
+    ) {
+      favoritesPoller.start();
+    } else {
+      favoritesPoller.stop();
+    }
   } catch (error) {
     favoritesError.value = error instanceof ApiError ? error.message : "加载收藏失败";
   } finally {
     favoritesLoading.value = false;
   }
+}
+
+function isFavoriteSelectable(favorite: ExternalFavorite): boolean {
+  if (!favorite.favorite_id || favorite.local_paper_id) return false;
+  if (["queued", "running"].includes(favorite.import_status)) return false;
+  return !(
+    favorite.import_job
+    && ["queued", "running"].includes(favorite.import_job.status)
+  );
+}
+
+function toggleFavoriteSelection(favorite: ExternalFavorite, checked: boolean) {
+  if (!favorite.favorite_id) return;
+  const current = new Set(batchSelectedIds.value);
+  if (checked) current.add(favorite.favorite_id);
+  else current.delete(favorite.favorite_id);
+  batchSelectedIds.value = [...current];
+}
+
+function toggleAllImportable() {
+  batchSelectedIds.value = allImportableSelected.value
+    ? []
+    : selectableFavorites.value.map((favorite) => favorite.favorite_id as number);
+}
+
+async function batchImportFavorites() {
+  const targets = favorites.value.filter((favorite) =>
+    favorite.favorite_id
+    && batchSelectedIds.value.includes(favorite.favorite_id),
+  );
+  if (!targets.length || batchImporting.value) return;
+  try {
+    await ElMessageBox.confirm(
+      `将为 ${targets.length} 篇收藏顺序创建 PDF 下载与入库任务。单篇失败不会阻止后续文献。`,
+      "批量下载并入库",
+      { type: "warning", confirmButtonText: "开始入库", cancelButtonText: "取消" },
+    );
+  } catch {
+    return;
+  }
+
+  batchImporting.value = true;
+  batchProcessed.value = 0;
+  batchTotal.value = targets.length;
+  batchFailures.value = [];
+  for (const favorite of targets) {
+    if (!favorite.favorite_id) continue;
+    try {
+      const result = await importFavoritePdf(favorite.favorite_id);
+      favorite.import_status = result.favorite.import_status;
+      favorite.import_job = result.import_job;
+      favorite.local_paper_id = result.favorite.local_paper_id;
+      favorite.import_error = result.favorite.import_error;
+    } catch (error) {
+      batchFailures.value.push({
+        title: favorite.title,
+        message: error instanceof ApiError ? error.message : "入库失败",
+      });
+    } finally {
+      batchProcessed.value += 1;
+    }
+  }
+  batchSelectedIds.value = [];
+  batchImporting.value = false;
+  await loadFavorites();
+  if (batchFailures.value.length) {
+    ElMessage.warning(
+      `批量入库完成，${batchFailures.value.length} 篇失败，失败原因已保留。`,
+    );
+  } else {
+    ElMessage.success(`已为 ${targets.length} 篇文献创建入库任务。`);
+  }
+}
+
+function toggleAbstract(arxivId: string) {
+  expandedAbstracts.value = expandedAbstracts.value.includes(arxivId)
+    ? expandedAbstracts.value.filter((id) => id !== arxivId)
+    : [...expandedAbstracts.value, arxivId];
 }
 
 async function importFavorite(favorite: ExternalFavorite) {
@@ -627,11 +887,16 @@ function openLocalPaper(paperId: number, page = 1) {
 
 watch(activeTab, (tab) => {
   if (tab === "favorites") void loadFavorites();
+  else favoritesPoller.stop();
   if (tab === "tracking") void loadTrackings();
 });
 
 onMounted(() => {
   void loadTrackings();
+});
+
+onUnmounted(() => {
+  favoritesPoller.stop();
 });
 </script>
 
@@ -694,10 +959,113 @@ onMounted(() => {
 
 .search-panel,
 .tracking-form {
-  padding: 18px;
-  background: #f7fafb;
+  padding: 20px;
+  background: var(--color-bg-subtle);
   border: 1px solid var(--line);
   border-radius: 14px;
+}
+
+.search-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.search-panel-head h3 {
+  margin: 4px 0;
+  font-size: 18px;
+}
+
+.search-panel-head p {
+  margin: 0;
+}
+
+.search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.primary-query {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.primary-query :deep(.el-input__wrapper) {
+  min-height: 44px;
+}
+
+.primary-query :deep(.el-button) {
+  height: 44px;
+}
+
+.search-options-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.advanced-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.advanced-toggle span {
+  color: var(--color-text-tertiary);
+  font-weight: 400;
+}
+
+.elapsed {
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.advanced-filters {
+  padding: 14px 14px 0;
+  margin-top: 2px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.advanced-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.advanced-grid :deep(.el-form-item) {
+  margin-bottom: 14px;
+}
+
+.inline-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-top: 12px;
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 24%, transparent);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+
+.inline-error :deep(.el-button) {
+  margin-left: auto;
 }
 
 .search-row {
@@ -720,16 +1088,56 @@ onMounted(() => {
 .external-card,
 .tracking-card,
 .recommendation-card {
+  position: relative;
   padding: 18px;
-  background: #fff;
+  padding-right: 48px;
+  background: var(--color-surface);
   border: 1px solid var(--line);
   border-radius: 14px;
-  box-shadow: 0 8px 20px rgba(15, 42, 61, 0.05);
+  box-shadow: var(--shadow-xs);
+}
+
+.external-card:has(.result-index) {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  padding-left: 14px;
+}
+
+.result-index {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--color-primary-soft);
+  border-radius: var(--radius-sm);
+}
+
+.card-main {
+  min-width: 0;
+}
+
+.result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
 }
 
 .external-card h3,
 .tracking-card h3 {
   margin: 10px 0 0;
+}
+
+.external-card h3 {
+  color: var(--color-text-primary);
+  font-size: 17px;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
 }
 
 .date {
@@ -738,13 +1146,59 @@ onMounted(() => {
 }
 
 .authors {
-  color: #466476;
+  color: var(--color-text-secondary);
   font-size: 13px;
 }
 
 .summary {
-  color: #536c7c;
+  color: var(--color-text-secondary);
   line-height: 1.7;
+}
+
+.external-card .summary {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 10px 0 4px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.external-card .summary.expanded {
+  display: block;
+  overflow: visible;
+}
+
+.summary-toggle {
+  padding: 0;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.external-card .card-actions {
+  margin-top: 14px;
+}
+
+.result-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.result-skeleton {
+  padding: 22px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.result-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .error-text {
@@ -784,7 +1238,7 @@ onMounted(() => {
   flex-direction: column;
   gap: 6px;
   padding: 10px;
-  background: #f7fafb;
+  background: var(--color-bg-subtle);
   border-radius: 9px;
 }
 
@@ -798,12 +1252,60 @@ onMounted(() => {
   margin-top: 10px;
 }
 
+.section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.favorite-check {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+}
+
+.batch-progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-md);
+}
+
+.batch-progress > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.batch-progress span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.batch-failures {
+  padding: 12px 14px;
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 24%, transparent);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+}
+
+.batch-failures p {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+
 .seed-box,
 .disclaimer {
   padding: 12px 14px;
   border-radius: 10px;
-  background: #fff8e8;
-  color: #72511d;
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
 }
 
 .seed-box {
@@ -841,6 +1343,48 @@ onMounted(() => {
   .recommendation-grid,
   .tracking-results {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .discovery-hero,
+  .search-panel {
+    padding: 16px;
+  }
+
+  .discovery-hero,
+  .search-panel-head,
+  .section-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .primary-query,
+  .advanced-grid,
+  .batch-progress {
+    grid-template-columns: 1fr;
+  }
+
+  .primary-query :deep(.el-button) {
+    width: 100%;
+  }
+
+  .search-options-line {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .section-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .external-card:has(.result-index) {
+    grid-template-columns: 1fr;
+  }
+
+  .result-index {
+    display: none;
   }
 }
 </style>

@@ -6,6 +6,9 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 from uuid import uuid4
 
+import pytest
+
+from app.core.exceptions import AppError
 from app.models.paper import Paper, PaperChunk
 from app.services import literature_review_service
 
@@ -32,6 +35,198 @@ class ReviewLLM:
                 )
             ]
         )
+
+
+class SequenceReviewLLM:
+    def __init__(
+        self,
+        contents: list[str],
+        finish_reasons: list[str] | None = None,
+    ):
+        self.contents = contents
+        self.finish_reasons = finish_reasons or []
+        self.calls: list[dict] = []
+        self.chat = SimpleNamespace(
+            completions=SimpleNamespace(create=self.create),
+        )
+
+    def create(self, **kwargs):
+        self.calls.append(kwargs)
+        index = min(len(self.calls) - 1, len(self.contents) - 1)
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(content=self.contents[index]),
+                    finish_reason=(
+                        self.finish_reasons[index]
+                        if index < len(self.finish_reasons)
+                        else "stop"
+                    ),
+                )
+            ]
+        )
+
+
+def test_review_json_repair_is_bounded_and_preserves_schema(
+    monkeypatch,
+):
+    valid = json.dumps(
+        {
+            "title": "Repaired Review",
+            "sections": [
+                {
+                    "heading": "Evidence",
+                    "content": "A grounded comparison.",
+                    "citation_ids": [1],
+                }
+            ],
+            "comparison": {},
+            "future_work": [],
+        }
+    )
+    llm = SequenceReviewLLM(['{"title": "truncated"', valid])
+    consume = Mock()
+    monkeypatch.setattr(
+        literature_review_service,
+        "get_llm_client",
+        lambda: llm,
+    )
+
+    parsed, _model = literature_review_service._call_review_model_bounded(
+        "Build an evidence review.",
+        consume_llm_call=consume,
+    )
+
+    assert parsed["title"] == "Repaired Review"
+    assert parsed["_llm_diagnostics"][0]["failure_kind"] == "json_parse_error"
+    assert len(llm.calls) == 2
+    assert consume.call_count == 2
+    assert all(
+        call["response_format"] == {"type": "json_object"}
+        for call in llm.calls
+    )
+    assert "Repair the supplied JSON only" in (
+        llm.calls[1]["messages"][0]["content"]
+    )
+
+
+def test_review_schema_failure_uses_one_repair_request(monkeypatch):
+    invalid_schema = json.dumps(
+        {
+            "title": "Missing section content",
+            "sections": [{"heading": "Evidence", "citation_ids": [1]}],
+        }
+    )
+    valid = json.dumps(
+        {
+            "title": "Schema Repaired",
+            "sections": [
+                {
+                    "heading": "Evidence",
+                    "content": "The section is complete.",
+                    "citation_ids": [1],
+                }
+            ],
+            "comparison": {},
+            "future_work": [],
+        }
+    )
+    llm = SequenceReviewLLM([invalid_schema, valid])
+    monkeypatch.setattr(
+        literature_review_service,
+        "get_llm_client",
+        lambda: llm,
+    )
+
+    parsed, _model = literature_review_service._call_review_model_bounded(
+        "Build an evidence review.",
+    )
+
+    assert parsed["title"] == "Schema Repaired"
+    assert len(llm.calls) == 2
+
+
+def test_truncated_review_uses_compact_repair_prompt(monkeypatch):
+    valid = json.dumps(
+        {
+            "title": "Compact Review",
+            "sections": [
+                {
+                    "heading": "Evidence",
+                    "content": "Compact grounded content.",
+                    "citation_ids": [1],
+                }
+            ],
+            "comparison": {},
+            "future_work": [],
+        }
+    )
+    llm = SequenceReviewLLM(
+        ['{"title":"truncated', valid],
+        finish_reasons=["length", "stop"],
+    )
+    monkeypatch.setattr(
+        literature_review_service,
+        "get_llm_client",
+        lambda: llm,
+    )
+
+    parsed, _model = literature_review_service._call_review_model_bounded(
+        "Original evidence prompt",
+    )
+
+    assert parsed["title"] == "Compact Review"
+    assert parsed["_llm_diagnostics"][0]["failure_kind"] == "output_truncated"
+    assert "compact complete object" in (
+        llm.calls[1]["messages"][1]["content"]
+    )
+
+
+def test_review_two_invalid_json_responses_raise_sanitized_diagnostic(
+    monkeypatch,
+):
+    llm = SequenceReviewLLM(
+        ['{"secret": "provider text is not valid', "still not json"]
+    )
+    monkeypatch.setattr(
+        literature_review_service,
+        "get_llm_client",
+        lambda: llm,
+    )
+
+    with pytest.raises(AppError) as captured:
+        literature_review_service._call_review_model_bounded("review")
+
+    assert captured.value.code == "REVIEW_LLM_JSON_ERROR"
+    details = captured.value.details
+    assert details["attempts"] == 2
+    assert len(details["diagnostics"]) == 2
+    serialized = json.dumps(details)
+    assert "provider text is not valid" not in serialized
+    assert all(
+        item["failure_kind"] == "json_parse_error"
+        for item in details["diagnostics"]
+    )
+
+
+def test_review_empty_response_is_distinct_from_json_or_schema_failure(
+    monkeypatch,
+):
+    llm = SequenceReviewLLM(["", ""])
+    monkeypatch.setattr(
+        literature_review_service,
+        "get_llm_client",
+        lambda: llm,
+    )
+
+    with pytest.raises(AppError) as captured:
+        literature_review_service._call_review_model_bounded("review")
+
+    assert captured.value.code == "REVIEW_LLM_RESPONSE_ERROR"
+    assert all(
+        item["failure_kind"] == "empty_response"
+        for item in captured.value.details["diagnostics"]
+    )
 
 
 def _add_paper_with_chunks(

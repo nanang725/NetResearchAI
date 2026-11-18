@@ -2,8 +2,10 @@ import type {
   DiscoveryField,
   DiscoverySortBy,
   DiscoverySortOrder,
+  ExternalFavorite,
   ExternalPaperResult,
 } from "@/types/discovery";
+import type { ImportJob } from "@/types/paper";
 
 
 export function formatArxivDate(value: string | null): string {
@@ -70,4 +72,20 @@ export function favoriteImportStatusType(
   if (status === "failed") return "danger";
   if (["queued", "running"].includes(status)) return "warning";
   return "info";
+}
+
+
+export function hasActiveFavoriteImport(
+  favorites: ExternalFavorite[],
+): boolean {
+  return favorites.some(
+    (favorite) =>
+      ["queued", "running"].includes(favorite.import_status)
+      || isActiveImportJob(favorite.import_job),
+  );
+}
+
+
+function isActiveImportJob(job: ImportJob | null): boolean {
+  return job?.status === "queued" || job?.status === "running";
 }

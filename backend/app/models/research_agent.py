@@ -83,6 +83,12 @@ class ResearchAgentRun(Base):
         default=3,
         server_default="3",
     )
+    max_replans: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=1,
+        server_default="1",
+    )
     max_execution_seconds: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
@@ -111,6 +117,25 @@ class ResearchAgentRun(Base):
         Boolean,
         nullable=False,
         default=False,
+        server_default="0",
+    )
+    lease_owner: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+        index=True,
+    )
+    lease_generation: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
+    heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    resume_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
         server_default="0",
     )
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)

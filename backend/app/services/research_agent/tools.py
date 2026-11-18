@@ -1,18 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from typing import Any, Callable, Literal, TypeVar
 
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppError
-from app.models.paper import Paper
 from app.schemas.research_agent import (
     CitationGraphInput,
     CitationGraphOutput,
     ComparePapersInput,
     ComparePapersOutput,
+    GetPaperStructureInput,
+    GetPaperStructureOutput,
     InspectLocalLibraryInput,
     InspectLocalLibraryOutput,
     ResearchOutlineInput,
@@ -22,6 +24,7 @@ from app.schemas.research_agent import (
     SearchLocalPapersInput,
     SearchLocalPapersOutput,
     SourceCandidate,
+    StandardToolOutput,
     VerifiableReferencesInput,
     VerifiableReferencesOutput,
 )
@@ -32,7 +35,7 @@ from app.services.academic_writing_service import (
 from app.services.arxiv_service import search_arxiv
 from app.services.citation_service import get_citation_graph
 from app.services.literature_review_service import generate_literature_review
-from app.services.paper_service import list_papers
+from app.services.paper_service import get_paper, list_papers
 from app.services.retrieval_service import search_chunks_hybrid
 
 
@@ -46,6 +49,7 @@ class ToolContext:
     run_id: str
     node_id: str
     cancel_check: Callable[[], bool]
+    consume_llm_call: Callable[[], None] | None = None
 
 
 @dataclass(frozen=True)
@@ -61,6 +65,7 @@ class ToolSpec:
     cost_class: Literal["local", "network", "llm"]
     handler: Callable[[ToolContext, BaseModel], BaseModel]
     llm_calls_per_execution: int = 0
+    dynamic_llm_calls: bool = False
 
 
 class ToolExecutionError(Exception):
@@ -70,10 +75,50 @@ class ToolExecutionError(Exception):
         *,
         code: str,
         retryable: bool,
+        category: str | None = None,
+        details: dict[str, Any] | None = None,
     ):
         super().__init__(message)
         self.code = code
         self.retryable = retryable
+        self.category = category or classify_tool_error(code)
+        self.details = details or {}
+
+
+def classify_tool_error(code: str) -> str:
+    normalized = code.upper()
+    if (
+        normalized in {
+            "AGENT_TOOL_INVALID_ARGUMENTS",
+            "AGENT_BINDING_INVALID_PATH",
+            "AGENT_BINDING_FIELD_NOT_FOUND",
+            "AGENT_BINDING_TARGET_SCHEMA_INVALID",
+        }
+        or "VALIDATION" in normalized
+    ):
+        return "validation_error"
+    if "NOT_FOUND" in normalized or normalized == "NOT_FOUND":
+        return "not_found"
+    if "TIMEOUT" in normalized:
+        return "timeout"
+    if "RATE_LIMIT" in normalized or "RATE_LIMITED" in normalized:
+        return "rate_limited"
+    if (
+        normalized.startswith("REVIEW_")
+        or normalized.startswith("LLM_")
+        or "INVALID_RESPONSE" in normalized
+    ):
+        return "external_service_error"
+    if any(
+        marker in normalized
+        for marker in (
+            "NETWORK",
+            "UPSTREAM",
+            "EXTERNAL_SERVICE",
+        )
+    ):
+        return "external_service_error"
+    return "internal_error"
 
 
 class ToolRegistry:
@@ -118,6 +163,7 @@ class ToolRegistry:
                 f"工具 {name!r} 的参数未通过 Schema 校验。",
                 code="AGENT_TOOL_INVALID_ARGUMENTS",
                 retryable=False,
+                category="validation_error",
             ) from exc
 
     def execute(
@@ -142,6 +188,8 @@ class ToolRegistry:
                     "ARXIV_UPSTREAM_ERROR",
                     "REVIEW_TIMEOUT",
                 },
+                category=classify_tool_error(exc.code),
+                details=exc.details,
             ) from exc
         except ToolExecutionError:
             raise
@@ -153,6 +201,7 @@ class ToolRegistry:
                 ),
                 code="AGENT_TOOL_EXECUTION_FAILED",
                 retryable=True,
+                category="internal_error",
             ) from exc
         try:
             output = spec.output_schema.model_validate(result)
@@ -161,8 +210,31 @@ class ToolRegistry:
                 f"工具 {name!r} 返回结果未通过输出 Schema 校验。",
                 code="AGENT_TOOL_INVALID_OUTPUT",
                 retryable=False,
+                category="internal_error",
             ) from exc
-        return output.model_dump(mode="json")
+        data = output.model_dump(mode="json")
+        result_count = data.get("result_count")
+        status = (
+            "empty_result"
+            if isinstance(result_count, int) and result_count == 0
+            else "success"
+        )
+        standard = StandardToolOutput(
+            success=True,
+            tool_name=name,
+            status=status,
+            data=data,
+            summary={
+                "source": data.get("source"),
+                "result_count": result_count if isinstance(result_count, int) else None,
+            },
+            warnings=[],
+            error=None,
+        )
+        return {
+            **data,
+            **standard.model_dump(mode="json"),
+        }
 
 
 def _local_source(
@@ -232,54 +304,50 @@ def _search_local_papers(
     validated: BaseModel,
 ) -> BaseModel:
     params = SearchLocalPapersInput.model_validate(validated)
-    paper_ids = params.paper_ids
-    if not paper_ids:
-        paper_ids = [
-            paper_id
-            for (paper_id,) in (
-                context.db.query(Paper.id)
-                .order_by(Paper.id.asc())
-                .limit(10)
-                .all()
-            )
-        ]
-    per_paper_limit = max(1, params.limit)
-    grouped: list[list[dict[str, Any]]] = []
-    for paper_id in paper_ids:
-        if context.cancel_check():
-            raise ToolExecutionError(
-                "研究任务已取消。",
-                code="AGENT_CANCELLED",
-                retryable=False,
-            )
-        items = search_chunks_hybrid(
+    if not params.paper_ids:
+        results = search_chunks_hybrid(
             db=context.db,
             query=params.query,
-            limit=per_paper_limit,
-            paper_id=paper_id,
+            limit=params.limit,
+            paper_id=None,
         )
-        grouped.append(
-            [
-                item
-                for item in items
-                if int(item.get("paper_id", -1)) == paper_id
-            ]
-        )
+    else:
+        grouped: list[list[dict[str, Any]]] = []
+        for paper_id in params.paper_ids:
+            if context.cancel_check():
+                raise ToolExecutionError(
+                    "研究任务已取消。",
+                    code="AGENT_CANCELLED",
+                    retryable=False,
+                )
+            items = search_chunks_hybrid(
+                db=context.db,
+                query=params.query,
+                limit=params.limit,
+                paper_id=paper_id,
+            )
+            grouped.append(
+                [
+                    item
+                    for item in items
+                    if int(item.get("paper_id", -1)) == paper_id
+                ]
+            )
 
-    results: list[dict[str, Any]] = []
-    positions = [0] * len(grouped)
-    while len(results) < params.limit:
-        added = False
-        for index, items in enumerate(grouped):
-            if positions[index] >= len(items):
-                continue
-            results.append(items[positions[index]])
-            positions[index] += 1
-            added = True
-            if len(results) >= params.limit:
+        results: list[dict[str, Any]] = []
+        positions = [0] * len(grouped)
+        while len(results) < params.limit:
+            added = False
+            for index, items in enumerate(grouped):
+                if positions[index] >= len(items):
+                    continue
+                results.append(items[positions[index]])
+                positions[index] += 1
+                added = True
+                if len(results) >= params.limit:
+                    break
+            if not added:
                 break
-        if not added:
-            break
 
     sources = [
         _local_source(
@@ -336,6 +404,7 @@ def _compare_papers(
         paper_ids=params.paper_ids,
         topic=params.topic,
         include_future_work=params.include_future_work,
+        consume_llm_call=context.consume_llm_call,
     )
     sources: list[SourceCandidate] = []
     seen: set[tuple[int, int]] = set()
@@ -365,6 +434,7 @@ def _compare_papers(
         source="existing_literature_review_service",
         sources=sources,
         result_count=len(sources),
+        llm_diagnostics=payload.get("llm_diagnostics", []),
     )
 
 
@@ -443,6 +513,108 @@ def _get_references(
     )
 
 
+def _parse_json_value(value: str | None) -> Any:
+    if not value:
+        return None
+    try:
+        return json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return None
+
+
+def _get_paper_structure(
+    context: ToolContext,
+    validated: BaseModel,
+) -> BaseModel:
+    params = GetPaperStructureInput.model_validate(validated)
+    paper = get_paper(context.db, params.paper_id, with_pages=True)
+    chunks_by_element: dict[int, list[int]] = {}
+    chunks_by_page: dict[int, list[int]] = {}
+    for chunk in paper.chunks:
+        chunks_by_page.setdefault(chunk.page_number, []).append(chunk.id)
+        if chunk.element_id is not None:
+            chunks_by_element.setdefault(chunk.element_id, []).append(chunk.id)
+
+    pages = []
+    sections: dict[str, dict[str, Any]] = {}
+    returned_element_count = 0
+    for page in sorted(paper.pages, key=lambda item: item.page_number)[
+        : params.max_pages
+    ]:
+        elements = []
+        for element in page.elements[: params.max_elements_per_page]:
+            text = None
+            truncated = False
+            if params.include_text and element.text:
+                text = element.text[:600]
+                truncated = len(element.text) > len(text)
+            bbox = _parse_json_value(element.bbox)
+            bbox_values = (
+                [float(item) for item in bbox]
+                if isinstance(bbox, list)
+                and len(bbox) == 4
+                and all(isinstance(item, (int, float)) for item in bbox)
+                else None
+            )
+            chunk_ids = sorted(chunks_by_element.get(element.id, []))
+            element_payload = {
+                "element_id": element.id,
+                "element_index": element.element_index,
+                "element_type": element.element_type,
+                "page_number": element.page_number,
+                "section_path": element.section_path,
+                "extraction_status": element.extraction_status,
+                "bbox": bbox_values,
+                "chunk_ids": chunk_ids,
+                "text": text,
+                "text_truncated": truncated,
+            }
+            elements.append(element_payload)
+            returned_element_count += 1
+            if element.section_path:
+                section = sections.setdefault(
+                    element.section_path,
+                    {
+                        "heading": element.section_path,
+                        "page_numbers": [],
+                        "element_ids": [],
+                        "chunk_ids": [],
+                    },
+                )
+                if element.page_number not in section["page_numbers"]:
+                    section["page_numbers"].append(element.page_number)
+                section["element_ids"].append(element.id)
+                section["chunk_ids"].extend(chunk_ids)
+        pages.append(
+            {
+                "page_number": page.page_number,
+                "parse_status": page.parse_status,
+                "char_count": page.char_count,
+                "element_count": len(page.elements),
+                "chunk_ids": sorted(chunks_by_page.get(page.page_number, [])),
+                "elements": elements,
+            }
+        )
+    for section in sections.values():
+        section["page_numbers"].sort()
+        section["element_ids"] = list(dict.fromkeys(section["element_ids"]))
+        section["chunk_ids"] = list(dict.fromkeys(section["chunk_ids"]))
+    return GetPaperStructureOutput(
+        paper_id=paper.id,
+        title=paper.title,
+        authors=paper.authors,
+        publication_year=paper.publication_year,
+        parse_status=paper.parse_status,
+        index_status=paper.index_status,
+        page_count=paper.page_count,
+        returned_page_count=len(pages),
+        sections=list(sections.values()),
+        pages=pages,
+        result_count=returned_element_count,
+        source="local_structured_paper",
+    )
+
+
 TOOL_REGISTRY = ToolRegistry()
 
 
@@ -458,6 +630,23 @@ TOOL_REGISTRY.register(
         max_calls_per_run=1,
         cost_class="local",
         handler=_inspect_local_library,
+    )
+)
+TOOL_REGISTRY.register(
+    ToolSpec(
+        name="get_paper_structure",
+        description=(
+            "读取真实本地论文的页面、结构化元素、章节路径和关联 Chunk ID，"
+            "不推断缺失结构。"
+        ),
+        input_schema=GetPaperStructureInput,
+        output_schema=GetPaperStructureOutput,
+        side_effect="read_only",
+        timeout=30.0,
+        max_attempts=1,
+        max_calls_per_run=2,
+        cost_class="local",
+        handler=_get_paper_structure,
     )
 )
 TOOL_REGISTRY.register(
@@ -500,7 +689,8 @@ TOOL_REGISTRY.register(
         max_calls_per_run=1,
         cost_class="llm",
         handler=_compare_papers,
-        llm_calls_per_execution=1,
+        llm_calls_per_execution=2,
+        dynamic_llm_calls=True,
     )
 )
 TOOL_REGISTRY.register(
