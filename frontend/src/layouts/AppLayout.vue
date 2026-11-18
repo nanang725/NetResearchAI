@@ -177,7 +177,12 @@ const navSections: NavSection[] = [
         matchNames: ["paper-detail"],
       },
       { to: "/search", label: "智能检索", icon: Search },
-      { to: "/discovery", label: "文献发现", icon: Compass },
+      {
+        to: "/discovery",
+        label: "每日论文推荐",
+        icon: Compass,
+        badge: "arXiv",
+      },
     ],
   },
   {

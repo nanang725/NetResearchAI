@@ -141,3 +141,16 @@ export interface LiteratureReviewRequest {
   topic: string;
   include_future_work: boolean;
 }
+
+export interface LiteratureReviewSession {
+  review_id: string;
+  selected_paper_ids: number[];
+  topic: string;
+  include_future_work: boolean;
+  status: "queued" | "running" | "completed" | "failed";
+  result: LiteratureReview | null;
+  error: string | null;
+  created_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+}

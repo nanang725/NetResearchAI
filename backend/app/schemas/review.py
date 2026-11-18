@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -75,4 +75,10 @@ class LiteratureReviewData(BaseModel):
 class LiteratureReviewResponse(BaseModel):
     success: Literal[True]
     data: LiteratureReviewData
+    error: None
+
+
+class LiteratureReviewSessionEnvelope(BaseModel):
+    success: Literal[True]
+    data: dict[str, Any] | None
     error: None

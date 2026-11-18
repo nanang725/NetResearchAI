@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import (
     Boolean,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -268,4 +269,113 @@ class TrackingRunItem(Base):
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     run: Mapped[TrackingRun] = relationship(back_populates="items")
+    external_paper: Mapped[ExternalPaper] = relationship()
+
+
+class DiscoveryInterestProfile(Base):
+    __tablename__ = "discovery_interest_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    interests_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class DailyRecommendationBatch(Base):
+    __tablename__ = "daily_recommendation_batches"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    recommendation_date: Mapped[str] = mapped_column(
+        String(10),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+    interests_json: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(24),
+        nullable=False,
+        default="queued",
+        server_default="queued",
+        index=True,
+    )
+    new_item_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    items: Mapped[list["DailyRecommendationItem"]] = relationship(
+        back_populates="batch",
+        cascade="all, delete-orphan",
+        order_by="DailyRecommendationItem.position",
+    )
+
+
+class DailyRecommendationItem(Base):
+    __tablename__ = "daily_recommendation_items"
+    __table_args__ = (
+        UniqueConstraint(
+            "batch_id",
+            "external_paper_id",
+            name="uq_daily_recommendation_batch_paper",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    batch_id: Mapped[int] = mapped_column(
+        ForeignKey("daily_recommendation_batches.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    external_paper_id: Mapped[int] = mapped_column(
+        ForeignKey("external_papers.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    score: Mapped[float] = mapped_column(Float, nullable=False, default=0)
+    recommendation_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    matched_interests_json: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        default="[]",
+    )
+    is_read: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="0",
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    batch: Mapped[DailyRecommendationBatch] = relationship(back_populates="items")
     external_paper: Mapped[ExternalPaper] = relationship()

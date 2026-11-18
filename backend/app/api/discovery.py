@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 
 from app.core.responses import success
 from app.database import get_db
 from app.schemas.discovery import (
+    DailyInterestsUpdate,
+    DailyReadStateUpdate,
     DiscoveryEnvelope,
     DiscoveryField,
     DiscoveryListEnvelope,
@@ -11,6 +14,14 @@ from app.schemas.discovery import (
     DiscoverySortOrder,
     FavoriteExternalRequest,
     TrackingSearchCreate,
+)
+from app.services.daily_recommendation_service import (
+    execute_daily_refresh,
+    get_daily_recommendation_state,
+    queue_daily_refresh,
+    serialize_daily_batch,
+    update_daily_item_read_state,
+    update_interests,
 )
 from app.services.discovery_service import (
     create_tracking_search,
@@ -26,6 +37,66 @@ from app.services.discovery_service import (
 
 
 router = APIRouter(prefix="/discovery", tags=["discovery"])
+
+
+def _session_factory(db: Session):
+    return sessionmaker(
+        bind=db.get_bind(),
+        autoflush=False,
+        autocommit=False,
+        future=True,
+    )
+
+
+@router.get("/daily", response_model=DiscoveryEnvelope)
+def get_daily_recommendations(db: Session = Depends(get_db)):
+    return success(get_daily_recommendation_state(db))
+
+
+@router.put("/interests", response_model=DiscoveryEnvelope)
+def save_discovery_interests(
+    request: DailyInterestsUpdate,
+    db: Session = Depends(get_db),
+):
+    return success(update_interests(db, request.interests))
+
+
+@router.post(
+    "/daily/refresh",
+    status_code=202,
+    response_model=DiscoveryEnvelope,
+)
+def refresh_daily_recommendations(
+    background_tasks: BackgroundTasks,
+    force: bool = Query(default=False),
+    db: Session = Depends(get_db),
+):
+    batch = queue_daily_refresh(db, force=force)
+    if batch.status == "running":
+        background_tasks.add_task(
+            execute_daily_refresh,
+            batch.id,
+            _session_factory(db),
+        )
+    return success(serialize_daily_batch(db, batch), status_code=202)
+
+
+@router.patch(
+    "/daily/items/{item_id}/read",
+    response_model=DiscoveryEnvelope,
+)
+def set_daily_recommendation_read_state(
+    item_id: int,
+    request: DailyReadStateUpdate,
+    db: Session = Depends(get_db),
+):
+    return success(
+        update_daily_item_read_state(
+            db,
+            item_id,
+            is_read=request.is_read,
+        )
+    )
 
 
 @router.get("/search", response_model=DiscoveryEnvelope)

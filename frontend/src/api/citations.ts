@@ -5,6 +5,7 @@ import type {
   CitationRebuildResult,
   LiteratureReview,
   LiteratureReviewRequest,
+  LiteratureReviewSession,
 } from "@/types/citation";
 
 
@@ -61,5 +62,46 @@ export async function generateLiteratureReview(
   request: LiteratureReviewRequest,
 ): Promise<LiteratureReview> {
   const { data } = await http.post<LiteratureReview>("/reviews", request);
+  return data;
+}
+
+
+export async function createLiteratureReviewSession(
+  request: LiteratureReviewRequest,
+): Promise<LiteratureReviewSession> {
+  const { data } = await http.post<LiteratureReviewSession>(
+    "/reviews/sessions",
+    request,
+  );
+  return data;
+}
+
+
+export async function fetchLiteratureReviewSession(
+  reviewId: string,
+): Promise<LiteratureReviewSession> {
+  const { data } = await http.get<LiteratureReviewSession>(
+    `/reviews/sessions/${reviewId}`,
+  );
+  return data;
+}
+
+
+export async function fetchLatestLiteratureReviewSession(): Promise<
+  LiteratureReviewSession | null
+> {
+  const { data } = await http.get<LiteratureReviewSession | null>(
+    "/reviews/sessions/latest",
+  );
+  return data;
+}
+
+
+export async function retryLiteratureReviewSession(
+  reviewId: string,
+): Promise<LiteratureReviewSession> {
+  const { data } = await http.post<LiteratureReviewSession>(
+    `/reviews/sessions/${reviewId}/retry`,
+  );
   return data;
 }

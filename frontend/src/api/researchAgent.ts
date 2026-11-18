@@ -339,6 +339,15 @@ export async function fetchResearchAgentRun(
   return response.data;
 }
 
+
+export async function fetchLatestResearchAgentRun(): Promise<ResearchAgentRun> {
+  const response = await http.get<ResearchAgentRun>(
+    "/research-agent/runs/latest",
+  );
+  return response.data;
+}
+
+
 export async function cancelResearchAgentRun(
   runId: string,
 ): Promise<ResearchAgentRun> {

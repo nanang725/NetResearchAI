@@ -1,5 +1,8 @@
 from app.models.citation import CitationEdge, CitationReference
 from app.models.discovery import (
+    DailyRecommendationBatch,
+    DailyRecommendationItem,
+    DiscoveryInterestProfile,
     ExternalFavorite,
     ExternalPaper,
     TrackingRun,
@@ -7,6 +10,7 @@ from app.models.discovery import (
     TrackingSearch,
     TrackingSeen,
 )
+from app.models.review import LiteratureReviewRecord
 from app.models.paper import (
     Paper,
     PaperChunk,
@@ -42,6 +46,10 @@ __all__ = [
     "TrackingSeen",
     "TrackingRun",
     "TrackingRunItem",
+    "DiscoveryInterestProfile",
+    "DailyRecommendationBatch",
+    "DailyRecommendationItem",
+    "LiteratureReviewRecord",
     "ResearchAgentRun",
     "ResearchAgentNode",
     "ResearchAgentToolCall",

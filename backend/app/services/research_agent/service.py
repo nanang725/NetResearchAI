@@ -66,6 +66,21 @@ def get_run_or_404(db: Session, run_id: str) -> ResearchAgentRun:
     return run
 
 
+def get_latest_run(db: Session) -> ResearchAgentRun:
+    run = (
+        db.query(ResearchAgentRun)
+        .order_by(ResearchAgentRun.created_at.desc(), ResearchAgentRun.id.desc())
+        .first()
+    )
+    if run is None:
+        raise AppError(
+            "当前还没有科研 Agent 任务。",
+            code="RESEARCH_AGENT_NO_RUNS",
+            status_code=404,
+        )
+    return run
+
+
 def _build_research_run(
     *,
     goal: str,

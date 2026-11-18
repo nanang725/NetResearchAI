@@ -574,7 +574,27 @@ class ResearchPlanner:
             )
         except Exception as exc:
             if isinstance(exc, PlanValidationError):
-                raise
+                self.last_llm_diagnostics = {
+                    "stage": "planner",
+                    "attempts": [
+                        {
+                            "stage": "planner",
+                            "attempt": self.last_llm_calls_used or 1,
+                            "failure_kind": "plan_validation_error",
+                            "error_type": type(exc).__name__,
+                            "error_code": getattr(exc, "code", None),
+                            "error": str(exc),
+                        }
+                    ],
+                    "fallback_used": True,
+                }
+                return validate_plan(
+                    fallback_plan(goal, budget),
+                    budget,
+                    version=1,
+                    generated_by="fallback",
+                    registry=self.registry,
+                )
             first_failure_kind = (
                 exc.kind
                 if isinstance(exc, LLMJSONError)

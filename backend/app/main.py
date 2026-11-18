@@ -31,6 +31,9 @@ from app.models import (  # noqa: F401
     PaperVersion,
     ExternalFavorite,
     ExternalPaper,
+    DiscoveryInterestProfile,
+    DailyRecommendationBatch,
+    DailyRecommendationItem,
     TrackingRun,
     TrackingRunItem,
     TrackingSearch,
@@ -40,8 +43,10 @@ from app.models import (  # noqa: F401
     ResearchAgentNode,
     ResearchAgentRun,
     ResearchAgentToolCall,
+    LiteratureReviewRecord,
 )
 from app.services.paper_service import ensure_storage, retry_pending_deletions
+from app.services.review_record_service import recover_interrupted_review_records
 from app.services.ingestion_service import (
     cleanup_expired_import_files,
     recover_interrupted_jobs,
@@ -57,6 +62,8 @@ async def lifespan(_app: FastAPI):
     ensure_storage()
     Base.metadata.create_all(bind=engine)
     ensure_additive_schema(engine)
+    with SessionLocal() as recovery_db:
+        recover_interrupted_review_records(recovery_db)
     Path(get_settings().upload_path).mkdir(parents=True, exist_ok=True)
     retry_pending_deletions(SessionLocal, delete_paper_vectors)
     cleanup_expired_import_files(SessionLocal)

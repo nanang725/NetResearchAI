@@ -1,5 +1,8 @@
 import { http } from "./http";
 import type {
+  DailyRecommendationPaper,
+  DailyRecommendationProfile,
+  DailyRecommendationState,
   DiscoveryField,
   DiscoveryRecommendations,
   DiscoverySortBy,
@@ -104,4 +107,45 @@ export function patchFavoriteState(
     ...result,
     favorite_id: favorite.favorite_id,
   };
+}
+
+
+export async function fetchDailyRecommendationState(): Promise<DailyRecommendationState> {
+  const { data } = await http.get<DailyRecommendationState>("/discovery/daily");
+  return data;
+}
+
+
+export async function saveDiscoveryInterests(
+  interests: string[],
+): Promise<DailyRecommendationProfile> {
+  const { data } = await http.put<DailyRecommendationProfile>(
+    "/discovery/interests",
+    { interests },
+  );
+  return data;
+}
+
+
+export async function refreshDailyRecommendations(force = true): Promise<
+  DailyRecommendationState["current"]
+> {
+  const { data } = await http.post<DailyRecommendationState["current"]>(
+    "/discovery/daily/refresh",
+    null,
+    { params: { force } },
+  );
+  return data;
+}
+
+
+export async function markDailyRecommendationRead(
+  itemId: number,
+  isRead: boolean,
+): Promise<DailyRecommendationPaper> {
+  const { data } = await http.patch<DailyRecommendationPaper>(
+    `/discovery/daily/items/${itemId}/read`,
+    { is_read: isRead },
+  );
+  return data;
 }

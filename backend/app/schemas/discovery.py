@@ -27,6 +27,18 @@ class TrackingSearchCreate(BaseModel):
     page_size: int = Field(default=20, ge=1, le=50)
 
 
+class DailyInterestsUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    interests: list[str] = Field(min_length=1, max_length=8)
+
+
+class DailyReadStateUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    is_read: bool
+
+
 class DiscoveryEnvelope(BaseModel):
     success: Literal[True]
     data: dict[str, Any]

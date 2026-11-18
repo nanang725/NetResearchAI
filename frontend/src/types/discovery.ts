@@ -101,3 +101,47 @@ export interface DiscoveryRecommendations {
   source_distinction: Record<string, string>;
   disclaimer: string;
 }
+
+
+export interface DailyRecommendationProfile {
+  interests: string[];
+  configured: boolean;
+  updated_at: string | null;
+}
+
+
+export interface DailyRecommendationPaper extends ExternalPaperResult {
+  item_id: number;
+  score: number;
+  matched_interests: string[];
+  recommendation_reason: string;
+  reason_source: "deterministic_keyword_rules";
+  is_read: boolean;
+  position: number;
+  favorite_import_status: string;
+  favorite_import_error: string | null;
+}
+
+
+export interface DailyRecommendationBatch {
+  batch_id: number;
+  date: string;
+  status: "queued" | "running" | "completed" | "failed";
+  interests: string[];
+  new_item_count: number;
+  error: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+  created_at: string;
+  items: DailyRecommendationPaper[];
+  source: "arxiv_official_api";
+  reason_disclaimer: string;
+}
+
+
+export interface DailyRecommendationState {
+  date: string;
+  profile: DailyRecommendationProfile;
+  current: DailyRecommendationBatch | null;
+  latest: DailyRecommendationBatch | null;
+}

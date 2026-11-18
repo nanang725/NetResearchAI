@@ -81,6 +81,12 @@
           <span>受控动态重规划</span>
           <span>最大 180 秒</span>
         </div>
+        <ol class="agent-pipeline" aria-label="Agent 执行阶段">
+          <li><strong>Planner</strong><span>生成可编辑计划与依赖关系</span></li>
+          <li><strong>Executor</strong><span>按预算调用只读工具并记录轨迹</span></li>
+          <li><strong>Evidence</strong><span>校验本地 Chunk 或标记 arXiv 摘要</span></li>
+          <li><strong>Report</strong><span>汇总引用证据并保留可恢复任务</span></li>
+        </ol>
       </div>
     </section>
 
@@ -758,7 +764,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { Cpu } from "@element-plus/icons-vue";
 import { ApiError } from "@/api/http";
 import {
@@ -766,6 +772,7 @@ import {
   confirmResearchAgentPlan,
   createResearchAgentPlan,
   createResearchAgentRun,
+  fetchLatestResearchAgentRun,
   fetchResearchAgentTools,
   fetchResearchAgentReport,
   fetchResearchAgentRun,
@@ -794,6 +801,7 @@ const defaultBudget: ResearchAgentBudget = {
   max_execution_seconds: 180,
 };
 const route = useRoute();
+const router = useRouter();
 
 interface PlanEditorForm {
   goal: string;
@@ -970,6 +978,16 @@ function stopPolling() {
   }
 }
 
+
+function syncRunRoute(runId: string) {
+  if (route.query.run === runId) return;
+  void router.replace({
+    name: "research-agent",
+    query: { ...route.query, run: runId },
+  });
+}
+
+
 async function loadReport(runId: string) {
   try {
     report.value = await fetchResearchAgentReport(runId);
@@ -1002,6 +1020,7 @@ async function createRunAutomatically() {
   stopPolling();
   try {
     run.value = await createResearchAgentRun(goal.value.trim(), defaultBudget);
+    syncRunRoute(run.value.run_id);
     await poll(run.value.run_id);
   } catch (cause) {
     error.value = cause instanceof ApiError ? cause.message : "研究任务创建失败。";
@@ -1018,6 +1037,7 @@ async function createPlan() {
   stopPolling();
   try {
     run.value = await createResearchAgentPlan(goal.value.trim(), defaultBudget);
+    syncRunRoute(run.value.run_id);
     await loadToolCatalog();
   } catch (cause) {
     error.value = cause instanceof ApiError ? cause.message : "研究计划生成失败。";
@@ -1031,6 +1051,7 @@ async function loadExistingRun(runId: string) {
   stopPolling();
   try {
     run.value = await fetchResearchAgentRun(runId);
+    syncRunRoute(run.value.run_id);
     goal.value = run.value.goal;
     if (run.value.status === "completed") {
       await loadReport(runId);
@@ -1164,7 +1185,18 @@ onMounted(() => {
     : "";
   if (requestedRunId) {
     void loadExistingRun(requestedRunId);
+    return;
   }
+  void fetchLatestResearchAgentRun()
+    .then((latest) => loadExistingRun(latest.run_id))
+    .catch((cause) => {
+      if (cause instanceof ApiError && cause.code === "RESEARCH_AGENT_NO_RUNS") {
+        return;
+      }
+      error.value = cause instanceof ApiError
+        ? cause.message
+        : "最近研究任务读取失败。";
+    });
 });
 
 onUnmounted(stopPolling);
@@ -1274,6 +1306,38 @@ onUnmounted(stopPolling);
   background: var(--color-bg-subtle);
   border-radius: var(--radius-pill);
   font-size: 10px;
+}
+
+.agent-pipeline {
+  display: grid;
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.agent-pipeline li {
+  display: flex;
+  min-width: 0;
+  padding: 10px;
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  flex-direction: column;
+  gap: 4px;
+}
+
+.agent-pipeline strong {
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.agent-pipeline span {
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+  line-height: 1.45;
 }
 
 .goal-actions {
@@ -1782,6 +1846,10 @@ onUnmounted(stopPolling);
 
   .agent-empty {
     flex-direction: column;
+  }
+
+  .agent-pipeline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .goal-buttons,

@@ -2,11 +2,11 @@
   <div class="discovery-page">
     <section class="page-card discovery-hero">
       <div>
-        <p class="eyebrow">MODULE 4 · ARXIV DISCOVERY</p>
-        <h2>自动化文献搜索、追踪与推荐</h2>
+        <p class="eyebrow">ARXIV DAILY DISCOVERY</p>
+        <h2>每日论文推荐与文献发现</h2>
         <p class="muted">
-          搜索结果来自 arXiv 官方公开 API；收藏前会再次回查官方元数据。
-          PDF 入库复用现有导入任务和 SHA 去重。
+          每日推荐来自 arXiv 官方公开 API；收藏前会再次回查官方元数据。
+          推荐理由只说明排序依据，不把检索摘要包装成深度阅读结论。
         </p>
       </div>
       <div class="hero-tags">
@@ -17,6 +17,218 @@
     </section>
 
     <el-tabs v-model="activeTab" class="page-card discovery-tabs">
+      <el-tab-pane label="每日论文推荐" name="daily">
+        <div class="tab-body daily-body">
+          <section class="daily-hero">
+            <div class="daily-title">
+              <div>
+                <p class="eyebrow">TODAY · {{ dailyState?.date || "每日更新" }}</p>
+                <h3>今日推荐</h3>
+                <p class="muted">
+                  首次进入当天页面或点击刷新时查询最新提交；结果保存在本地
+                  SQLite，刷新页面后仍可查看收藏、已读和导入状态。
+                </p>
+              </div>
+              <div class="daily-actions">
+                <el-button
+                  type="primary"
+                  :loading="dailyRefreshing"
+                  @click="startDailyRefresh(true)"
+                >
+                  手动刷新
+                </el-button>
+              </div>
+            </div>
+
+            <div class="interest-panel">
+              <div class="interest-copy">
+                <strong>研究兴趣设置</strong>
+                <span>最多 8 个兴趣；推荐按关键词覆盖和提交时间排序。</span>
+              </div>
+              <el-select
+                v-model="interestDraft"
+                multiple
+                filterable
+                allow-create
+                default-first-option
+                :multiple-limit="8"
+                placeholder="选择或输入研究兴趣"
+                class="interest-select"
+              >
+                <el-option
+                  v-for="interest in interestOptions"
+                  :key="interest"
+                  :label="interest"
+                  :value="interest"
+                />
+              </el-select>
+              <el-button
+                plain
+                :loading="interestsSaving"
+                :disabled="!interestDraft.length"
+                @click="saveInterests"
+              >
+                保存兴趣
+              </el-button>
+            </div>
+          </section>
+
+          <div
+            v-if="dailyError || dailyState?.current?.status === 'failed'"
+            class="inline-error"
+          >
+            <span>{{ dailyError || dailyState?.current?.error }}</span>
+            <el-button link type="primary" @click="startDailyRefresh(true)">
+              重新获取
+            </el-button>
+          </div>
+          <el-alert
+            v-if="dailyState?.current?.status === 'completed'
+              && dailyState.current.error"
+            :title="dailyState.current.error"
+            type="warning"
+            :closable="false"
+            show-icon
+          />
+
+          <div
+            v-if="dailyState?.current?.status === 'running'
+              || dailyState?.current?.status === 'queued'"
+            class="daily-loading"
+            aria-live="polite"
+          >
+            <el-skeleton :rows="4" animated />
+            <span>正在从 arXiv 官方 API 获取最新论文并按研究兴趣排序…</span>
+          </div>
+
+          <template v-else-if="dailyState?.current">
+            <div class="daily-summary">
+              <div>
+                <strong>{{ dailyState.current.items.length }}</strong>
+                <span>今日推荐</span>
+              </div>
+              <div>
+                <strong>{{ dailyState.current.new_item_count }}</strong>
+                <span>本次新增</span>
+              </div>
+              <div>
+                <strong>{{ unreadDailyCount }}</strong>
+                <span>未读</span>
+              </div>
+              <el-tag
+                :type="dailyState.current.status === 'failed' ? 'danger' : 'success'"
+                effect="plain"
+              >
+                {{ dailyState.current.status === "failed" ? "更新失败" : "arXiv 官方数据" }}
+              </el-tag>
+            </div>
+            <p class="disclaimer">{{ dailyState.current.reason_disclaimer }}</p>
+            <el-empty
+              v-if="!dailyState.current.items.length"
+              description="今天暂未找到符合研究兴趣的新论文；系统不会伪造推荐结果。"
+            />
+            <section v-else class="daily-grid">
+              <article
+                v-for="paper in dailyState.current.items"
+                :key="paper.item_id"
+                class="daily-card"
+                :class="{ read: paper.is_read }"
+              >
+                <div class="daily-card-top">
+                  <div class="tag-row">
+                    <el-tag v-if="paper.is_read" size="small" type="info">已读</el-tag>
+                    <el-tag size="small" type="warning">
+                      arXiv:{{ paper.arxiv_id }}
+                    </el-tag>
+                    <el-tag v-if="paper.primary_category" size="small">
+                      {{ paper.primary_category }}
+                    </el-tag>
+                    <el-tag
+                      v-if="paper.favorite_id"
+                      size="small"
+                      type="success"
+                    >
+                      已收藏
+                    </el-tag>
+                  </div>
+                  <span class="daily-score">匹配 {{ paper.score.toFixed(1) }}</span>
+                </div>
+                <h4>{{ paper.title }}</h4>
+                <p class="authors">{{ paper.authors.join(", ") || "作者未知" }}</p>
+                <div class="daily-meta">
+                  <span>{{ formatArxivDate(paper.published) }}</span>
+                  <span>相关度与新鲜度排序</span>
+                </div>
+                <p class="daily-abstract">{{ paper.summary }}</p>
+                <div class="recommendation-reason">
+                  <strong>推荐理由</strong>
+                  <p>{{ paper.recommendation_reason }}</p>
+                  <small>规则生成，不是论文内容结论</small>
+                </div>
+                <div class="daily-card-actions">
+                  <el-button size="small" @click="openDailyDetails(paper)">
+                    论文详情
+                  </el-button>
+                  <el-button
+                    size="small"
+                    plain
+                    @click="toggleDailyRead(paper)"
+                  >
+                    {{ paper.is_read ? "标为未读" : "标为已读" }}
+                  </el-button>
+                  <el-button
+                    v-if="!paper.favorite_id"
+                    size="small"
+                    :loading="dailyFavoritingId === paper.arxiv_id"
+                    @click="favoriteDailyPaper(paper)"
+                  >
+                    收藏
+                  </el-button>
+                  <el-button
+                    v-if="paper.local_paper_id"
+                    size="small"
+                    type="success"
+                    @click="openLocalPaper(paper.local_paper_id)"
+                  >
+                    打开本地论文
+                  </el-button>
+                  <el-button
+                    v-else
+                    size="small"
+                    type="primary"
+                    :loading="dailyImportingId === paper.item_id"
+                    :disabled="['queued', 'running'].includes(paper.favorite_import_status)"
+                    @click="importDailyPaper(paper)"
+                  >
+                    {{
+                      paper.favorite_import_status === "queued"
+                        ? "等待导入"
+                        : paper.favorite_import_status === "running"
+                          ? "导入中"
+                          : "导入文献库"
+                    }}
+                  </el-button>
+                  <a :href="paper.abs_url" target="_blank" rel="noreferrer">
+                    <el-button size="small" link type="primary">原文</el-button>
+                  </a>
+                  <a :href="paper.pdf_url" target="_blank" rel="noreferrer">
+                    <el-button size="small" link type="primary">PDF</el-button>
+                  </a>
+                </div>
+                <p v-if="paper.favorite_import_error" class="error-text">
+                  导入失败：{{ paper.favorite_import_error }}
+                </p>
+              </article>
+            </section>
+          </template>
+
+          <el-empty
+            v-else
+            description="当前没有今日推荐记录，点击手动刷新开始获取。"
+          />
+        </div>
+      </el-tab-pane>
+
       <el-tab-pane label="外部搜索" name="search">
         <div class="tab-body">
           <section class="search-panel">
@@ -508,6 +720,60 @@
         </div>
       </el-tab-pane>
     </el-tabs>
+
+    <el-dialog
+      v-model="dailyDetailsOpen"
+      :title="selectedDailyPaper?.title || '论文详情'"
+      width="min(760px, calc(100vw - 32px))"
+    >
+      <div v-if="selectedDailyPaper" class="daily-detail">
+        <div class="tag-row">
+          <el-tag type="warning">arXiv:{{ selectedDailyPaper.arxiv_id }}</el-tag>
+          <el-tag v-if="selectedDailyPaper.primary_category">
+            {{ selectedDailyPaper.primary_category }}
+          </el-tag>
+          <el-tag v-if="selectedDailyPaper.is_read" type="info">已读</el-tag>
+        </div>
+        <dl>
+          <div>
+            <dt>作者</dt>
+            <dd>{{ selectedDailyPaper.authors.join(", ") || "作者未知" }}</dd>
+          </div>
+          <div>
+            <dt>提交时间</dt>
+            <dd>{{ formatArxivDate(selectedDailyPaper.published) }}</dd>
+          </div>
+          <div>
+            <dt>arXiv 分类</dt>
+            <dd>
+              {{ selectedDailyPaper.categories?.join(", ")
+                || selectedDailyPaper.primary_category
+                || "未提供" }}
+            </dd>
+          </div>
+        </dl>
+        <section>
+          <h4>arXiv 原始摘要</h4>
+          <p>{{ selectedDailyPaper.summary }}</p>
+        </section>
+        <section class="recommendation-reason">
+          <strong>规则生成的推荐理由</strong>
+          <p>{{ selectedDailyPaper.recommendation_reason }}</p>
+          <small>
+            匹配兴趣：{{ selectedDailyPaper.matched_interests.join("、") }}。
+            该理由不构成对论文方法、实验结果或结论的真实性判断。
+          </small>
+        </section>
+        <div class="card-actions">
+          <a :href="selectedDailyPaper.abs_url" target="_blank" rel="noreferrer">
+            <el-button type="primary" plain>打开 arXiv 原文页</el-button>
+          </a>
+          <a :href="selectedDailyPaper.pdf_url" target="_blank" rel="noreferrer">
+            <el-button plain>打开 PDF</el-button>
+          </a>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -518,16 +784,22 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import {
   createDiscoveryTracking,
   favoriteExternal,
+  fetchDailyRecommendationState,
   fetchDiscoveryRecommendations,
   fetchDiscoveryTrackings,
   fetchExternalFavorites,
   importFavoritePdf,
+  markDailyRecommendationRead,
   patchFavoriteState,
+  refreshDailyRecommendations,
   refreshDiscoveryTracking,
+  saveDiscoveryInterests,
   searchExternalLiterature,
 } from "@/api/discovery";
 import { ApiError } from "@/api/http";
 import type {
+  DailyRecommendationPaper,
+  DailyRecommendationState,
   DiscoveryField,
   DiscoveryRecommendations,
   DiscoverySortBy,
@@ -548,7 +820,29 @@ import {
 import { createTaskPoller } from "@/utils/taskPoller";
 
 const router = useRouter();
-const activeTab = ref("search");
+const activeTab = ref("daily");
+const interestOptions = [
+  "人工智能",
+  "大语言模型",
+  "RAG",
+  "AI Agent",
+  "计算机网络",
+  "知识图谱",
+  "文献智能分析",
+];
+const dailyState = ref<DailyRecommendationState | null>(null);
+const interestDraft = ref<string[]>([]);
+const dailyRefreshing = ref(false);
+const interestsSaving = ref(false);
+const dailyError = ref("");
+const dailyFavoritingId = ref("");
+const dailyImportingId = ref<number | null>(null);
+const dailyDetailsOpen = ref(false);
+const selectedDailyPaper = ref<DailyRecommendationPaper | null>(null);
+let dailyPollTimer: ReturnType<typeof setTimeout> | null = null;
+const unreadDailyCount = computed(
+  () => dailyState.value?.current?.items.filter((paper) => !paper.is_read).length ?? 0,
+);
 const searchQuery = ref("");
 const searchField = ref<DiscoveryField>("all");
 const searchSort = ref<DiscoverySortBy>("relevance");
@@ -633,6 +927,181 @@ const batchProgress = computed(() =>
     ? Math.round((batchProcessed.value / batchTotal.value) * 100)
     : 0,
 );
+
+function stopDailyPolling() {
+  if (dailyPollTimer) clearTimeout(dailyPollTimer);
+  dailyPollTimer = null;
+}
+
+function scheduleDailyPoll(reason: "refresh" | "import") {
+  stopDailyPolling();
+  dailyPollTimer = setTimeout(() => {
+    void pollDailyState(reason);
+  }, reason === "refresh" ? 1500 : 2500);
+}
+
+function applyDailyState(state: DailyRecommendationState) {
+  dailyState.value = state;
+  if (!interestDraft.value.length) {
+    interestDraft.value = [...state.profile.interests];
+  }
+}
+
+async function pollDailyState(reason: "refresh" | "import") {
+  try {
+    const state = await fetchDailyRecommendationState();
+    applyDailyState(state);
+    dailyError.value = "";
+    const batchActive = ["queued", "running"].includes(
+      state.current?.status || "",
+    );
+    const importActive = state.current?.items.some((paper) =>
+      ["queued", "running"].includes(paper.favorite_import_status),
+    ) ?? false;
+    dailyRefreshing.value = batchActive;
+    if (batchActive) scheduleDailyPoll("refresh");
+    else if (importActive) scheduleDailyPoll("import");
+    else stopDailyPolling();
+  } catch (error) {
+    dailyError.value = error instanceof ApiError
+      ? error.message
+      : "每日推荐状态读取失败";
+    dailyRefreshing.value = false;
+    scheduleDailyPoll(reason);
+  }
+}
+
+async function loadDailyState() {
+  try {
+    const state = await fetchDailyRecommendationState();
+    applyDailyState(state);
+    dailyError.value = "";
+    if (!state.current) {
+      await startDailyRefresh(false);
+    } else if (["queued", "running"].includes(state.current.status)) {
+      dailyRefreshing.value = true;
+      scheduleDailyPoll("refresh");
+    }
+  } catch (error) {
+    dailyError.value = error instanceof ApiError
+      ? error.message
+      : "每日推荐加载失败";
+  }
+}
+
+async function startDailyRefresh(force: boolean) {
+  if (dailyRefreshing.value) return;
+  dailyRefreshing.value = true;
+  dailyError.value = "";
+  try {
+    const batch = await refreshDailyRecommendations(force);
+    if (dailyState.value && batch) {
+      dailyState.value.current = batch;
+    } else {
+      await pollDailyState("refresh");
+    }
+    if (["queued", "running"].includes(batch?.status || "")) {
+      scheduleDailyPoll("refresh");
+    } else {
+      dailyRefreshing.value = false;
+    }
+  } catch (error) {
+    dailyRefreshing.value = false;
+    dailyError.value = error instanceof ApiError
+      ? error.message
+      : "arXiv 每日推荐刷新失败";
+  }
+}
+
+async function saveInterests() {
+  if (!interestDraft.value.length || interestsSaving.value) return;
+  interestsSaving.value = true;
+  try {
+    const profile = await saveDiscoveryInterests(interestDraft.value);
+    if (dailyState.value) dailyState.value.profile = profile;
+    interestDraft.value = [...profile.interests];
+    ElMessage.success("研究兴趣已保存；下次刷新将按新兴趣生成推荐");
+  } catch (error) {
+    ElMessage.error(error instanceof ApiError ? error.message : "研究兴趣保存失败");
+  } finally {
+    interestsSaving.value = false;
+  }
+}
+
+function replaceDailyPaper(updated: DailyRecommendationPaper) {
+  if (dailyState.value?.current) {
+    dailyState.value.current.items = dailyState.value.current.items.map((paper) =>
+      paper.item_id === updated.item_id ? updated : paper,
+    );
+  }
+  if (selectedDailyPaper.value?.item_id === updated.item_id) {
+    selectedDailyPaper.value = updated;
+  }
+}
+
+async function toggleDailyRead(paper: DailyRecommendationPaper) {
+  try {
+    const updated = await markDailyRecommendationRead(
+      paper.item_id,
+      !paper.is_read,
+    );
+    replaceDailyPaper(updated);
+  } catch (error) {
+    ElMessage.error(error instanceof ApiError ? error.message : "已读状态保存失败");
+  }
+}
+
+async function ensureDailyFavorite(paper: DailyRecommendationPaper) {
+  if (paper.favorite_id) return paper.favorite_id;
+  const favorite = await favoriteExternal(paper.arxiv_id);
+  paper.favorite_id = favorite.favorite_id;
+  return favorite.favorite_id;
+}
+
+async function favoriteDailyPaper(paper: DailyRecommendationPaper) {
+  dailyFavoritingId.value = paper.arxiv_id;
+  try {
+    await ensureDailyFavorite(paper);
+    replaceDailyPaper({ ...paper });
+    ElMessage.success("已收藏，原始元数据已由服务端回查");
+  } catch (error) {
+    ElMessage.error(error instanceof ApiError ? error.message : "收藏失败");
+  } finally {
+    dailyFavoritingId.value = "";
+  }
+}
+
+async function importDailyPaper(paper: DailyRecommendationPaper) {
+  if (paper.local_paper_id) {
+    openLocalPaper(paper.local_paper_id);
+    return;
+  }
+  dailyImportingId.value = paper.item_id;
+  try {
+    const favoriteId = await ensureDailyFavorite(paper);
+    if (!favoriteId) throw new Error("收藏记录未返回有效 ID");
+    const result = await importFavoritePdf(favoriteId);
+    paper.favorite_import_status = result.favorite.import_status;
+    paper.favorite_import_error = result.favorite.import_error;
+    paper.local_paper_id = result.favorite.local_paper_id;
+    replaceDailyPaper({ ...paper });
+    ElMessage.success(
+      result.status === "already_in_library"
+        ? "本地已有相同论文"
+        : "已进入现有 PDF 下载与导入任务",
+    );
+    await pollDailyState("import");
+  } catch (error) {
+    ElMessage.error(error instanceof ApiError ? error.message : "论文导入失败");
+  } finally {
+    dailyImportingId.value = null;
+  }
+}
+
+function openDailyDetails(paper: DailyRecommendationPaper) {
+  selectedDailyPaper.value = paper;
+  dailyDetailsOpen.value = true;
+}
 
 async function runSearch(page: number) {
   const query = searchQuery.value.trim();
@@ -892,10 +1361,12 @@ watch(activeTab, (tab) => {
 });
 
 onMounted(() => {
+  void loadDailyState();
   void loadTrackings();
 });
 
 onUnmounted(() => {
+  stopDailyPolling();
   favoritesPoller.stop();
 });
 </script>
@@ -955,6 +1426,250 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.daily-body {
+  gap: 14px;
+}
+
+.daily-hero {
+  display: flex;
+  padding: 20px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-primary-soft) 72%, transparent),
+      color-mix(in srgb, var(--color-accent-soft) 52%, transparent)
+    );
+  border: 1px solid var(--color-primary-border);
+  border-radius: 14px;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.daily-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.daily-title > div:first-child {
+  min-width: 0;
+}
+
+.daily-title h3 {
+  margin: 4px 0 6px;
+  font-size: 20px;
+}
+
+.daily-title p {
+  margin: 0;
+}
+
+.daily-actions {
+  flex: 0 0 auto;
+}
+
+.interest-panel {
+  display: grid;
+  min-width: 0;
+  align-items: center;
+  padding: 12px;
+  background: color-mix(in srgb, var(--color-surface) 78%, transparent);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  grid-template-columns: minmax(180px, 0.7fr) minmax(260px, 1.5fr) auto;
+  gap: 12px;
+}
+
+.interest-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.interest-copy span {
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+}
+
+.interest-select {
+  min-width: 0;
+  width: 100%;
+}
+
+.daily-loading {
+  display: grid;
+  padding: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.daily-loading span {
+  max-width: 240px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.daily-summary {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.daily-summary > div {
+  display: flex;
+  min-width: 110px;
+  padding: 10px 14px;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-md);
+  flex-direction: column;
+}
+
+.daily-summary strong {
+  font-family: var(--font-mono);
+  font-size: 20px;
+}
+
+.daily-summary span {
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+}
+
+.daily-summary > :deep(.el-tag) {
+  align-self: center;
+  margin-left: auto;
+}
+
+.daily-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.daily-card {
+  display: flex;
+  min-width: 0;
+  padding: 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent-2);
+  border-radius: 14px;
+  box-shadow: var(--shadow-xs);
+  flex-direction: column;
+  gap: 9px;
+}
+
+.daily-card.read {
+  border-top-color: var(--color-border-strong);
+  opacity: 0.82;
+}
+
+.daily-card-top {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.daily-score {
+  flex: 0 0 auto;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.daily-card h4 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.daily-meta {
+  display: flex;
+  flex-wrap: wrap;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  gap: 6px 16px;
+}
+
+.daily-abstract {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.recommendation-reason {
+  padding: 10px 12px;
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
+  border-radius: var(--radius-md);
+}
+
+.recommendation-reason p {
+  margin: 5px 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.recommendation-reason small {
+  color: var(--color-text-tertiary);
+}
+
+.daily-card-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.daily-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.daily-detail dl {
+  display: grid;
+  margin: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.daily-detail dl > div {
+  min-width: 0;
+  padding: 10px;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-md);
+}
+
+.daily-detail dt {
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+}
+
+.daily-detail dd {
+  margin: 4px 0 0;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.daily-detail section p {
+  line-height: 1.75;
+  white-space: pre-wrap;
 }
 
 .search-panel,
@@ -1339,6 +2054,18 @@ onUnmounted(() => {
 }
 
 @media (max-width: 1050px) {
+  .daily-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .interest-panel {
+    grid-template-columns: 1fr auto;
+  }
+
+  .interest-copy {
+    grid-column: 1 / -1;
+  }
+
   .search-row,
   .recommendation-grid,
   .tracking-results {
@@ -1350,6 +2077,38 @@ onUnmounted(() => {
   .discovery-hero,
   .search-panel {
     padding: 16px;
+  }
+
+  .daily-title,
+  .daily-loading {
+    align-items: flex-start;
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .daily-actions,
+  .daily-actions :deep(.el-button) {
+    width: 100%;
+  }
+
+  .interest-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .interest-copy {
+    grid-column: auto;
+  }
+
+  .daily-card-top {
+    flex-direction: column;
+  }
+
+  .daily-summary > :deep(.el-tag) {
+    margin-left: 0;
+  }
+
+  .daily-detail dl {
+    grid-template-columns: 1fr;
   }
 
   .discovery-hero,

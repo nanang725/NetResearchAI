@@ -15,6 +15,7 @@ from app.services.research_agent.service import (
     confirm_research_plan,
     create_research_plan,
     create_research_run,
+    get_latest_run,
     get_report,
     get_run_or_404,
     serialize_run,
@@ -110,6 +111,14 @@ def create_run(
     start_research_run_from_session(db, run.id)
     db.refresh(run)
     return success(serialize_run(db, run), status_code=202)
+
+
+@router.get(
+    "/runs/latest",
+    response_model=ResearchAgentRunEnvelope,
+)
+def read_latest_run(db: Session = Depends(get_db)):
+    return success(serialize_run(db, get_latest_run(db)))
 
 
 @router.get(

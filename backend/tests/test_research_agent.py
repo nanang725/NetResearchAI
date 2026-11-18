@@ -703,6 +703,10 @@ def test_research_agent_api_create_read_cancel_and_report(
         assert loaded.status_code == 200
         assert loaded.json()["data"]["run_id"] == run_id
 
+        latest = client.get("/api/research-agent/runs/latest")
+        assert latest.status_code == 200
+        assert latest.json()["data"]["run_id"] == run_id
+
         report = client.get(f"/api/research-agent/runs/{run_id}/report")
         assert report.status_code == 409
         assert report.json()["error"]["code"] == "RESEARCH_AGENT_REPORT_NOT_READY"
@@ -991,6 +995,58 @@ def test_planner_json_repair_is_bounded(monkeypatch):
     assert "Repair the supplied JSON only" in (
         llm.calls[1]["messages"][0]["content"]
     )
+
+
+def test_invalid_llm_plan_falls_back_to_safe_plan(monkeypatch):
+    invalid = {
+        "analysis": {
+            "topic": "unsafe plan",
+            "research_question": "Can validation fail safely?",
+            "time_range": None,
+            "analysis_dimensions": ["method"],
+        },
+        "nodes": [
+            {
+                "id": f"search_{index}",
+                "tool_name": "search_local_papers",
+                "arguments": {"query": "evidence", "limit": 5},
+                "depends_on": [],
+                "reason": "search",
+                "completion_condition": "results returned",
+                "retry_limit": 0,
+            }
+            for index in range(4)
+        ],
+    }
+    response = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(
+                    content=json.dumps(invalid)
+                ),
+                finish_reason="stop",
+            )
+        ]
+    )
+    fake_client = SimpleNamespace(
+        chat=SimpleNamespace(
+            completions=SimpleNamespace(create=lambda **_kwargs: response)
+        )
+    )
+    monkeypatch.setattr(planner_module, "get_llm_client", lambda: fake_client)
+
+    planner = ResearchPlanner()
+    plan = planner.create_plan(
+        "Inspect local evidence safely",
+        AgentBudgetRequest(),
+    )
+
+    assert plan.generated_by == "fallback"
+    assert planner.last_llm_calls_used == 1
+    assert planner.last_llm_diagnostics["fallback_used"] is True
+    assert len(
+        [node for node in plan.nodes if node.tool_name == "search_local_papers"]
+    ) <= TOOL_REGISTRY.get("search_local_papers").max_calls_per_run
 
 
 def test_zero_llm_budget_skips_planner_model_call(monkeypatch):

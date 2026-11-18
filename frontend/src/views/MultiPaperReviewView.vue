@@ -9,7 +9,19 @@
             选择 2～5 篇本地论文，系统逐篇检索证据并比较方法、结果、结论与局限。
           </p>
         </div>
-        <el-tag effect="plain">证据约束生成</el-tag>
+        <div class="workspace-actions">
+          <el-tag v-if="reviewSession" effect="plain">
+            {{ reviewSession.status === "completed" ? "已保存综述" : "任务已恢复" }}
+          </el-tag>
+          <el-tag effect="plain">证据约束生成</el-tag>
+          <el-button
+            v-if="reviewSession || review || selectedPaperIds.length || topic"
+            plain
+            @click="startNewReview"
+          >
+            重新开始
+          </el-button>
+        </div>
       </div>
 
       <div class="review-form-grid">
@@ -117,7 +129,7 @@
 
     <template v-if="review">
       <section class="page-card review-cover">
-        <div>
+        <div class="cover-heading">
           <el-tag type="warning" effect="plain">AI 辅助生成</el-tag>
           <h2>{{ review.title }}</h2>
           <p class="muted">主题：{{ review.topic }} · 模型：{{ review.model }}</p>
@@ -255,14 +267,20 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { fetchPapers } from "@/api/papers";
-import { generateLiteratureReview } from "@/api/citations";
+import {
+  createLiteratureReviewSession,
+  fetchLatestLiteratureReviewSession,
+  fetchLiteratureReviewSession,
+  retryLiteratureReviewSession,
+} from "@/api/citations";
 import { ApiError } from "@/api/http";
 import type { PaperListItem } from "@/types/paper";
 import type {
   LiteratureReview,
+  LiteratureReviewSession,
   ReviewEvidenceCitation,
   ReviewFutureWorkItem,
 } from "@/types/citation";
@@ -278,15 +296,18 @@ import {
 import { statusLabel } from "@/utils/format";
 
 const router = useRouter();
+const route = useRoute();
 const papers = ref<PaperListItem[]>([]);
 const selectedPaperIds = ref<number[]>([]);
 const topic = ref("");
 const includeFutureWork = ref(true);
 const review = ref<LiteratureReview | null>(null);
+const reviewSession = ref<LiteratureReviewSession | null>(null);
 const loading = ref(false);
 const errorMessage = ref("");
 const loadingElapsedMs = ref(0);
 let loadingTimer: ReturnType<typeof setInterval> | null = null;
+let sessionPollTimer: ReturnType<typeof setTimeout> | null = null;
 
 const selectionError = computed(() =>
   validateReviewPaperSelection(selectedPaperIds.value),
@@ -333,6 +354,75 @@ function stopLoadingClock() {
   loadingTimer = null;
 }
 
+function stopSessionPolling() {
+  if (sessionPollTimer) clearTimeout(sessionPollTimer);
+  sessionPollTimer = null;
+}
+
+function syncSessionRoute(reviewId: string) {
+  if (route.query.review === reviewId) return;
+  void router.replace({
+    name: "review",
+    query: { ...route.query, review: reviewId },
+  });
+}
+
+function applySession(session: LiteratureReviewSession) {
+  reviewSession.value = session;
+  selectedPaperIds.value = [...session.selected_paper_ids];
+  topic.value = session.topic;
+  includeFutureWork.value = session.include_future_work;
+  review.value = session.result;
+  errorMessage.value = session.status === "failed"
+    ? session.error || "综述生成失败，请稍后重试。"
+    : "";
+  if (session.status === "queued" || session.status === "running") {
+    loading.value = true;
+    startLoadingClock();
+  } else {
+    loading.value = false;
+    stopLoadingClock();
+  }
+}
+
+async function pollSession(reviewId: string) {
+  stopSessionPolling();
+  try {
+    const session = await fetchLiteratureReviewSession(reviewId);
+    applySession(session);
+    if (session.status === "queued" || session.status === "running") {
+      sessionPollTimer = setTimeout(() => void pollSession(reviewId), 1500);
+    }
+  } catch (error) {
+    errorMessage.value = error instanceof ApiError
+      ? error.message
+      : "综述任务状态读取失败。";
+    sessionPollTimer = setTimeout(() => void pollSession(reviewId), 2500);
+  }
+}
+
+async function restoreReviewSession(reviewId?: string) {
+  try {
+    const session = reviewId
+      ? await fetchLiteratureReviewSession(reviewId)
+      : await fetchLatestLiteratureReviewSession();
+    if (!session) return;
+    applySession(session);
+    syncSessionRoute(session.review_id);
+    if (session.status === "queued" || session.status === "running") {
+      await pollSession(session.review_id);
+    }
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404 && reviewId) {
+      errorMessage.value = "上次综述任务已不存在，可重新开始。";
+      return;
+    }
+    ElMessage.error(
+      error instanceof ApiError ? error.message : "恢复综述任务失败。",
+    );
+  }
+}
+
 async function generateReview() {
   const validation = validateReviewPaperSelection(selectedPaperIds.value);
   if (validation) {
@@ -347,25 +437,60 @@ async function generateReview() {
   errorMessage.value = "";
   startLoadingClock();
   try {
-    review.value = await generateLiteratureReview(
+    const session = await createLiteratureReviewSession(
       buildReviewRequest(
         selectedPaperIds.value,
         topic.value,
         includeFutureWork.value,
       ),
     );
+    applySession(session);
+    syncSessionRoute(session.review_id);
+    await pollSession(session.review_id);
   } catch (error) {
     errorMessage.value = error instanceof ApiError
       ? error.message
       : "生成综述失败，请稍后重试。";
   } finally {
-    stopLoadingClock();
-    loading.value = false;
+    if (reviewSession.value?.status !== "queued"
+      && reviewSession.value?.status !== "running") {
+      stopLoadingClock();
+      loading.value = false;
+    }
   }
 }
 
 function retryReview() {
+  if (reviewSession.value?.status === "failed") {
+    loading.value = true;
+    errorMessage.value = "";
+    void retryLiteratureReviewSession(reviewSession.value.review_id)
+      .then((session) => {
+        applySession(session);
+        return pollSession(session.review_id);
+      })
+      .catch((error) => {
+        loading.value = false;
+        errorMessage.value = error instanceof ApiError
+          ? error.message
+          : "综述重试失败。";
+      });
+    return;
+  }
   void generateReview();
+}
+
+function startNewReview() {
+  stopSessionPolling();
+  stopLoadingClock();
+  reviewSession.value = null;
+  review.value = null;
+  selectedPaperIds.value = [];
+  topic.value = "";
+  includeFutureWork.value = true;
+  loading.value = false;
+  errorMessage.value = "";
+  void router.replace({ name: "review" });
 }
 
 function openCitation(citation: ReviewEvidenceCitation) {
@@ -382,10 +507,15 @@ onMounted(async () => {
   } catch (error) {
     ElMessage.error(error instanceof ApiError ? error.message : "加载论文列表失败");
   }
+  const requestedReviewId = typeof route.query.review === "string"
+    ? route.query.review
+    : undefined;
+  await restoreReviewSession(requestedReviewId);
 });
 
 onUnmounted(() => {
   stopLoadingClock();
+  stopSessionPolling();
 });
 </script>
 
@@ -415,8 +545,7 @@ onUnmounted(() => {
   margin: 0 0 8px;
 }
 
-.workspace-heading,
-.review-cover {
+.workspace-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -425,6 +554,19 @@ onUnmounted(() => {
 
 .workspace-heading {
   margin-bottom: 18px;
+}
+
+.workspace-heading > div:first-child {
+  min-width: 0;
+}
+
+.workspace-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .workspace-heading h2 {
@@ -579,25 +721,33 @@ onUnmounted(() => {
 
 .review-cover h2 {
   margin: 12px 0 6px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .review-cover {
-  flex-wrap: wrap;
+  display: grid;
+  min-width: 0;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  gap: 18px 24px;
 }
 
-.review-cover > div:first-child {
+.cover-heading {
   min-width: 0;
-  flex: 1;
 }
 
 .cover-metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(80px, 1fr));
+  min-width: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
 .cover-metrics div {
   display: flex;
+  min-width: 0;
   padding: 10px 12px;
   background: color-mix(in srgb, var(--color-surface) 72%, transparent);
   border-radius: var(--radius-md);
@@ -611,9 +761,12 @@ onUnmounted(() => {
 .cover-metrics span {
   color: var(--color-text-tertiary);
   font-size: 10px;
+  white-space: nowrap;
 }
 
 .disclaimer {
+  grid-column: 1 / -1;
+  margin: 0;
   color: var(--color-warning);
   background: var(--color-warning-soft);
   border-radius: 8px;
@@ -651,6 +804,7 @@ onUnmounted(() => {
 }
 
 .comparison-card {
+  min-width: 0;
   padding: 14px;
   background: var(--color-bg-subtle);
   border-radius: 10px;
@@ -672,6 +826,15 @@ onUnmounted(() => {
   gap: 10px;
 }
 
+.comparison-item-head strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.comparison-item-head :deep(.el-tag) {
+  flex: 0 0 auto;
+}
+
 .comparison-item p {
   line-height: 1.65;
   color: var(--color-text-secondary);
@@ -690,6 +853,18 @@ onUnmounted(() => {
   .workspace-heading {
     flex-direction: column;
   }
+
+  .workspace-actions {
+    justify-content: flex-start;
+  }
+
+  .review-cover {
+    grid-template-columns: 1fr;
+  }
+
+  .disclaimer {
+    grid-column: auto;
+  }
 }
 
 @media (max-width: 620px) {
@@ -704,7 +879,7 @@ onUnmounted(() => {
 
   .cover-metrics {
     width: 100%;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .form-actions {
@@ -714,6 +889,16 @@ onUnmounted(() => {
 
   .form-actions :deep(.el-button) {
     width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .cover-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .cover-metrics span {
+    white-space: normal;
   }
 }
 

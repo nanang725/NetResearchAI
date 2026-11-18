@@ -77,9 +77,9 @@ const router = createRouter({
           name: "discovery",
           component: () => import("@/views/DiscoveryView.vue"),
           meta: {
-            title: "文献发现",
+            title: "每日论文推荐",
             stage: "v0.4.0 正式版本",
-            feature: "官方 arXiv 搜索、收藏入库、关键词追踪与本地/外部推荐",
+            feature: "每日 arXiv 论文推荐、研究兴趣、收藏入库、关键词追踪与外部搜索",
           },
         },
         {
